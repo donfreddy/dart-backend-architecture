@@ -94,7 +94,7 @@ final class TokenPair {
       };
 }
 
-final class JwtService {
+class JwtService {
   final String privateKeyPath;
   final String publicKeyPath;
   final Duration accessTokenExpiry;
