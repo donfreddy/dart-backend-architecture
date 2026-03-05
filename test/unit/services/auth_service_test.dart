@@ -1,6 +1,3 @@
-import 'dart:convert';
-
-import 'package:crypto/crypto.dart';
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/database/model/keystore.dart';
@@ -29,12 +26,13 @@ void main() {
     late MockUserRepo mockUserRepo;
     late MockKeystoreRepo mockKeystoreRepo;
     late MockJwtService mockJwtService;
+    late MockCryptoWorker mockCryptoWorker;
 
     final user = User(
       id: 'u-1',
       email: 'x@y.com',
       name: 'X',
-      passwordHash: sha256.convert(utf8.encode('pass123')).toString(),
+      passwordHash: 'bcrypt-hash',
       createdAt: DateTime.utc(2026, 1, 1),
     );
 
@@ -42,6 +40,7 @@ void main() {
       mockUserRepo = MockUserRepo();
       mockKeystoreRepo = MockKeystoreRepo();
       mockJwtService = MockJwtService();
+      mockCryptoWorker = MockCryptoWorker();
 
       when(() => mockJwtService.accessTokenExpiry).thenReturn(const Duration(hours: 1));
       when(() => mockJwtService.refreshTokenExpiry).thenReturn(const Duration(days: 30));
@@ -51,6 +50,7 @@ void main() {
         userRepo: mockUserRepo,
         keystoreRepo: mockKeystoreRepo,
         jwt: mockJwtService,
+        crypto: mockCryptoWorker,
       );
     });
 
@@ -65,6 +65,7 @@ void main() {
 
     test('throws AuthFailureError on wrong password', () async {
       when(() => mockUserRepo.findByEmail(any())).thenAnswer((_) async => user);
+      when(() => mockCryptoWorker.verifyPassword(any(), any())).thenAnswer((_) async => false);
 
       await expectLater(
         sut.login(const LoginDto(email: 'x@y.com', password: 'wrong')),
@@ -74,6 +75,8 @@ void main() {
 
     test('returns AuthResult on valid credentials', () async {
       when(() => mockUserRepo.findByEmail('x@y.com')).thenAnswer((_) async => user);
+      when(() => mockCryptoWorker.verifyPassword('pass123', user.passwordHash!))
+          .thenAnswer((_) async => true);
       when(() => mockKeystoreRepo.create(user, any(), any())).thenAnswer(
         (inv) async => Keystore(
           id: 'k-1',
@@ -89,6 +92,7 @@ void main() {
       expect(result.user.id, 'u-1');
       expect(result.tokens.accessToken, 'jwt-token');
       expect(result.tokens.refreshToken, 'jwt-token');
+      verify(() => mockCryptoWorker.verifyPassword('pass123', user.passwordHash!)).called(1);
       verify(() => mockKeystoreRepo.create(user, any(), any())).called(1);
       verify(() => mockJwtService.encode(any())).called(2);
     });
