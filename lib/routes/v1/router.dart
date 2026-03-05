@@ -12,6 +12,7 @@ import 'package:dart_backend_architecture/routes/v1/access/token_handler.dart';
 import 'package:dart_backend_architecture/routes/v1/blog/blog_detail.dart';
 import 'package:dart_backend_architecture/routes/v1/blog/blog_list.dart';
 import 'package:dart_backend_architecture/routes/v1/blog/editor.dart';
+import 'package:dart_backend_architecture/routes/v1/blog/write.dart';
 import 'package:dart_backend_architecture/routes/v1/profile/user.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
 import 'package:dart_backend_architecture/services/blog_service.dart';
@@ -36,7 +37,12 @@ Handler buildV1Router({
     roleRepo: roleRepo,
     roleCode: RoleCode.editor.value,
   );
+  final requireWriter = authorizationMiddleware(
+    roleRepo: roleRepo,
+    roleCode: RoleCode.writer.value,
+  );
   Handler applyEditorAuth(Handler inner) => requireAuth(requireEditor(inner));
+  Handler applyWriterAuth(Handler inner) => requireAuth(requireWriter(inner));
 
   final myProfile = requireAuth((r) => myProfileHandler(r, userRepo));
   final updateProfile = requireAuth((r) => updateProfileHandler(r, userRepo));
@@ -58,9 +64,34 @@ Handler buildV1Router({
   router.get('/blogs/latest', (Request r) => latestBlogsHandler(r, blogService));
   router.get('/blogs/similar/id/<id>', (Request r, String id) => similarBlogsByIdHandler(r, id, blogService));
 
-  // Blog writer
-  // router.post('/blog', (r) => writerCreateHandler(r, blogService));
-  // router.put('/blog/<id>', (r, id) => writerUpdateHandler(r, id, blogService));
+  // Blog writer (auth + writer role)
+  router.post('/blogs/writer', (Request r) {
+    return applyWriterAuth((req) => writerCreateBlogHandler(req, blogService))(r);
+  });
+  router.put('/blogs/writer/id/<id>', (Request r, String id) {
+    return applyWriterAuth((req) => writerUpdateBlogHandler(req, id, blogService))(r);
+  });
+  router.put('/blogs/writer/submit/<id>', (Request r, String id) {
+    return applyWriterAuth((req) => writerSubmitBlogHandler(req, id, blogService))(r);
+  });
+  router.put('/blogs/writer/withdraw/<id>', (Request r, String id) {
+    return applyWriterAuth((req) => writerWithdrawBlogHandler(req, id, blogService))(r);
+  });
+  router.delete('/blogs/writer/id/<id>', (Request r, String id) {
+    return applyWriterAuth((req) => writerDeleteBlogHandler(req, id, blogService))(r);
+  });
+  router.get('/blogs/writer/submitted/all', (Request r) {
+    return applyWriterAuth((req) => writerSubmittedBlogsHandler(req, blogService))(r);
+  });
+  router.get('/blogs/writer/published/all', (Request r) {
+    return applyWriterAuth((req) => writerPublishedBlogsHandler(req, blogService))(r);
+  });
+  router.get('/blogs/writer/drafts/all', (Request r) {
+    return applyWriterAuth((req) => writerDraftBlogsHandler(req, blogService))(r);
+  });
+  router.get('/blogs/writer/id/<id>', (Request r, String id) {
+    return applyWriterAuth((req) => writerBlogByIdHandler(req, id, blogService))(r);
+  });
 
   // Blog editor (auth + editor role)
   router.put('/blogs/editor/publish/<id>', (Request r, String id) {
