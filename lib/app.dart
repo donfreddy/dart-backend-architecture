@@ -1,28 +1,47 @@
 import 'package:dart_backend_architecture/core/middleware/api_key_middleware.dart';
-import 'package:dart_backend_architecture/core/middleware/auth_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/cors_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/error_handler_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/rate_limit_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/tracing_middleware.dart';
+import 'package:dart_backend_architecture/database/repository/interfaces/api_key_repo.dart';
 import 'package:shelf/shelf.dart';
-import 'package:shelf/shelf_io.dart';
 
-Handler buildApp(Handler router) {
-  return const Pipeline()
+Handler buildApp(
+  Handler router, {
+  List<String> corsAllowedOrigins = const [],
+  ApiKeyRepo? apiKeyRepo,
+  RateLimitStore? rateLimitStore,
+  int rateLimitMaxRequests = 100,
+  Duration rateLimitWindow = const Duration(minutes: 1),
+}) {
+  var pipeline = const Pipeline()
+      // ── Error boundary (outermost) ───────────────────────
+      .addMiddleware(errorHandlerMiddleware())
+
       // ── Observability ─────────────────────────────────────
-      // First — captures every request including those that fail auth
       .addMiddleware(tracingMiddleware())
       .addMiddleware(logRequests())
 
-      // ── Security ──────────────────────────────────────────
-      .addMiddleware(corsMiddleware())
-      .addMiddleware(apiKeyMiddleware())
-      .addMiddleware(rateLimitMiddleware())
+      // ── Security baseline ─────────────────────────────────
+      .addMiddleware(
+        corsMiddleware(
+          allowedOrigins: corsAllowedOrigins,
+        ),
+      );
 
-      // ── Error boundary ────────────────────────────────────
-      // Last — catches everything thrown by middleware below and handlers
-      .addMiddleware(errorHandlerMiddleware())
+  if (apiKeyRepo != null) {
+    pipeline = pipeline.addMiddleware(apiKeyMiddleware(apiKeyRepo));
+  }
 
-      // ── Business ──────────────────────────────────────────
-      .addHandler(router);
+  if (rateLimitStore != null) {
+    pipeline = pipeline.addMiddleware(
+      rateLimitMiddleware(
+        rateLimitStore,
+        maxRequests: rateLimitMaxRequests,
+        window: rateLimitWindow,
+      ),
+    );
+  }
+
+  return pipeline.addHandler(router);
 }
