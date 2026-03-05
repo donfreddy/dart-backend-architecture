@@ -116,19 +116,20 @@ dart-backend-architecture/
 │   │   └── v1/
 │   │       ├── access/
 │   │       │   ├── login_handler.dart
-│   │       │   ├── logout_handler.dart
-│   │       │   ├── schema.dart
 │   │       │   ├── signup_handler.dart
-│   │       │   └── token_handler.dart
+│   │       │   ├── logout_handler.dart
+│   │       │   ├── token_handler.dart
+│   │       │   └── schema.dart
 │   │       ├── blog/
-│   │       │   ├── blog_detail.dart
-│   │       │   ├── blog_list.dart
-│   │       │   ├── editor.dart
-│   │       │   ├── schema.dart
-│   │       │   └── write.dart
+│   │       │   ├── writer_handler.dart
+│   │       │   ├── editor_handler.dart
+│   │       │   ├── blog_detail_handler.dart
+│   │       │   └── schema.dart
+│   │       ├── blogs/
+│   │       │   └── list_handler.dart
 │   │       ├── profile/
-│   │       │   ├── schema.dart
-│   │       │   └── user.dart
+│   │       │   ├── profile_handler.dart
+│   │       │   └── schema.dart
 │   │       └── router.dart
 │   ├── services/
 │   │   ├── auth_service.dart
