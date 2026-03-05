@@ -1,4 +1,5 @@
 import 'package:dart_backend_architecture/cache/cache_service.dart';
+import 'package:dart_backend_architecture/cache/repository/blog_cache.dart';
 import 'package:dart_backend_architecture/config.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/database/db_pool.dart';
@@ -55,6 +56,7 @@ final class CompositionRoot {
   PostgresBlogRepo get _blogRepo => PostgresBlogRepo(_db.pool);
   PostgresKeystoreRepo get _keystoreRepo => PostgresKeystoreRepo(_db.pool);
   PostgresRoleRepo get _roleRepo => PostgresRoleRepo(_db.pool);
+  BlogCache get _blogCache => BlogCache(_cache);
 
   // Core services
   JwtService get _jwtService => JwtService(
@@ -74,8 +76,8 @@ final class CompositionRoot {
 
   BlogService get _blogService => BlogService(
         blogRepo: _blogRepo,
-        // cache: _cache,
-        // nats: _nats,
+        blogCache: _blogCache,
+        nats: _nats,
       );
 
   // HTTP entrypoint

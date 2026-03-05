@@ -26,9 +26,7 @@ final class TestCompositionRoot {
         crypto: cryptoWorker,
       );
 
-  BlogService get blogService => BlogService(
-        blogRepo: blogRepo,
-      );
+  BlogService get blogService => throw UnimplementedError('BlogService is not used in current unit tests');
 
   Handler get router => buildRouter(
         authService: authService,
