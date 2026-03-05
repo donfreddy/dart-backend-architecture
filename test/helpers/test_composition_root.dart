@@ -10,6 +10,7 @@ final class TestCompositionRoot {
   final MockUserRepo userRepo;
   final MockBlogRepo blogRepo;
   final MockJwtService jwtService;
+  final MockCryptoWorker cryptoWorker;
   // final MockCacheService cacheService;
   // final MockNatsService natsService;
   // final MockCryptoWorker cryptoWorker;
@@ -18,16 +19,16 @@ final class TestCompositionRoot {
       : userRepo = MockUserRepo(),
         blogRepo = MockBlogRepo(),
         jwtService = MockJwtService(),
+        cryptoWorker = MockCryptoWorker()
         // cacheService = MockCacheService(),
-        // natsService = MockNatsService(),
-        // cryptoWorker = MockCryptoWorker();
+        // natsService = MockNatsService()
+        ;
         
   AuthService get authService => AuthService(
         userRepo: userRepo,
         keystoreRepo: MockKeystoreRepo(),
         jwt: jwtService,
-        // cache: cacheService,
-        // crypto: cryptoWorker,
+        crypto: cryptoWorker,
       );
 
   BlogService get blogService => BlogService(
