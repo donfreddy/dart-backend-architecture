@@ -1,5 +1,6 @@
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/keystore_repo.dart';
+import 'package:dart_backend_architecture/database/repository/interfaces/role_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/user_repo.dart';
 import 'package:dart_backend_architecture/routes/v1/router.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
@@ -13,6 +14,7 @@ Handler buildRouter({
   required JwtService jwtService,
   required UserRepo userRepo,
   required KeystoreRepo keystoreRepo,
+  required RoleRepo roleRepo,
 }) {
   final root = Router();
 
@@ -24,6 +26,7 @@ Handler buildRouter({
       jwtService: jwtService,
       userRepo: userRepo,
       keystoreRepo: keystoreRepo,
+      roleRepo: roleRepo,
     ),
   );
 
