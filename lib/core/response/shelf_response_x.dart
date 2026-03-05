@@ -30,3 +30,60 @@ int _defaultHttpStatus(ApiResponse<dynamic> result) {
     Failure(error: final error) => error.type.httpStatus,
   };
 }
+
+Response ok<T>({
+  required String message,
+  T? data,
+  int? status,
+  Map<String, String>? headers,
+  StatusCode statusCode = StatusCode.success,
+}) {
+  return Success<T>(
+    message: message,
+    data: data,
+    statusCode: statusCode,
+  ).toShelfResponse(
+    status: status,
+    headers: headers,
+  );
+}
+
+Response okPaginated<T>({
+  required String message,
+  required List<T> items,
+  required int page,
+  required int limit,
+  required int total,
+  int? status,
+  Map<String, String>? headers,
+  StatusCode statusCode = StatusCode.success,
+}) {
+  return PaginatedResponse<T>(
+    message: message,
+    items: items,
+    pagination: PaginationMeta(
+      page: page,
+      limit: limit,
+      total: total,
+    ),
+    statusCode: statusCode,
+  ).toShelfResponse(
+    status: status,
+    headers: headers,
+  );
+}
+
+Response fail({
+  required ApiError error,
+  Object? data,
+  int? status,
+  Map<String, String>? headers,
+}) {
+  return Failure(
+    error: error,
+    data: data,
+  ).toShelfResponse(
+    status: status,
+    headers: headers,
+  );
+}

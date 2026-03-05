@@ -1,8 +1,8 @@
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/middleware/auth_middleware.dart';
+import 'package:dart_backend_architecture/core/response/shelf_response_x.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/user_repo.dart';
 import 'package:dart_backend_architecture/helpers/validator.dart';
-import 'package:dart_backend_architecture/routes/base_response.dart';
 import 'package:dart_backend_architecture/routes/v1/profile/schema.dart';
 import 'package:shelf/shelf.dart';
 
