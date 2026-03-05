@@ -1,0 +1,97 @@
+name: dart-backend-architecture
+
+services:
+  # ── API ──────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      target: builder # JIT en dev — hot reload possible
+    command: dart run bin/server.dart
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      PORT: 8080
+      DATABASE_URL: postgres://dba:dba@postgres:5432/dba?sslmode=disable
+      REDIS_URL: redis://redis:6379
+      NATS_URL: nats://nats:4222
+      JWT_PRIVATE_KEY_PATH: keys/private.pem
+      JWT_PUBLIC_KEY_PATH: keys/public.pem
+      OTEL_ENDPOINT: http://otel-collector:4317
+      ENVIRONMENT: development
+    volumes:
+      - .:/app # source montée pour dart run
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      nats:
+        condition: service_started
+      migrations:
+        condition: service_completed_successfully
+    restart: on-failure
+
+  # ── Migrations ───────────────────────────────────────────────
+  migrations:
+    image: amacneil/dbmate:latest
+    environment:
+      DATABASE_URL: postgres://dba:dba@postgres:5432/dba?sslmode=disable
+    volumes:
+      - ./db:/db
+    command: ["--wait", "--wait-timeout", "30s", "up"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── PostgreSQL ───────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dba
+      POSTGRES_PASSWORD: dba
+      POSTGRES_DB: dba
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dba -d dba"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Redis ────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── NATS ─────────────────────────────────────────────────────
+  nats:
+    image: nats:2-alpine
+    ports:
+      - "${NATS_PORT:-4222}:4222"
+      - "8222:8222" # HTTP monitoring UI
+
+  # ── OpenTelemetry Collector ───────────────────────────────────
+  otel-collector:
+    image: grafana/otel-lgtm:latest
+    ports:
+      - "3000:3000" # Grafana UI
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    volumes:
+      - otel_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+  otel_data:
