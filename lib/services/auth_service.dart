@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'dart:math';
 
-import 'package:crypto/crypto.dart';
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
@@ -9,6 +7,7 @@ import 'package:dart_backend_architecture/database/model/role.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/keystore_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/user_repo.dart';
+import 'package:dart_backend_architecture/workers/crypto_worker.dart';
 import 'package:uuid/uuid.dart';
 
 final class LoginDto {
@@ -66,6 +65,7 @@ final class AuthService {
   final UserRepo _userRepo;
   final KeystoreRepo _keystoreRepo;
   final JwtService _jwt;
+  final CryptoWorker _crypto;
   final Uuid _uuid;
   final String _issuer;
   final String _audience;
@@ -76,12 +76,14 @@ final class AuthService {
     required UserRepo userRepo,
     required KeystoreRepo keystoreRepo,
     required JwtService jwt,
+    required CryptoWorker crypto,
     Uuid? uuid,
     String issuer = 'dart-backend-architecture',
     String audience = 'dba-users',
   })  : _userRepo = userRepo,
         _keystoreRepo = keystoreRepo,
         _jwt = jwt,
+        _crypto = crypto,
         _uuid = uuid ?? const Uuid(),
         _issuer = issuer,
         _audience = audience;
@@ -101,7 +103,7 @@ final class AuthService {
       id: _uuid.v4(),
       email: dto.email,
       name: dto.name,
-      passwordHash: _hashPassword(dto.password),
+      passwordHash: await _crypto.hashPassword(dto.password),
       profilePicUrl: dto.profilePicUrl,
       createdAt: DateTime.now().toUtc(),
     );
@@ -135,7 +137,7 @@ final class AuthService {
     if (passwordHash == null || passwordHash.isEmpty) {
       throw const BadRequestError('Credential not set');
     }
-    if (!_verifyPassword(dto.password, passwordHash)) {
+    if (!await _crypto.verifyPassword(dto.password, passwordHash)) {
       throw const AuthFailureError('Authentication failure');
     }
 
@@ -231,15 +233,6 @@ final class AuthService {
       accessToken: _jwt.encode(accessPayload),
       refreshToken: _jwt.encode(refreshPayload),
     );
-  }
-
-  static String _hashPassword(String password) {
-    final digest = sha256.convert(utf8.encode(password));
-    return digest.bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-  }
-
-  static bool _verifyPassword(String password, String expectedHash) {
-    return _hashPassword(password) == expectedHash;
   }
 
   static String _randomHex(int bytesLength) {

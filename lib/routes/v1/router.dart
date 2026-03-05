@@ -21,20 +21,20 @@ Handler buildV1Router({
   router.delete('/logout', (Request r) => logoutHandler(r, authService));
   router.post('/token/refresh', (Request r) => tokenHandler(r, authService));
 
-  // Blogs
-  router.get('/blogs', (r) => listBlogsHandler(r, blogService));
-  router.get('/blogs/<id>', (r, id) => blogDetailHandler(r, id, blogService));
+  // // Blogs
+  // router.get('/blogs', (r) => listBlogsHandler(r, blogService));
+  // router.get('/blogs/<id>', (r, id) => blogDetailHandler(r, id, blogService));
 
-  // Blog writer
-  router.post('/blog', (r) => writerCreateHandler(r, blogService));
-  router.put('/blog/<id>', (r, id) => writerUpdateHandler(r, id, blogService));
+  // // Blog writer
+  // router.post('/blog', (r) => writerCreateHandler(r, blogService));
+  // router.put('/blog/<id>', (r, id) => writerUpdateHandler(r, id, blogService));
 
-  // Blog editor
-  router.put('/blog/<id>/submit', (r, id) => editorSubmitHandler(r, id, blogService));
-  router.put('/blog/<id>/publish', (r, id) => editorPublishHandler(r, id, blogService));
+  // // Blog editor
+  // router.put('/blog/<id>/submit', (r, id) => editorSubmitHandler(r, id, blogService));
+  // router.put('/blog/<id>/publish', (r, id) => editorPublishHandler(r, id, blogService));
 
-  // Profile
-  router.get('/profile/my', (r) => myProfileHandler(r, authService));
+  // // Profile
+  // router.get('/profile/my', (r) => myProfileHandler(r, authService));
 
   return router.call;
 }
