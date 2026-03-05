@@ -1,6 +1,7 @@
 import 'package:dart_backend_architecture/database/model/user.dart';
 
 final class Keystore {
+  final String? id;
   final User client;
   final String primaryKey;
   final String secondaryKey;
@@ -9,6 +10,7 @@ final class Keystore {
   final DateTime? updatedAt;
 
   const Keystore({
+    this.id,
     required this.client,
     required this.primaryKey,
     required this.secondaryKey,
@@ -18,6 +20,7 @@ final class Keystore {
   });
 
   Keystore copyWith({
+    String? id,
     User? client,
     String? primaryKey,
     String? secondaryKey,
@@ -26,6 +29,7 @@ final class Keystore {
     DateTime? updatedAt,
   }) {
     return Keystore(
+      id: id ?? this.id,
       client: client ?? this.client,
       primaryKey: primaryKey ?? this.primaryKey,
       secondaryKey: secondaryKey ?? this.secondaryKey,
@@ -37,6 +41,7 @@ final class Keystore {
 
   factory Keystore.fromJson(Map<String, dynamic> json) {
     return Keystore(
+      id: json['id'] as String?,
       client: User.fromJson(json['client'] as Map<String, dynamic>),
       primaryKey: json['primary_key'] as String,
       secondaryKey: json['secondary_key'] as String,
@@ -48,6 +53,7 @@ final class Keystore {
 
   Map<String, dynamic> toJson() {
     return {
+      if (id != null) 'id': id,
       'client': client.toJson(),
       'primary_key': primaryKey,
       'secondary_key': secondaryKey,

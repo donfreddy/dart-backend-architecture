@@ -1,6 +1,7 @@
 import 'package:dart_backend_architecture/database/model/user.dart';
 
 final class Blog {
+  final String? id;
   final String title;
   final String description;
   final String? text;
@@ -22,6 +23,7 @@ final class Blog {
   final DateTime? updatedAt;
 
   const Blog({
+    this.id,
     required this.title,
     required this.description,
     this.text,
@@ -44,6 +46,7 @@ final class Blog {
   });
 
   Blog copyWith({
+    String? id,
     String? title,
     String? description,
     String? text,
@@ -65,6 +68,7 @@ final class Blog {
     DateTime? updatedAt,
   }) {
     return Blog(
+      id: id ?? this.id,
       title: title ?? this.title,
       description: description ?? this.description,
       text: text ?? this.text,
@@ -89,6 +93,7 @@ final class Blog {
 
   factory Blog.fromJson(Map<String, dynamic> json) {
     return Blog(
+      id: json['id'] as String?,
       title: json['title'] as String,
       description: json['description'] as String,
       text: json['text'] as String?,
@@ -113,6 +118,7 @@ final class Blog {
 
   Map<String, dynamic> toJson() {
     return {
+      if (id != null) 'id': id,
       'title': title,
       'description': description,
       if (text != null) 'text': text,
@@ -138,16 +144,17 @@ final class Blog {
   @override
   bool operator ==(Object other) {
     return other is Blog &&
+        other.id == id &&
         other.title == title &&
         other.blogUrl == blogUrl &&
         other.author == author;
   }
 
   @override
-  int get hashCode => Object.hash(title, blogUrl, author);
+  int get hashCode => Object.hash(id, title, blogUrl, author);
 
   @override
-  String toString() => 'Blog(title: $title, blogUrl: $blogUrl)';
+  String toString() => 'Blog(id: $id, title: $title, blogUrl: $blogUrl)';
 }
 
 DateTime? _readDateTime(Object? value) {

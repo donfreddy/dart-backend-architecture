@@ -20,6 +20,7 @@ final class PostgresUserRepo implements UserRepo {
     u.name,
     u.profile_pic_url,
     u.created_at,
+    u.password_hash,
     COALESCE(array_remove(array_agg(r.code), NULL), ARRAY[]::text[]) AS roles
   ''';
 
@@ -30,6 +31,11 @@ final class PostgresUserRepo implements UserRepo {
     String refreshTokenKey,
     String roleCode,
   ) async {
+    final passwordHash = user.passwordHash;
+    if (passwordHash == null || passwordHash.isEmpty) {
+      throw const BadRequestError('Credential not set');
+    }
+
     try {
       final now = DateTime.now().toUtc();
       final role = await _roleRepo.findByCode(roleCode);
@@ -41,21 +47,20 @@ final class PostgresUserRepo implements UserRepo {
         Sql.named('''
           INSERT INTO users (id, email, name, password_hash, profile_pic_url, created_at, updated_at)
           VALUES (@id, @email, @name, @passwordHash, @profilePicUrl, @createdAt, @updatedAt)
-          RETURNING $_selectFields
+          RETURNING id
         '''),
         parameters: {
           'id': user.id,
           'email': user.email,
           'name': user.name,
-          // Current domain model has no password field yet.
-          'passwordHash': '',
+          'passwordHash': passwordHash,
           'profilePicUrl': user.profilePicUrl,
-          'createdAt': user.createdAt,
+          'createdAt': now,
           'updatedAt': now,
         },
       );
 
-      final createdUser = User.fromRow(result.first);
+      final userId = result.first[0] as String;
       await _pool.execute(
         Sql.named('''
           INSERT INTO user_roles (user_id, role_id, created_at)
@@ -63,11 +68,16 @@ final class PostgresUserRepo implements UserRepo {
           ON CONFLICT (user_id, role_id) DO NOTHING
         '''),
         parameters: {
-          'userId': createdUser.id,
+          'userId': userId,
           'roleId': role.id,
           'createdAt': now,
         },
       );
+
+      final createdUser = await findById(userId);
+      if (createdUser == null) {
+        throw const InternalError('User creation failed');
+      }
 
       final keystore = await _keystoreRepo.create(
         createdUser,
@@ -76,6 +86,8 @@ final class PostgresUserRepo implements UserRepo {
       );
 
       return (user: createdUser, keystore: keystore);
+    } on ApiError {
+      rethrow;
     } catch (e, st) {
       _log.severe('create failed', e, st);
       throw const InternalError();
@@ -93,7 +105,7 @@ final class PostgresUserRepo implements UserRepo {
           LEFT JOIN user_roles ur ON ur.user_id = u.id
           LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
           WHERE u.email = @email AND u.deleted_at IS NULL
-          GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at
+          GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
           ''',
         ),
         parameters: {'email': email},
@@ -117,7 +129,7 @@ final class PostgresUserRepo implements UserRepo {
           LEFT JOIN user_roles ur ON ur.user_id = u.id
           LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
           WHERE u.id = @id AND u.deleted_at IS NULL
-          GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at
+          GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
           ''',
         ),
         parameters: {'id': id},
@@ -141,7 +153,7 @@ final class PostgresUserRepo implements UserRepo {
           LEFT JOIN user_roles ur ON ur.user_id = u.id
           LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
           WHERE u.id = @id AND u.deleted_at IS NULL
-          GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at
+          GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
           ''',
         ),
         parameters: {'id': id},
@@ -165,7 +177,7 @@ final class PostgresUserRepo implements UserRepo {
           LEFT JOIN user_roles ur ON ur.user_id = u.id
           LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
           WHERE u.id = @id AND u.deleted_at IS NULL
-          GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at
+          GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
           ''',
         ),
         parameters: {'id': id},
@@ -195,7 +207,7 @@ final class PostgresUserRepo implements UserRepo {
             profile_pic_url = @profilePicUrl,
             updated_at = @updatedAt
           WHERE id = @id AND deleted_at IS NULL
-          RETURNING id, email, name, profile_pic_url, created_at
+          RETURNING id
         '''),
         parameters: {
           'id': user.id,
@@ -210,13 +222,10 @@ final class PostgresUserRepo implements UserRepo {
         throw const NotFoundError('User not found');
       }
 
-      final updatedUser = User(
-        id: result.first[0] as String,
-        email: result.first[1] as String,
-        name: result.first[2] as String,
-        profilePicUrl: result.first[3] as String?,
-        createdAt: result.first[4] as DateTime,
-      );
+      final updatedUser = await findById(result.first[0] as String);
+      if (updatedUser == null) {
+        throw const NotFoundError('User not found');
+      }
       final keystore = await _keystoreRepo.create(
         updatedUser,
         accessTokenKey,
@@ -257,5 +266,4 @@ final class PostgresUserRepo implements UserRepo {
       throw const InternalError();
     }
   }
-
 }

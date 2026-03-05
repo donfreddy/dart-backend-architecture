@@ -48,6 +48,7 @@ final class PostgresKeystoreRepo implements KeystoreRepo {
 
       final row = result.first;
       return Keystore(
+        id: row[0] as String,
         client: client,
         primaryKey: row[2] as String,
         secondaryKey: row[3] as String,
@@ -161,6 +162,7 @@ final class PostgresKeystoreRepo implements KeystoreRepo {
     );
 
     return Keystore(
+      id: row[0] as String,
       client: client,
       primaryKey: row[2] as String,
       secondaryKey: row[3] as String,
