@@ -18,11 +18,7 @@ Future<Response> tokenHandler(
   final accessToken = validateAuthBearer(headerValidated['authorization'] as String);
 
   final decoded = await readJsonBody(request);
-  final bodyValidated = validateSchema(
-    refreshTokenSchema,
-    decoded,
-    source: ValidationSource.body,
-  );
+  final bodyValidated = validateSchema(refreshTokenSchema, decoded);
   final refreshToken = bodyValidated['refreshToken'] as String;
   final tokens = await authService.refreshToken(
     accessToken: accessToken,

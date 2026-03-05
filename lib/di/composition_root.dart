@@ -83,6 +83,8 @@ final class CompositionRoot {
         authService: _authService,
         blogService: _blogService,
         jwtService: _jwtService,
+        userRepo: _userRepo,
+        keystoreRepo: _keystoreRepo,
       );
 
   // Release resources in reverse dependency order.
