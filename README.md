@@ -145,6 +145,9 @@ dart-backend-architecture/
 │           └── auth_service_test.dart
 ├── .env.example
 ├── .gitignore
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── analysis_options.yaml
 ├── Dockerfile
 ├── docker-compose.yml
