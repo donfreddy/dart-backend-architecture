@@ -6,6 +6,7 @@ import 'package:dart_backend_architecture/routes/v1/access/logout_handler.dart';
 import 'package:dart_backend_architecture/routes/v1/access/login_handler.dart';
 import 'package:dart_backend_architecture/routes/v1/access/signup_handler.dart';
 import 'package:dart_backend_architecture/routes/v1/access/token_handler.dart';
+import 'package:dart_backend_architecture/routes/v1/blog/blog_detail.dart';
 import 'package:dart_backend_architecture/routes/v1/profile/user.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
 import 'package:dart_backend_architecture/services/blog_service.dart';
@@ -35,9 +36,9 @@ Handler buildV1Router({
   router.delete('/logout', (Request r) => logoutHandler(r, authService));
   router.post('/token/refresh', (Request r) => tokenHandler(r, authService));
 
-  // // Blogs
-  // router.get('/blogs', (r) => listBlogsHandler(r, blogService));
-  // router.get('/blogs/<id>', (r, id) => blogDetailHandler(r, id, blogService));
+  // Blogs
+  router.get('/blogs/url', (Request r) => blogByUrlHandler(r, blogService));
+  router.get('/blogs/id/<id>', (Request r, String id) => blogByIdHandler(r, id, blogService));
 
   // // Blog writer
   // router.post('/blog', (r) => writerCreateHandler(r, blogService));

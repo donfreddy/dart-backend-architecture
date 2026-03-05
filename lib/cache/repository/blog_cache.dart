@@ -11,10 +11,6 @@ final class BlogCache {
 
   const BlogCache(this._cache);
 
-  Future<void> evictAllLists() async {
-    await _cache.invalidatePattern(CacheKeys.blogListPattern);
-  }
-
   // // ── Single blog ────────────────────────────────────────────
 
   // Future<Blog?> findById(String id) async {
@@ -64,8 +60,8 @@ final class BlogCache {
   //   );
   // }
 
-  // // Evict all paginated list entries — called on create / publish / unpublish
-  // Future<void> evictAllLists() async {
-  //   await _cache.invalidatePattern(CacheKeys.blogListPattern);
-  // }
+  // Evict all paginated list entries — called on create / publish / unpublish
+  Future<void> evictAllLists() async {
+    await _cache.invalidatePattern(CacheKeys.blogListPattern);
+  }
 }
