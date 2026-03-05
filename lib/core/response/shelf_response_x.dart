@@ -26,7 +26,7 @@ extension ShelfResponseX on ApiResponse<dynamic> {
 
 int _defaultHttpStatus(ApiResponse<dynamic> result) {
   return switch (result) {
-    Success<dynamic>() => 200,
+    Success<dynamic>() || PaginatedResponse<dynamic>() => 200,
     Failure(error: final error) => error.type.httpStatus,
   };
 }
