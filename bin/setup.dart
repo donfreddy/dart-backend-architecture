@@ -1,13 +1,16 @@
-// ignore_for_file: avoid_print
-
 import 'dart:io';
+
+import 'package:dart_backend_architecture/core/logger.dart';
+import 'package:logging/logging.dart';
 
 const _oldName = 'dart_backend_architecture';
 const _oldDescription = 'A production-ready, clean architecture blueprint '
     'for building scalable backend servers with Dart.';
 
 Future<void> main() async {
-  _printBanner();
+  AppLogger.configure();
+  final log = AppLogger.get('setup');
+  _printBanner(log);
 
   // ── 1. Project name ────────────────────────────────────────
   final projectName = _promptProjectName();
@@ -17,21 +20,21 @@ Future<void> main() async {
   final inputDesc = stdin.readLineSync()?.trim() ?? '';
   final projectDescription = inputDesc.isEmpty ? _oldDescription : inputDesc;
 
-  print('\n⚙️  Configuring project: $_oldName → $projectName\n');
+  log.info('\n⚙️  Configuring project: $_oldName → $projectName\n');
 
   // ── 3. Replace package name in source files ─────────────────
-  await _replaceInFiles(projectName, projectDescription);
+  await _replaceInFiles(projectName, projectDescription, log);
 
   // ── 4. Generate RSA key pair ───────────────────────────────
-  await _generateKeys();
+  await _generateKeys(log);
 
   // ── 5. Create .env from .env.example ──────────────────────
-  await _createEnvFile();
+  await _createEnvFile(log);
 
   // ── 6. dart pub get ────────────────────────────────────────
-  await _pubGet();
+  await _pubGet(log);
 
-  _printSuccess(projectName);
+  _printSuccess(projectName, log);
 }
 
 // ── Prompt ─────────────────────────────────────────────────────
@@ -64,7 +67,7 @@ String _promptProjectName() {
 
 // ── File replacement ───────────────────────────────────────────
 
-Future<void> _replaceInFiles(String newName, String newDescription) async {
+Future<void> _replaceInFiles(String newName, String newDescription, Logger log) async {
   final root = Directory.current;
   var count = 0;
 
@@ -78,7 +81,7 @@ Future<void> _replaceInFiles(String newName, String newDescription) async {
 
       if (updated != original) {
         await entity.writeAsString(updated);
-        print('  ✓ ${_relativePath(entity.path)}');
+        log.info('  ✓ ${_relativePath(entity.path)}');
         count++;
       }
     } catch (_) {
@@ -86,7 +89,7 @@ Future<void> _replaceInFiles(String newName, String newDescription) async {
     }
   }
 
-  print('\n  $count file(s) updated.\n');
+  log.info('\n  $count file(s) updated.\n');
 }
 
 bool _isEligible(String path) {
@@ -99,8 +102,8 @@ bool _isEligible(String path) {
 
 // ── RSA key generation ─────────────────────────────────────────
 
-Future<void> _generateKeys() async {
-  print('🔑 Generating RSA key pair...');
+Future<void> _generateKeys(Logger log) async {
+  log.info('🔑 Generating RSA key pair...');
 
   final keysDir = Directory('keys');
   if (!keysDir.existsSync()) keysDir.createSync();
@@ -109,14 +112,14 @@ Future<void> _generateKeys() async {
   final publicKey = File('keys/public.pem');
 
   if (privateKey.existsSync() && publicKey.existsSync()) {
-    print('  ⚠️  keys/private.pem and keys/public.pem already exist — skipping.\n');
+    log.info('  ⚠️  keys/private.pem and keys/public.pem already exist — skipping.\n');
     return;
   }
 
   // Check openssl is available
   final which = await Process.run('which', ['openssl']);
   if (which.exitCode != 0) {
-    print('  ⚠️  openssl not found. Generate keys manually:\n'
+    log.info('  ⚠️  openssl not found. Generate keys manually:\n'
         '      openssl genrsa -out keys/private.pem 2048\n'
         '      openssl rsa -in keys/private.pem -pubout -out keys/public.pem\n');
     return;
@@ -148,18 +151,18 @@ Future<void> _generateKeys() async {
     return;
   }
 
-  print('  ✓ keys/private.pem');
-  print('  ✓ keys/public.pem\n');
+  log.info('  ✓ keys/private.pem');
+  log.info('  ✓ keys/public.pem\n');
 }
 
 // ── .env creation ──────────────────────────────────────────────
 
-Future<void> _createEnvFile() async {
-  print('📄 Creating .env file...');
+Future<void> _createEnvFile(Logger log) async {
+  log.info('📄 Creating .env file...');
 
   final envFile = File('.env');
   if (envFile.existsSync()) {
-    print('  ⚠️  .env already exists — skipping.\n');
+    log.info('  ⚠️  .env already exists — skipping.\n');
     return;
   }
 
@@ -170,13 +173,13 @@ Future<void> _createEnvFile() async {
   }
 
   await example.copy('.env');
-  print('  ✓ .env created from .env.example\n');
+  log.info('  ✓ .env created from .env.example\n');
 }
 
 // ── dart pub get ───────────────────────────────────────────────
 
-Future<void> _pubGet() async {
-  print('📦 Installing dependencies...');
+Future<void> _pubGet(Logger log) async {
+  log.info('📦 Installing dependencies...');
 
   final result = await Process.run(
     'dart',
@@ -195,21 +198,21 @@ Future<void> _pubGet() async {
     exit(1);
   }
 
-  print('  ✓ Dependencies installed\n');
+  log.info('  ✓ Dependencies installed\n');
 }
 
 // ── Helpers ────────────────────────────────────────────────────
 
-void _printBanner() {
-  print('''
+void _printBanner(Logger log) {
+  log.info('''
 ╔═══════════════════════════════════════════════╗
 ║       Dart Backend Architecture — Setup       ║
 ╚═══════════════════════════════════════════════╝
 ''');
 }
 
-void _printSuccess(String projectName) {
-  print('''
+void _printSuccess(String projectName, Logger log) {
+  log.info('''
 ╔═══════════════════════════════════════════════╗
 ║              Setup complete ✓                 ║
 ╚═══════════════════════════════════════════════╝

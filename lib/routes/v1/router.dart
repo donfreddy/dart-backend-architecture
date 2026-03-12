@@ -55,7 +55,7 @@ Handler buildV1Router({
 
   // Blogs
   router.get('/blogs/url', (Request r) => blogByUrlHandler(r, blogService));
-  router.get('/blogs/id/<id>', (Request r, String id) => blogByIdHandler(r, id, blogService));
+  router.get('/blogs/id/<id>', (Request _, String id) => blogByIdHandler(id, blogService));
   router.get('/blogs/tag/<tag>', (Request r, String tag) => blogsByTagHandler(r, tag, blogService));
   router.get(
     '/blogs/author/id/<id>',
@@ -95,25 +95,25 @@ Handler buildV1Router({
 
   // Blog editor (auth + editor role)
   router.put('/blogs/editor/publish/<id>', (Request r, String id) {
-    return applyEditorAuth((req) => editorPublishBlogHandler(req, id, blogService))(r);
+    return applyEditorAuth((_) => editorPublishBlogHandler(id, blogService))(r);
   });
   router.put('/blogs/editor/unpublish/<id>', (Request r, String id) {
-    return applyEditorAuth((req) => editorUnpublishBlogHandler(req, id, blogService))(r);
+    return applyEditorAuth((_) => editorUnpublishBlogHandler(id, blogService))(r);
   });
   router.delete('/blogs/editor/id/<id>', (Request r, String id) {
-    return applyEditorAuth((req) => editorDeleteBlogHandler(req, id, blogService))(r);
+    return applyEditorAuth((_) => editorDeleteBlogHandler(id, blogService))(r);
   });
   router.get('/blogs/editor/published/all', (Request r) {
-    return applyEditorAuth((req) => editorPublishedBlogsHandler(req, blogService))(r);
+    return applyEditorAuth((_) => editorPublishedBlogsHandler(blogService))(r);
   });
   router.get('/blogs/editor/submitted/all', (Request r) {
-    return applyEditorAuth((req) => editorSubmittedBlogsHandler(req, blogService))(r);
+    return applyEditorAuth((_) => editorSubmittedBlogsHandler(blogService))(r);
   });
   router.get('/blogs/editor/drafts/all', (Request r) {
-    return applyEditorAuth((req) => editorDraftBlogsHandler(req, blogService))(r);
+    return applyEditorAuth((_) => editorDraftBlogsHandler(blogService))(r);
   });
   router.get('/blogs/editor/id/<id>', (Request r, String id) {
-    return applyEditorAuth((req) => editorBlogByIdHandler(req, id, blogService))(r);
+    return applyEditorAuth((_) => editorBlogByIdHandler(id, blogService))(r);
   });
 
   // Profile

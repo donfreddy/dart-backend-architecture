@@ -28,7 +28,6 @@ Future<Response> blogByUrlHandler(
 }
 
 Future<Response> blogByIdHandler(
-  Request request,
   String id,
   BlogService blogService,
 ) async {

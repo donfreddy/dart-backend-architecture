@@ -6,6 +6,7 @@ import 'package:dart_backend_architecture/config.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_backend_architecture/core/telemetry/otel_setup.dart';
 import 'package:dart_backend_architecture/di/composition_root.dart';
+import 'package:logging/logging.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 
 Future<void> main() async {
@@ -51,7 +52,7 @@ Future<void> _spawnServer(int workerId) async {
     final server = await HttpServer.bind(
       InternetAddress.anyIPv4,
       config.port,
-      shared: true,   // All isolates share the same TCP socket
+      shared: true, // All isolates share the same TCP socket
     );
 
     server.autoCompress = true;
@@ -77,11 +78,11 @@ Future<void> _spawnServer(int workerId) async {
 Future<void> _handleShutdown({
   required HttpServer server,
   required CompositionRoot root,
-  required dynamic log,
+  required Logger log,
 }) async {
   final signals = [
     ProcessSignal.sigterm,
-    ProcessSignal.sigint,   // Ctrl+C in local dev
+    ProcessSignal.sigint, // Ctrl+C in local dev
   ];
 
   await Future.any(

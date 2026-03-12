@@ -6,7 +6,6 @@ import 'package:dart_backend_architecture/services/blog_service.dart';
 import 'package:shelf/shelf.dart';
 
 Future<Response> editorPublishBlogHandler(
-  Request request,
   String id,
   BlogService blogService,
 ) async {
@@ -32,7 +31,6 @@ Future<Response> editorPublishBlogHandler(
 }
 
 Future<Response> editorUnpublishBlogHandler(
-  Request request,
   String id,
   BlogService blogService,
 ) async {
@@ -56,7 +54,6 @@ Future<Response> editorUnpublishBlogHandler(
 }
 
 Future<Response> editorDeleteBlogHandler(
-  Request request,
   String id,
   BlogService blogService,
 ) async {
@@ -73,10 +70,7 @@ Future<Response> editorDeleteBlogHandler(
   return ok<Object?>(message: 'Blog deleted successfully');
 }
 
-Future<Response> editorPublishedBlogsHandler(
-  Request request,
-  BlogService blogService,
-) async {
+Future<Response> editorPublishedBlogsHandler(BlogService blogService) async {
   final blogs = await blogService.findAllPublished();
   return ok(
     message: 'success',
@@ -84,10 +78,7 @@ Future<Response> editorPublishedBlogsHandler(
   );
 }
 
-Future<Response> editorSubmittedBlogsHandler(
-  Request request,
-  BlogService blogService,
-) async {
+Future<Response> editorSubmittedBlogsHandler(BlogService blogService) async {
   final blogs = await blogService.findAllSubmissions();
   return ok(
     message: 'success',
@@ -95,10 +86,7 @@ Future<Response> editorSubmittedBlogsHandler(
   );
 }
 
-Future<Response> editorDraftBlogsHandler(
-  Request request,
-  BlogService blogService,
-) async {
+Future<Response> editorDraftBlogsHandler(BlogService blogService) async {
   final blogs = await blogService.findAllDrafts();
   return ok(
     message: 'success',
@@ -107,7 +95,6 @@ Future<Response> editorDraftBlogsHandler(
 }
 
 Future<Response> editorBlogByIdHandler(
-  Request request,
   String id,
   BlogService blogService,
 ) async {
