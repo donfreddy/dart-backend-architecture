@@ -22,6 +22,7 @@ final class BlogService implements BlogRepo {
   Future<Blog> create(Blog blog) async {
     final created = await _blogRepo.create(blog);
     await _evictListsBestEffort();
+    await _evictSingleBestEffort(created);
     await _publishBestEffort(
       subject: 'blog.created',
       payload: {
@@ -85,7 +86,10 @@ final class BlogService implements BlogRepo {
   @override
   Future<Blog?> findByUrl(String blogUrl) {
     _requireNonEmpty(blogUrl, field: 'blogUrl');
-    return _blogRepo.findByUrl(blogUrl);
+    return _blogCache.getByUrlWithLoader(
+      blogUrl,
+      () => _blogRepo.findByUrl(blogUrl),
+    );
   }
 
   @override
@@ -103,7 +107,10 @@ final class BlogService implements BlogRepo {
   @override
   Future<Blog?> findInfoWithTextById(String id) {
     _requireId(id);
-    return _blogRepo.findInfoWithTextById(id);
+    return _blogCache.getByIdWithLoader(
+      id,
+      () => _blogRepo.findInfoWithTextById(id),
+    );
   }
 
   @override
@@ -143,6 +150,7 @@ final class BlogService implements BlogRepo {
   Future<void> update(Blog blog) async {
     await _blogRepo.update(blog);
     await _evictListsBestEffort();
+    await _evictSingleBestEffort(blog);
     await _publishBestEffort(
       subject: 'blog.updated',
       payload: {
@@ -168,6 +176,15 @@ final class BlogService implements BlogRepo {
   Future<void> _evictListsBestEffort() async {
     try {
       await _blogCache.evictAllLists();
+    } catch (_) {}
+  }
+
+  Future<void> _evictSingleBestEffort(Blog blog) async {
+    try {
+      if (blog.id != null) {
+        await _blogCache.evictById(blog.id!);
+      }
+      await _blogCache.evictByUrl(blog.blogUrl);
     } catch (_) {}
   }
 

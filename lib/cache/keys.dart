@@ -3,6 +3,7 @@ abstract final class CacheKeys {
 
   // ── Blogs ──────────────────────────────────────────────────
   static String blog(String id) => 'blog:$id';
+  static String blogUrl(String endpoint) => 'blog:url:$endpoint';
   static String blogList(int page, int pageSize) => 'blogs:p$page:s$pageSize';
   static const blogListPattern = 'blogs:*';
   static const blogTtl = Duration(hours: 1);

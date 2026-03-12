@@ -1,67 +1,76 @@
-// import 'dart:convert';
+import 'dart:convert';
 
 import 'package:dart_backend_architecture/cache/cache_service.dart';
 import 'package:dart_backend_architecture/cache/keys.dart';
-// import 'package:dart_backend_architecture/cache/keys.dart';
-// import 'package:dart_backend_architecture/database/model/blog.dart';
-// import 'package:dart_backend_architecture/services/blog_service.dart';
+import 'package:dart_backend_architecture/database/model/blog.dart';
 
 final class BlogCache {
   final CacheService _cache;
 
   const BlogCache(this._cache);
 
-  // // ── Single blog ────────────────────────────────────────────
+  // ── Single blog (read-through) ───────────────────────────────
 
-  // Future<Blog?> findById(String id) async {
-  //   final raw = await _cache.get(CacheKeys.blog(id));
-  //   if (raw == null) return null;
+  Future<Blog?> getByIdWithLoader(
+    String id,
+    Future<Blog?> Function() loader,
+  ) async {
+    final cached = await _get(CacheKeys.blog(id));
+    if (cached != null) return cached;
 
-  //   try {
-  //     return Blog.fromJson(jsonDecode(raw) as Map<String, dynamic>);
-  //   } catch (_) {
-  //     // Corrupt entry — evict silently
-  //     await _cache.invalidate(CacheKeys.blog(id));
-  //     return null;
-  //   }
-  // }
+    final fresh = await loader();
+    if (fresh == null || fresh.id == null) return fresh;
 
-  // Future<void> saveById(Blog blog) async {
-  //   await _cache.set(
-  //     CacheKeys.blog(blog.id),
-  //     jsonEncode(blog.toJson()),
-  //     ttl: CacheKeys.blogTtl,
-  //   );
-  // }
+    await _set(CacheKeys.blog(fresh.id!), fresh);
+    await _set(CacheKeys.blogUrl(fresh.blogUrl), fresh);
+    return fresh;
+  }
 
-  // Future<void> evictById(String id) async {
-  //   await _cache.invalidate(CacheKeys.blog(id));
-  // }
+  Future<Blog?> getByUrlWithLoader(
+    String url,
+    Future<Blog?> Function() loader,
+  ) async {
+    final cached = await _get(CacheKeys.blogUrl(url));
+    if (cached != null) return cached;
 
-  // // ── Blog list ──────────────────────────────────────────────
+    final fresh = await loader();
+    if (fresh == null || fresh.id == null) return fresh;
 
-  // Future<BlogListResult?> findList(int page, int pageSize) async {
-  //   final raw = await _cache.get(CacheKeys.blogList(page, pageSize));
-  //   if (raw == null) return null;
+    await _set(CacheKeys.blog(fresh.id!), fresh);
+    await _set(CacheKeys.blogUrl(fresh.blogUrl), fresh);
+    return fresh;
+  }
 
-  //   try {
-  //     return BlogListResult.fromJson(jsonDecode(raw) as Map<String, dynamic>);
-  //   } catch (_) {
-  //     await _cache.invalidate(CacheKeys.blogList(page, pageSize));
-  //     return null;
-  //   }
-  // }
+  Future<void> evictById(String id) async {
+    await _cache.invalidate(CacheKeys.blog(id));
+  }
 
-  // Future<void> saveList(int page, int pageSize, BlogListResult result) async {
-  //   await _cache.set(
-  //     CacheKeys.blogList(page, pageSize),
-  //     jsonEncode(result.toJson()),
-  //     ttl: CacheKeys.blogTtl,
-  //   );
-  // }
+  Future<void> evictByUrl(String url) async {
+    await _cache.invalidate(CacheKeys.blogUrl(url));
+  }
 
   // Evict all paginated list entries — called on create / publish / unpublish
   Future<void> evictAllLists() async {
     await _cache.invalidatePattern(CacheKeys.blogListPattern);
+  }
+
+  Future<Blog?> _get(String key) async {
+    final raw = await _cache.get(key);
+    if (raw == null) return null;
+
+    try {
+      return Blog.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (_) {
+      await _cache.invalidate(key);
+      return null;
+    }
+  }
+
+  Future<void> _set(String key, Blog blog) {
+    return _cache.set(
+      key,
+      jsonEncode(blog.toJson()),
+      ttl: CacheKeys.blogTtl,
+    );
   }
 }

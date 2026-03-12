@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:async';
 
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_nats/dart_nats.dart';
@@ -7,8 +8,10 @@ import 'package:dart_nats/dart_nats.dart';
 final _log = AppLogger.get('NatsService');
 
 final class NatsService {
-  late final Client _client;
+  late Client _client;
   bool _connected = false;
+  late Uri _uri;
+  Completer<void>? _reconnectCompleter;
 
   NatsService._();
 
@@ -28,32 +31,33 @@ final class NatsService {
       );
     }
 
-    _client = Client();
-    await _client.connect(uri);
-    _connected = true;
-
-    _log.info('NATS connected -> $natsUrl');
+    _uri = uri;
+    await _connectWithRetry();
   }
 
   // ── Publish — fire and forget ─────────────────────────────────
 
   Future<void> publish(String subject, Map<String, dynamic> payload) async {
-    if (!_connected) {
-      _log.warning('NATS not connected — dropping event: $subject');
-      return;
-    }
+    await _ensureConnected();
 
     try {
       await _client.pubString(subject, jsonEncode(payload));
     } catch (e) {
-      // Publishing must never crash the caller
-      _log.warning('NATS publish failed [$subject]: $e');
+      _connected = false;
+      _log.warning('NATS publish failed [$subject], will retry after reconnect: $e');
+      await _ensureConnected();
+      try {
+        await _client.pubString(subject, jsonEncode(payload));
+      } catch (e) {
+        _log.warning('NATS publish failed after retry [$subject]: $e');
+      }
     }
   }
 
   // ── Subscribe — returns a typed Dart Stream ───────────────────
 
-  Stream<Map<String, dynamic>> subscribe(String subject) {
+  Future<Stream<Map<String, dynamic>>> subscribe(String subject) async {
+    await _ensureConnected();
     if (!_connected) {
       _log.warning('NATS not connected — subscribe ignored: $subject');
       return const Stream<Map<String, dynamic>>.empty();
@@ -81,6 +85,7 @@ final class NatsService {
     Map<String, dynamic> payload, {
     Duration timeout = const Duration(seconds: 5),
   }) async {
+    await _ensureConnected();
     if (!_connected) return null;
 
     try {
@@ -106,5 +111,48 @@ final class NatsService {
     await _client.close();
     _connected = false;
     _log.info('NATS connection closed');
+  }
+
+  // ── Internal helpers ──────────────────────────────────────────
+
+  Future<void> _ensureConnected() async {
+    if (_connected) return;
+    await _reconnect();
+  }
+
+  Future<void> _reconnect() async {
+    if (_reconnectCompleter != null) {
+      return _reconnectCompleter!.future;
+    }
+    final completer = _reconnectCompleter = Completer<void>();
+
+    try {
+      await _connectWithRetry();
+      completer.complete();
+    } catch (e) {
+      completer.completeError(e);
+    } finally {
+      _reconnectCompleter = null;
+    }
+  }
+
+  Future<void> _connectWithRetry() async {
+    var backoff = const Duration(milliseconds: 200);
+
+    for (var attempt = 1; attempt <= 5; attempt++) {
+      try {
+        _client = Client();
+        await _client.connect(_uri);
+        _connected = true;
+        _log.info('NATS connected -> ${_uri.toString()}');
+        return;
+      } catch (e) {
+        _connected = false;
+        _log.warning('NATS connect attempt $attempt failed: $e');
+        if (attempt == 5) rethrow;
+        await Future<void>.delayed(backoff);
+        backoff *= 2;
+      }
+    }
   }
 }
