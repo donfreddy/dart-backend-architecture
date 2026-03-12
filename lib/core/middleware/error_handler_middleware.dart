@@ -18,11 +18,14 @@ Middleware errorHandlerMiddleware() {
         return _handleApiError(request, error);
       } catch (e, st) {
         _log.severe(
-            'Unhandled exception on ${request.method} ${request.url.path}',
-            e,
-            st);
+          'Unhandled exception on ${request.method} ${request.url.path}',
+          e,
+          st,
+        );
         return _handleApiError(
-            request, const InternalError('An unexpected error occurred'));
+          request,
+          const InternalError('An unexpected error occurred'),
+        );
       }
     };
   };

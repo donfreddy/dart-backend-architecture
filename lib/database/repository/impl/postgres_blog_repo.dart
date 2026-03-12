@@ -120,8 +120,9 @@ final class PostgresBlogRepo implements BlogRepo {
 
       final id = result.first[0] as String;
       final created = await findBlogAllDataById(id);
-      if (created == null)
+      if (created == null) {
         throw const InternalError('Failed to load created blog');
+      }
       return created;
     } catch (e, st) {
       _log.severe('create failed', e, st);
@@ -189,19 +190,27 @@ final class PostgresBlogRepo implements BlogRepo {
 
   @override
   Future<Blog?> findInfoById(String id) => _findOne(
-      whereClause: 'b.id = @id AND b.status = TRUE', params: {'id': id});
+        whereClause: 'b.id = @id AND b.status = TRUE',
+        params: {'id': id},
+      );
 
   @override
   Future<Blog?> findInfoWithTextById(String id) => _findOne(
-      whereClause: 'b.id = @id AND b.status = TRUE', params: {'id': id});
+        whereClause: 'b.id = @id AND b.status = TRUE',
+        params: {'id': id},
+      );
 
   @override
   Future<Blog?> findInfoWithTextAndDraftTextById(String id) => _findOne(
-      whereClause: 'b.id = @id AND b.status = TRUE', params: {'id': id});
+        whereClause: 'b.id = @id AND b.status = TRUE',
+        params: {'id': id},
+      );
 
   @override
   Future<Blog?> findBlogAllDataById(String id) => _findOne(
-      whereClause: 'b.id = @id AND b.status = TRUE', params: {'id': id});
+        whereClause: 'b.id = @id AND b.status = TRUE',
+        params: {'id': id},
+      );
 
   @override
   Future<Blog?> findByUrl(String blogUrl) => _findOne(
@@ -211,11 +220,16 @@ final class PostgresBlogRepo implements BlogRepo {
 
   @override
   Future<Blog?> findUrlIfExists(String blogUrl) => _findOne(
-      whereClause: 'b.blog_url = @blogUrl', params: {'blogUrl': blogUrl});
+        whereClause: 'b.blog_url = @blogUrl',
+        params: {'blogUrl': blogUrl},
+      );
 
   @override
   Future<List<Blog>> findByTagAndPaginated(
-      String tag, int pageNumber, int limit) async {
+    String tag,
+    int pageNumber,
+    int limit,
+  ) async {
     final offset = _offset(pageNumber, limit);
     return _findMany(
       whereClause:
@@ -238,8 +252,9 @@ final class PostgresBlogRepo implements BlogRepo {
 
   @override
   Future<List<Blog>> findAllDrafts() => _findMany(
-      whereClause: 'b.is_draft = TRUE AND b.status = TRUE',
-      orderBy: 'b.updated_at DESC');
+        whereClause: 'b.is_draft = TRUE AND b.status = TRUE',
+        orderBy: 'b.updated_at DESC',
+      );
 
   @override
   Future<List<Blog>> findAllSubmissions() => _findMany(
@@ -249,8 +264,9 @@ final class PostgresBlogRepo implements BlogRepo {
 
   @override
   Future<List<Blog>> findAllPublished() => _findMany(
-      whereClause: 'b.is_published = TRUE AND b.status = TRUE',
-      orderBy: 'b.updated_at DESC');
+        whereClause: 'b.is_published = TRUE AND b.status = TRUE',
+        orderBy: 'b.updated_at DESC',
+      );
 
   @override
   Future<List<Blog>> findAllSubmissionsForWriter(User user) => _findMany(
@@ -301,7 +317,7 @@ final class PostgresBlogRepo implements BlogRepo {
         'query': blog.title,
         'title': blog.title,
         'limit': limit,
-        'offset': 0
+        'offset': 0,
       },
       orderBy: '''
         ts_rank(

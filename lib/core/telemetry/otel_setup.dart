@@ -35,7 +35,10 @@ Future<void> initTelemetry() async {
   } catch (e, st) {
     // Telemetry failure must never crash the server
     _log.warning(
-        'OpenTelemetry initialization failed — continuing without it', e, st);
+      'OpenTelemetry initialization failed — continuing without it',
+      e,
+      st,
+    );
   }
 }
 

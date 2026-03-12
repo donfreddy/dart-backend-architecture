@@ -97,9 +97,9 @@ void main() {
       expect(result.user.id, 'u-1');
       expect(result.tokens.accessToken, 'jwt-token');
       expect(result.tokens.refreshToken, 'jwt-token');
-      verify(() =>
-              mockCryptoWorker.verifyPassword('pass123', user.passwordHash!))
-          .called(1);
+      verify(
+        () => mockCryptoWorker.verifyPassword('pass123', user.passwordHash!),
+      ).called(1);
       verify(() => mockKeystoreRepo.create(user, any(), any())).called(1);
       verify(() => mockJwtService.encode(any())).called(2);
     });

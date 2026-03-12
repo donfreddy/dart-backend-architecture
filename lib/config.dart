@@ -64,7 +64,8 @@ final class AppConfig {
     final result = schema.safeParse(envSource);
     if (result.isFailure) {
       throw Exception(
-          'Invalid environment config: \n${result.errors.format()}');
+        'Invalid environment config: \n${result.errors.format()}',
+      );
     }
 
     final env = result.value;

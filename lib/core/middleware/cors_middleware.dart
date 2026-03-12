@@ -1,4 +1,3 @@
-// lib/core/middleware/cors_middleware.dart
 import 'package:shelf/shelf.dart';
 
 Middleware corsMiddleware({
@@ -9,17 +8,17 @@ Middleware corsMiddleware({
     'PUT',
     'PATCH',
     'DELETE',
-    'OPTIONS'
+    'OPTIONS',
   ],
   List<String> allowedHeaders = const [
     'Content-Type',
     'Authorization',
-    'x-api-key'
+    'x-api-key',
   ],
   List<String> exposedHeaders = const [
     'instruction',
     'X-RateLimit-Limit',
-    'X-RateLimit-Remaining'
+    'X-RateLimit-Remaining',
   ],
   bool allowCredentials = true,
   Duration maxAge = const Duration(hours: 24),

@@ -53,7 +53,8 @@ String _promptProjectName() {
     final valid = RegExp(r'^[a-z][a-z0-9_]*$');
     if (!valid.hasMatch(input)) {
       _error(
-          'Invalid name. Use lowercase letters, digits and underscores only (e.g. my_api).');
+        'Invalid name. Use lowercase letters, digits and underscores only (e.g. my_api).',
+      );
       continue;
     }
 
@@ -69,7 +70,10 @@ String _promptProjectName() {
 // ── File replacement ───────────────────────────────────────────
 
 Future<void> _replaceInFiles(
-    String newName, String newDescription, Logger log) async {
+  String newName,
+  String newDescription,
+  Logger log,
+) async {
   final root = Directory.current;
   var count = 0;
 
@@ -117,7 +121,8 @@ Future<void> _generateKeys(Logger log) async {
 
   if (privateKey.existsSync() && publicKey.existsSync()) {
     log.info(
-        '  ⚠️  keys/private.pem and keys/public.pem already exist — skipping.\n');
+      '  ⚠️  keys/private.pem and keys/public.pem already exist — skipping.\n',
+    );
     return;
   }
 
@@ -194,7 +199,8 @@ Future<void> _pubGet(Logger log) async {
     const Duration(seconds: 60),
     onTimeout: () {
       _error(
-          'dart pub get timed out after 60s. Check your internet connection.');
+        'dart pub get timed out after 60s. Check your internet connection.',
+      );
       exit(1);
     },
   );

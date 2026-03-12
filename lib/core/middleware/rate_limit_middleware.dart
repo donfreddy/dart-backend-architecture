@@ -29,7 +29,8 @@ Middleware rateLimitMiddleware(
 
         if (current > maxRequests) {
           _log.warning(
-              'Rate limit exceeded for IP: $ip ($current/$maxRequests)');
+            'Rate limit exceeded for IP: $ip ($current/$maxRequests)',
+          );
           return Response(
             429,
             body: jsonEncode({

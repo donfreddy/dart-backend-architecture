@@ -28,7 +28,10 @@ final class PostgresKeystoreRepo implements KeystoreRepo {
 
   @override
   Future<Keystore> create(
-      User client, String primaryKey, String secondaryKey) async {
+    User client,
+    String primaryKey,
+    String secondaryKey,
+  ) async {
     try {
       final now = DateTime.now().toUtc();
       final result = await _pool.execute(
@@ -65,7 +68,10 @@ final class PostgresKeystoreRepo implements KeystoreRepo {
 
   @override
   Future<Keystore?> find(
-      User client, String primaryKey, String secondaryKey) async {
+    User client,
+    String primaryKey,
+    String secondaryKey,
+  ) async {
     try {
       final result = await _pool.execute(
         Sql.named('''
