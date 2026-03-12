@@ -39,7 +39,10 @@ final class CompositionRoot {
   /// Initialize infrastructure dependencies once at process start.
   /// Connects DB, Redis, NATS and spawns the crypto worker.
   static Future<CompositionRoot> initialize(AppConfig config) async {
-    final db = await DatabasePool.connect(config.databaseUrl);
+    final db = await DatabasePool.connect(
+      config.databaseUrl,
+      maxConnections: config.dbPoolSize,
+    );
     final cache = await CacheService.connect(config.redisUrl);
     final nats = await NatsService.connect(config.natsUrl);
     final crypto = await CryptoWorker.spawn();

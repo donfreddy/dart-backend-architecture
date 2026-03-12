@@ -16,6 +16,8 @@ final class AppConfig {
   final String otelEndpoint;
   final String environment;
   final int maxRequestBodyBytes;
+  final int dbPoolSize;
+  final int workerCount;
 
   const AppConfig._({
     required this.port,
@@ -29,6 +31,8 @@ final class AppConfig {
     required this.otelEndpoint,
     required this.environment,
     required this.maxRequestBodyBytes,
+    required this.dbPoolSize,
+    required this.workerCount,
   });
 
   /// Load configuration from `.env` (if present) and environment variables.
@@ -50,6 +54,8 @@ final class AppConfig {
       'OTEL_ENDPOINT': z.string().withDefault(''),
       'ENVIRONMENT': z.string().min(1).withDefault('development'),
       'MAX_REQUEST_BODY_BYTES': z.coerce().integer(min: 1024).withDefault(1024 * 1024),
+      'DB_POOL_SIZE': z.coerce().integer(min: 1).withDefault(20),
+      'WORKER_COUNT': z.coerce().integer(min: 0).withDefault(0), // 0 = auto (cpu count)
     });
 
     final result = schema.safeParse(envSource);
@@ -71,6 +77,8 @@ final class AppConfig {
       otelEndpoint: env['OTEL_ENDPOINT'] as String,
       environment: env['ENVIRONMENT'] as String,
       maxRequestBodyBytes: env['MAX_REQUEST_BODY_BYTES'] as int,
+      dbPoolSize: env['DB_POOL_SIZE'] as int,
+      workerCount: env['WORKER_COUNT'] as int,
     );
   }
 

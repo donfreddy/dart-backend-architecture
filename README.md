@@ -215,8 +215,10 @@ Copy `.env.example` to `.env`.
 |----------------------------|----------------------------------------------|
 | `PORT`                     | API port                                     |
 | `MAX_REQUEST_BODY_BYTES`   | Max allowed request payload size in bytes    |
+| `WORKER_COUNT`             | Isolates per process (0 = auto by CPU count) |
 | `DATABASE_URL`             | PostgreSQL connection string                 |
 | `DB_PORT`                  | Postgres published port (docker convenience) |
+| `DB_POOL_SIZE`             | Max Postgres connections per process         |
 | `REDIS_URL`                | Redis connection string                      |
 | `REDIS_PORT`               | Redis published port (docker convenience)    |
 | `NATS_URL`                 | NATS connection string                       |

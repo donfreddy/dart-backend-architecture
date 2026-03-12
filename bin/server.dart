@@ -16,8 +16,9 @@ Future<void> main() async {
   // OpenTelemetry — before any request is served
   await initTelemetry();
 
-  final count = Platform.numberOfProcessors;
-  AppLogger.root.info('Starting $count isolate(s) on port ${AppConfig.fromEnv().port}');
+  final config = AppConfig.fromEnv();
+  final count = config.workerCount > 0 ? config.workerCount : Platform.numberOfProcessors;
+  AppLogger.root.info('Starting $count isolate(s) on port ${config.port}');
 
   // Spawn N-1 worker isolates — main isolate handles its own share
   for (var i = 1; i < count; i++) {

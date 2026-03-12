@@ -1,12 +1,16 @@
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:postgres/postgres.dart';
 
+/// Thin wrapper around `postgres.Pool` with sane defaults and validation.
 final class DatabasePool {
   final Pool<dynamic> pool;
 
   DatabasePool._(this.pool);
 
-  static Future<DatabasePool> connect(String databaseUrl) async {
+  static Future<DatabasePool> connect(
+    String databaseUrl, {
+    int maxConnections = 20,
+  }) async {
     final log = AppLogger.get('DatabasePool');
 
     final uri = Uri.parse(databaseUrl);
@@ -34,7 +38,7 @@ final class DatabasePool {
         ),
       ],
       settings: PoolSettings(
-        maxConnectionCount: 20,
+        maxConnectionCount: maxConnections,
         connectTimeout: const Duration(seconds: 5),
         queryTimeout: const Duration(seconds: 30),
         sslMode: sslMode,
