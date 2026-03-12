@@ -5,6 +5,10 @@ import 'package:shelf/shelf.dart';
 
 class _BodyTooLarge implements Exception {}
 
+/// Rejects requests whose body exceeds [maxBytes].
+/// - Checks `content-length` eagerly when present.
+/// - Streams the body and aborts once the limit is crossed.
+/// Returns HTTP 413 with the standard envelope on overflow.
 Middleware bodyLimitMiddleware({int maxBytes = 1024 * 1024}) {
   return (Handler inner) {
     return (Request request) async {

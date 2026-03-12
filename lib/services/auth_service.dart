@@ -10,6 +10,8 @@ import 'package:dart_backend_architecture/database/repository/interfaces/user_re
 import 'package:dart_backend_architecture/workers/crypto_worker.dart';
 import 'package:uuid/uuid.dart';
 
+/// Authentication/authorization use-cases (signup, login, refresh, logout).
+/// Stateless tokens with per-user keystore; delegates hashing to CryptoWorker.
 final class LoginDto {
   final String email;
   final String password;

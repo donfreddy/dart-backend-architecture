@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:zema/zema.dart';
 
+/// Strongly typed configuration loaded from `.env` + process env.
+/// Provides defaults for local dev and throws on invalid/missing required vars.
 final class AppConfig {
   final int port;
   final String databaseUrl;
@@ -29,6 +31,7 @@ final class AppConfig {
     required this.maxRequestBodyBytes,
   });
 
+  /// Load configuration from `.env` (if present) and environment variables.
   factory AppConfig.fromEnv() {
     final envSource = <String, String>{
       ..._loadDotEnv('.env'),

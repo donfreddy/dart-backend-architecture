@@ -7,6 +7,8 @@ import 'package:dart_backend_architecture/core/middleware/tracing_middleware.dar
 import 'package:dart_backend_architecture/database/repository/interfaces/api_key_repo.dart';
 import 'package:shelf/shelf.dart';
 
+/// Builds the top-level Shelf pipeline used by the server.
+/// Order matters: errors → tracing/logs → security (body limit, CORS) → optional auth/rate-limit → router.
 Handler buildApp(
   Handler router, {
   List<String> corsAllowedOrigins = const [],

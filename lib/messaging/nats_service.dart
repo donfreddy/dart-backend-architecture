@@ -7,6 +7,8 @@ import 'package:dart_nats/dart_nats.dart';
 
 final _log = AppLogger.get('NatsService');
 
+/// Thin NATS client with auto-reconnect/backoff and best-effort publish.
+/// Intended to be injected as a singleton per process.
 final class NatsService {
   late Client _client;
   bool _connected = false;
@@ -15,6 +17,7 @@ final class NatsService {
 
   NatsService._();
 
+  /// Connect and return a ready-to-use service.
   static Future<NatsService> connect(String natsUrl) async {
     final service = NatsService._();
     await service._init(natsUrl);
@@ -37,6 +40,7 @@ final class NatsService {
 
   // ── Publish — fire and forget ─────────────────────────────────
 
+  /// Publish a JSON payload. Retries once after reconnect on failure.
   Future<void> publish(String subject, Map<String, dynamic> payload) async {
     await _ensureConnected();
 
@@ -56,6 +60,7 @@ final class NatsService {
 
   // ── Subscribe — returns a typed Dart Stream ───────────────────
 
+  /// Subscribe to a subject and get a stream of decoded JSON maps.
   Future<Stream<Map<String, dynamic>>> subscribe(String subject) async {
     await _ensureConnected();
     if (!_connected) {
@@ -80,6 +85,7 @@ final class NatsService {
 
   // ── Request / Reply ──────────────────────────────────────────
 
+  /// Send a request and await a JSON map response. Returns `null` on timeout or failure.
   Future<Map<String, dynamic>?> request(
     String subject,
     Map<String, dynamic> payload, {

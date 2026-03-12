@@ -14,8 +14,9 @@ import 'package:dart_backend_architecture/services/blog_service.dart';
 import 'package:dart_backend_architecture/workers/crypto_worker.dart';
 import 'package:shelf/shelf.dart';
 
-// The only module that wires concrete implementations.
-// The rest of the codebase depends on abstractions/interfaces.
+/// Central wiring point for all concrete infrastructure.
+/// Keeps creation order, lifetimes and disposal in one place so the rest
+/// of the code can depend purely on abstractions/interfaces.
 final class CompositionRoot {
   final AppConfig _config;
   final DatabasePool _db;
@@ -35,7 +36,8 @@ final class CompositionRoot {
         _nats = nats,
         _crypto = crypto;
 
-  // Initialize all infrastructure dependencies once at startup.
+  /// Initialize infrastructure dependencies once at process start.
+  /// Connects DB, Redis, NATS and spawns the crypto worker.
   static Future<CompositionRoot> initialize(AppConfig config) async {
     final db = await DatabasePool.connect(config.databaseUrl);
     final cache = await CacheService.connect(config.redisUrl);
@@ -80,7 +82,7 @@ final class CompositionRoot {
         nats: _nats,
       );
 
-  // HTTP entrypoint
+  /// Fully-wired HTTP handler including health/readiness endpoints.
   Handler get router => buildRouter(
         authService: _authService,
         blogService: _blogService,
@@ -96,7 +98,7 @@ final class CompositionRoot {
         natsCheck: () => _nats.ping(),
       );
 
-  // Release resources in reverse dependency order.
+  /// Release resources in reverse dependency order. Call on graceful shutdown.
   Future<void> dispose() async {
     await _nats.close();
     await _cache.close();

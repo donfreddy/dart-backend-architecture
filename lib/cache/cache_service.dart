@@ -5,6 +5,8 @@ import 'package:redis/redis.dart';
 
 final _log = AppLogger.get('CacheService');
 
+/// Minimal Redis wrapper with retry + reconnect and cache-aside helpers.
+/// Designed to fail open (never crash callers) so HTTP requests keep flowing.
 final class CacheService {
   final _RedisConfig _config;
   late RedisConnection _conn;

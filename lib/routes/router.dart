@@ -9,6 +9,7 @@ import 'package:dart_backend_architecture/services/blog_service.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 
+/// Root router wiring liveness/readiness plus versioned APIs.
 Handler buildRouter({
   required AuthService authService,
   required BlogService blogService,
