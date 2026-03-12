@@ -34,6 +34,7 @@ Future<Response> readyzHandler({
   final allHealthy = results.every((r) => r.ok);
 
   return ok(
+    status: allHealthy ? 200 : 503,
     statusCode: allHealthy ? StatusCode.success : StatusCode.failure,
     message: allHealthy ? 'ready' : 'degraded',
     data: {

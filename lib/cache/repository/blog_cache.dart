@@ -4,7 +4,7 @@ import 'package:dart_backend_architecture/cache/cache_service.dart';
 import 'package:dart_backend_architecture/cache/keys.dart';
 import 'package:dart_backend_architecture/database/model/blog.dart';
 
-final class BlogCache {
+class BlogCache {
   final CacheService _cache;
 
   const BlogCache(this._cache);

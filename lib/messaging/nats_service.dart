@@ -9,7 +9,7 @@ final _log = AppLogger.get('NatsService');
 
 /// Thin NATS client with auto-reconnect/backoff and best-effort publish.
 /// Intended to be injected as a singleton per process.
-final class NatsService {
+class NatsService {
   late Client _client;
   bool _connected = false;
   late Uri _uri;
