@@ -26,7 +26,8 @@ Middleware authMiddleware({
         source: ValidationSource.header,
       );
 
-      final accessToken = validateAuthBearer(headerValidated['authorization'] as String);
+      final accessToken =
+          validateAuthBearer(headerValidated['authorization'] as String);
 
       try {
         final payload = jwtService.validate(accessToken);
@@ -61,7 +62,10 @@ Middleware authMiddleware({
 }
 
 void _validateTokenData(JwtPayload payload) {
-  if (payload.sub.isEmpty || payload.prm.isEmpty || payload.iss.isEmpty || payload.aud.isEmpty) {
+  if (payload.sub.isEmpty ||
+      payload.prm.isEmpty ||
+      payload.iss.isEmpty ||
+      payload.aud.isEmpty) {
     throw const AuthFailureError('Invalid access token');
   }
 }

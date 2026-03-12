@@ -76,7 +76,8 @@ final class User {
       };
 
   @override
-  bool operator ==(Object other) => other is User && other.id == id && other.email == email;
+  bool operator ==(Object other) =>
+      other is User && other.id == id && other.email == email;
 
   @override
   int get hashCode => Object.hash(id, email);

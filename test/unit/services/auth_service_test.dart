@@ -42,8 +42,10 @@ void main() {
       mockJwtService = MockJwtService();
       mockCryptoWorker = MockCryptoWorker();
 
-      when(() => mockJwtService.accessTokenExpiry).thenReturn(const Duration(hours: 1));
-      when(() => mockJwtService.refreshTokenExpiry).thenReturn(const Duration(days: 30));
+      when(() => mockJwtService.accessTokenExpiry)
+          .thenReturn(const Duration(hours: 1));
+      when(() => mockJwtService.refreshTokenExpiry)
+          .thenReturn(const Duration(days: 30));
       when(() => mockJwtService.encode(any())).thenReturn('jwt-token');
 
       sut = AuthService(
@@ -65,7 +67,8 @@ void main() {
 
     test('throws AuthFailureError on wrong password', () async {
       when(() => mockUserRepo.findByEmail(any())).thenAnswer((_) async => user);
-      when(() => mockCryptoWorker.verifyPassword(any(), any())).thenAnswer((_) async => false);
+      when(() => mockCryptoWorker.verifyPassword(any(), any()))
+          .thenAnswer((_) async => false);
 
       await expectLater(
         sut.login(const LoginDto(email: 'x@y.com', password: 'wrong')),
@@ -74,7 +77,8 @@ void main() {
     });
 
     test('returns AuthResult on valid credentials', () async {
-      when(() => mockUserRepo.findByEmail('x@y.com')).thenAnswer((_) async => user);
+      when(() => mockUserRepo.findByEmail('x@y.com'))
+          .thenAnswer((_) async => user);
       when(() => mockCryptoWorker.verifyPassword('pass123', user.passwordHash!))
           .thenAnswer((_) async => true);
       when(() => mockKeystoreRepo.create(user, any(), any())).thenAnswer(
@@ -87,12 +91,15 @@ void main() {
         ),
       );
 
-      final result = await sut.login(const LoginDto(email: 'x@y.com', password: 'pass123'));
+      final result = await sut
+          .login(const LoginDto(email: 'x@y.com', password: 'pass123'));
 
       expect(result.user.id, 'u-1');
       expect(result.tokens.accessToken, 'jwt-token');
       expect(result.tokens.refreshToken, 'jwt-token');
-      verify(() => mockCryptoWorker.verifyPassword('pass123', user.passwordHash!)).called(1);
+      verify(() =>
+              mockCryptoWorker.verifyPassword('pass123', user.passwordHash!))
+          .called(1);
       verify(() => mockKeystoreRepo.create(user, any(), any())).called(1);
       verify(() => mockJwtService.encode(any())).called(2);
     });

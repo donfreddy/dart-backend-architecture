@@ -78,7 +78,8 @@ Future<Response> updateProfileHandler(
     message: 'Profile updated',
     data: {
       'name': updatedUser.name,
-      if (updatedUser.profilePicUrl != null) 'profilePicUrl': updatedUser.profilePicUrl,
+      if (updatedUser.profilePicUrl != null)
+        'profilePicUrl': updatedUser.profilePicUrl,
       'roles': updatedUser.roles,
     },
   );

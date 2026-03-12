@@ -56,7 +56,8 @@ Future<_ProbeResult> _run(String name, Probe probe, Duration timeout) async {
   } catch (e, st) {
     _log.warning('Health probe failed for $name', e, st);
     final duration = (DateTime.now().microsecondsSinceEpoch - started) ~/ 1000;
-    return _ProbeResult(name, ok: false, error: e.toString(), durationMs: duration);
+    return _ProbeResult(name,
+        ok: false, error: e.toString(), durationMs: duration);
   }
 }
 
@@ -66,5 +67,6 @@ final class _ProbeResult {
   final String? error;
   final int durationMs;
 
-  const _ProbeResult(this.name, {required this.ok, this.error, required this.durationMs});
+  const _ProbeResult(this.name,
+      {required this.ok, this.error, required this.durationMs});
 }

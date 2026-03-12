@@ -75,7 +75,8 @@ final class Keystore {
   int get hashCode => Object.hash(client, primaryKey, secondaryKey);
 
   @override
-  String toString() => 'Keystore(client: ${client.id}, primaryKey: $primaryKey)';
+  String toString() =>
+      'Keystore(client: ${client.id}, primaryKey: $primaryKey)';
 }
 
 DateTime? _readDateTime(Object? value) {

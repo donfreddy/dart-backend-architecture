@@ -28,7 +28,8 @@ Middleware rateLimitMiddleware(
         final current = await store.increment(key, window: window);
 
         if (current > maxRequests) {
-          _log.warning('Rate limit exceeded for IP: $ip ($current/$maxRequests)');
+          _log.warning(
+              'Rate limit exceeded for IP: $ip ($current/$maxRequests)');
           return Response(
             429,
             body: jsonEncode({
@@ -48,10 +49,13 @@ Middleware rateLimitMiddleware(
         final response = await inner(request);
 
         // Inject rate limit headers on every response
-        return response.change(headers: {
-          'X-RateLimit-Limit': maxRequests.toString(),
-          'X-RateLimit-Remaining': (maxRequests - current).clamp(0, maxRequests).toString(),
-        },);
+        return response.change(
+          headers: {
+            'X-RateLimit-Limit': maxRequests.toString(),
+            'X-RateLimit-Remaining':
+                (maxRequests - current).clamp(0, maxRequests).toString(),
+          },
+        );
       } catch (e) {
         // Redis failure must never block a request
         _log.warning('Rate limit check failed — bypassing: $e');

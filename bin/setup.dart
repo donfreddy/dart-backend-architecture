@@ -52,7 +52,8 @@ String _promptProjectName() {
     // Dart package name rules: lowercase, underscores, no leading digits
     final valid = RegExp(r'^[a-z][a-z0-9_]*$');
     if (!valid.hasMatch(input)) {
-      _error('Invalid name. Use lowercase letters, digits and underscores only (e.g. my_api).');
+      _error(
+          'Invalid name. Use lowercase letters, digits and underscores only (e.g. my_api).');
       continue;
     }
 
@@ -67,7 +68,8 @@ String _promptProjectName() {
 
 // ── File replacement ───────────────────────────────────────────
 
-Future<void> _replaceInFiles(String newName, String newDescription, Logger log) async {
+Future<void> _replaceInFiles(
+    String newName, String newDescription, Logger log) async {
   final root = Directory.current;
   var count = 0;
 
@@ -77,7 +79,9 @@ Future<void> _replaceInFiles(String newName, String newDescription, Logger log) 
 
     try {
       final original = await entity.readAsString();
-      var updated = original.replaceAll(_oldName, newName).replaceAll(_oldDescription, newDescription);
+      var updated = original
+          .replaceAll(_oldName, newName)
+          .replaceAll(_oldDescription, newDescription);
 
       if (updated != original) {
         await entity.writeAsString(updated);
@@ -112,7 +116,8 @@ Future<void> _generateKeys(Logger log) async {
   final publicKey = File('keys/public.pem');
 
   if (privateKey.existsSync() && publicKey.existsSync()) {
-    log.info('  ⚠️  keys/private.pem and keys/public.pem already exist — skipping.\n');
+    log.info(
+        '  ⚠️  keys/private.pem and keys/public.pem already exist — skipping.\n');
     return;
   }
 
@@ -188,7 +193,8 @@ Future<void> _pubGet(Logger log) async {
   ).timeout(
     const Duration(seconds: 60),
     onTimeout: () {
-      _error('dart pub get timed out after 60s. Check your internet connection.');
+      _error(
+          'dart pub get timed out after 60s. Check your internet connection.');
       exit(1);
     },
   );
@@ -235,4 +241,5 @@ void _printSuccess(String projectName, Logger log) {
 
 void _error(String message) => stderr.writeln('  ✗ $message');
 
-String _relativePath(String absolute) => absolute.replaceFirst('${Directory.current.path}/', '');
+String _relativePath(String absolute) =>
+    absolute.replaceFirst('${Directory.current.path}/', '');

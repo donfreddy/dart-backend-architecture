@@ -39,11 +39,14 @@ Middleware tracingMiddleware() {
           ..addAttributes(
             OTel.attributesFromMap({
               'http.status_code': response.statusCode,
-              'http.server_duration_ms': (DateTime.now().microsecondsSinceEpoch - start) / 1000.0,
+              'http.server_duration_ms':
+                  (DateTime.now().microsecondsSinceEpoch - start) / 1000.0,
             }),
           )
           ..setStatus(
-            response.statusCode < 400 ? SpanStatusCode.Ok : SpanStatusCode.Error,
+            response.statusCode < 400
+                ? SpanStatusCode.Ok
+                : SpanStatusCode.Error,
           );
 
         return response;

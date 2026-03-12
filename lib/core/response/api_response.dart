@@ -110,8 +110,10 @@ final class Failure extends ApiResponse<Object?> {
     super.data,
     StatusCode? statusCode,
   }) : super(
-          statusCode:
-              statusCode ?? (error.type == ErrorType.accessToken ? StatusCode.invalidAccessToken : StatusCode.failure),
+          statusCode: statusCode ??
+              (error.type == ErrorType.accessToken
+                  ? StatusCode.invalidAccessToken
+                  : StatusCode.failure),
           message: error.message,
         );
 

@@ -16,7 +16,9 @@ final class DatabasePool {
     final uri = Uri.parse(databaseUrl);
     final database = uri.path.replaceFirst('/', '');
     final port = uri.hasPort ? uri.port : 5432;
-    final sslMode = uri.queryParameters['sslmode'] == 'disable' ? SslMode.disable : SslMode.require;
+    final sslMode = uri.queryParameters['sslmode'] == 'disable'
+        ? SslMode.disable
+        : SslMode.require;
     final credentials = _parseCredentials(uri);
 
     if (uri.host.isEmpty || database.isEmpty) {

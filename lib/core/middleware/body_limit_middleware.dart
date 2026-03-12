@@ -12,24 +12,25 @@ class _BodyTooLarge implements Exception {}
 Middleware bodyLimitMiddleware({int maxBytes = 1024 * 1024}) {
   return (Handler inner) {
     return (Request request) async {
-      final contentLength = int.tryParse(request.headers['content-length'] ?? '');
+      final contentLength =
+          int.tryParse(request.headers['content-length'] ?? '');
       if (contentLength != null && contentLength > maxBytes) {
         return _tooLarge();
       }
 
       var total = 0;
       final limitedStream = request.read().transform(
-            StreamTransformer.fromHandlers(
-              handleData: (chunk, sink) {
-                total += chunk.length;
-                if (total > maxBytes) {
-                  sink.addError(_BodyTooLarge());
-                  return;
-                }
-                sink.add(chunk);
-              },
-            ),
-          );
+        StreamTransformer.fromHandlers(
+          handleData: (chunk, sink) {
+            total += chunk.length;
+            if (total > maxBytes) {
+              sink.addError(_BodyTooLarge());
+              return;
+            }
+            sink.add(chunk);
+          },
+        ),
+      );
 
       try {
         final limitedRequest = request.change(body: limitedStream);

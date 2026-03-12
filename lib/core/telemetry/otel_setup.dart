@@ -34,7 +34,8 @@ Future<void> initTelemetry() async {
     _log.info('OpenTelemetry initialized → ${config.otelEndpoint}');
   } catch (e, st) {
     // Telemetry failure must never crash the server
-    _log.warning('OpenTelemetry initialization failed — continuing without it', e, st);
+    _log.warning(
+        'OpenTelemetry initialization failed — continuing without it', e, st);
   }
 }
 

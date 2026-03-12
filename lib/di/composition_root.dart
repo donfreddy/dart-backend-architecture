@@ -57,7 +57,8 @@ final class CompositionRoot {
   }
 
   // Repositories
-  PostgresUserRepo get _userRepo => PostgresUserRepo(_db.pool, _keystoreRepo, _roleRepo);
+  PostgresUserRepo get _userRepo =>
+      PostgresUserRepo(_db.pool, _keystoreRepo, _roleRepo);
   PostgresBlogRepo get _blogRepo => PostgresBlogRepo(_db.pool);
   PostgresKeystoreRepo get _keystoreRepo => PostgresKeystoreRepo(_db.pool);
   PostgresRoleRepo get _roleRepo => PostgresRoleRepo(_db.pool);

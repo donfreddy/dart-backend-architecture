@@ -13,7 +13,8 @@ abstract interface class BlogRepo {
   Future<Blog?> findByUrl(String blogUrl);
   Future<Blog?> findUrlIfExists(String blogUrl);
 
-  Future<List<Blog>> findByTagAndPaginated(String tag, int pageNumber, int limit);
+  Future<List<Blog>> findByTagAndPaginated(
+      String tag, int pageNumber, int limit);
 
   Future<List<Blog>> findAllPublishedForAuthor(User user);
   Future<List<Blog>> findAllDrafts();

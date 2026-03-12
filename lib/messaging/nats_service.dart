@@ -48,7 +48,8 @@ final class NatsService {
       await _client.pubString(subject, jsonEncode(payload));
     } catch (e) {
       _connected = false;
-      _log.warning('NATS publish failed [$subject], will retry after reconnect: $e');
+      _log.warning(
+          'NATS publish failed [$subject], will retry after reconnect: $e');
       await _ensureConnected();
       try {
         await _client.pubString(subject, jsonEncode(payload));

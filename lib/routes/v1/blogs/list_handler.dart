@@ -48,7 +48,8 @@ Future<Response> blogsByAuthorIdHandler(
     source: ValidationSource.param,
   );
 
-  final author = await userRepo.findPublicProfileById(validated['id'] as String);
+  final author =
+      await userRepo.findPublicProfileById(validated['id'] as String);
   if (author == null) throw const BadRequestError('User not registered');
 
   final blogs = await blogService.findAllPublishedForAuthor(author);

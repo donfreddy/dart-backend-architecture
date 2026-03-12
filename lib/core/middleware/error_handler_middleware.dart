@@ -17,8 +17,12 @@ Middleware errorHandlerMiddleware() {
         final error = BadRequestError('Malformed request: ${e.message}');
         return _handleApiError(request, error);
       } catch (e, st) {
-        _log.severe('Unhandled exception on ${request.method} ${request.url.path}', e, st);
-        return _handleApiError(request, const InternalError('An unexpected error occurred'));
+        _log.severe(
+            'Unhandled exception on ${request.method} ${request.url.path}',
+            e,
+            st);
+        return _handleApiError(
+            request, const InternalError('An unexpected error occurred'));
       }
     };
   };

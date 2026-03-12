@@ -50,17 +50,21 @@ final class AppConfig {
       'JWT_PRIVATE_KEY_PATH': z.string().min(1),
       'JWT_PUBLIC_KEY_PATH': z.string().min(1),
       'JWT_ACCESS_TOKEN_EXPIRY': z.coerce().integer(min: 1).withDefault(3600),
-      'JWT_REFRESH_TOKEN_EXPIRY': z.coerce().integer(min: 1).withDefault(2592000),
+      'JWT_REFRESH_TOKEN_EXPIRY':
+          z.coerce().integer(min: 1).withDefault(2592000),
       'OTEL_ENDPOINT': z.string().withDefault(''),
       'ENVIRONMENT': z.string().min(1).withDefault('development'),
-      'MAX_REQUEST_BODY_BYTES': z.coerce().integer(min: 1024).withDefault(1024 * 1024),
+      'MAX_REQUEST_BODY_BYTES':
+          z.coerce().integer(min: 1024).withDefault(1024 * 1024),
       'DB_POOL_SIZE': z.coerce().integer(min: 1).withDefault(20),
-      'WORKER_COUNT': z.coerce().integer(min: 0).withDefault(0), // 0 = auto (cpu count)
+      'WORKER_COUNT':
+          z.coerce().integer(min: 0).withDefault(0), // 0 = auto (cpu count)
     });
 
     final result = schema.safeParse(envSource);
     if (result.isFailure) {
-      throw Exception('Invalid environment config: \n${result.errors.format()}');
+      throw Exception(
+          'Invalid environment config: \n${result.errors.format()}');
     }
 
     final env = result.value;

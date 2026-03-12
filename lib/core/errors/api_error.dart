@@ -32,7 +32,11 @@ extension ErrorTypeCodeX on ErrorType {
 
 extension ErrorTypeHttpX on ErrorType {
   int get httpStatus => switch (this) {
-        ErrorType.badToken || ErrorType.tokenExpired || ErrorType.unauthorized || ErrorType.accessToken => 401,
+        ErrorType.badToken ||
+        ErrorType.tokenExpired ||
+        ErrorType.unauthorized ||
+        ErrorType.accessToken =>
+          401,
         ErrorType.internal => 500,
         ErrorType.notFound || ErrorType.noEntry || ErrorType.noData => 404,
         ErrorType.badRequest || ErrorType.validation => 400,
@@ -65,54 +69,66 @@ sealed class ApiError implements Exception {
 }
 
 final class AuthFailureError extends ApiError {
-  const AuthFailureError([String message = 'Invalid credentials']) : super(ErrorType.unauthorized, message);
+  const AuthFailureError([String message = 'Invalid credentials'])
+      : super(ErrorType.unauthorized, message);
 }
 
 final class InternalError extends ApiError {
-  const InternalError([String message = 'Internal error']) : super(ErrorType.internal, message);
+  const InternalError([String message = 'Internal error'])
+      : super(ErrorType.internal, message);
 }
 
 final class BadRequestError extends ApiError {
-  const BadRequestError([String message = 'Bad request']) : super(ErrorType.badRequest, message);
+  const BadRequestError([String message = 'Bad request'])
+      : super(ErrorType.badRequest, message);
 }
 
 final class NotFoundError extends ApiError {
-  const NotFoundError([String message = 'Not found']) : super(ErrorType.notFound, message);
+  const NotFoundError([String message = 'Not found'])
+      : super(ErrorType.notFound, message);
 }
 
 final class ForbiddenError extends ApiError {
-  const ForbiddenError([String message = 'Permission denied']) : super(ErrorType.forbidden, message);
+  const ForbiddenError([String message = 'Permission denied'])
+      : super(ErrorType.forbidden, message);
 }
 
 final class NoEntryError extends ApiError {
-  const NoEntryError([String message = "Entry doesn't exist"]) : super(ErrorType.noEntry, message);
+  const NoEntryError([String message = "Entry doesn't exist"])
+      : super(ErrorType.noEntry, message);
 }
 
 final class BadTokenError extends ApiError {
-  const BadTokenError([String message = 'Token is not valid']) : super(ErrorType.badToken, message);
+  const BadTokenError([String message = 'Token is not valid'])
+      : super(ErrorType.badToken, message);
 }
 
 final class TokenExpiredError extends ApiError {
-  const TokenExpiredError([String message = 'Token is expired']) : super(ErrorType.tokenExpired, message);
+  const TokenExpiredError([String message = 'Token is expired'])
+      : super(ErrorType.tokenExpired, message);
 }
 
 final class NoDataError extends ApiError {
-  const NoDataError([String message = 'No data available']) : super(ErrorType.noData, message);
+  const NoDataError([String message = 'No data available'])
+      : super(ErrorType.noData, message);
 }
 
 final class AccessTokenError extends ApiError {
-  const AccessTokenError([String message = 'Invalid access token']) : super(ErrorType.accessToken, message);
+  const AccessTokenError([String message = 'Invalid access token'])
+      : super(ErrorType.accessToken, message);
 }
 
 final class ValidationError extends ApiError {
   final Map<String, List<String>> fieldErrors;
 
-  const ValidationError(this.fieldErrors) : super(ErrorType.validation, 'Validation failed');
+  const ValidationError(this.fieldErrors)
+      : super(ErrorType.validation, 'Validation failed');
 
   @override
   Object? get data => {'errors': fieldErrors};
 }
 
 final class ConflictError extends ApiError {
-  const ConflictError([String message = 'Already exists']) : super(ErrorType.conflict, message);
+  const ConflictError([String message = 'Already exists'])
+      : super(ErrorType.conflict, message);
 }

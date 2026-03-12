@@ -120,7 +120,8 @@ final class PostgresBlogRepo implements BlogRepo {
 
       final id = result.first[0] as String;
       final created = await findBlogAllDataById(id);
-      if (created == null) throw const InternalError('Failed to load created blog');
+      if (created == null)
+        throw const InternalError('Failed to load created blog');
       return created;
     } catch (e, st) {
       _log.severe('create failed', e, st);
@@ -187,19 +188,20 @@ final class PostgresBlogRepo implements BlogRepo {
   }
 
   @override
-  Future<Blog?> findInfoById(String id) => _findOne(whereClause: 'b.id = @id AND b.status = TRUE', params: {'id': id});
+  Future<Blog?> findInfoById(String id) => _findOne(
+      whereClause: 'b.id = @id AND b.status = TRUE', params: {'id': id});
 
   @override
-  Future<Blog?> findInfoWithTextById(String id) =>
-      _findOne(whereClause: 'b.id = @id AND b.status = TRUE', params: {'id': id});
+  Future<Blog?> findInfoWithTextById(String id) => _findOne(
+      whereClause: 'b.id = @id AND b.status = TRUE', params: {'id': id});
 
   @override
-  Future<Blog?> findInfoWithTextAndDraftTextById(String id) =>
-      _findOne(whereClause: 'b.id = @id AND b.status = TRUE', params: {'id': id});
+  Future<Blog?> findInfoWithTextAndDraftTextById(String id) => _findOne(
+      whereClause: 'b.id = @id AND b.status = TRUE', params: {'id': id});
 
   @override
-  Future<Blog?> findBlogAllDataById(String id) =>
-      _findOne(whereClause: 'b.id = @id AND b.status = TRUE', params: {'id': id});
+  Future<Blog?> findBlogAllDataById(String id) => _findOne(
+      whereClause: 'b.id = @id AND b.status = TRUE', params: {'id': id});
 
   @override
   Future<Blog?> findByUrl(String blogUrl) => _findOne(
@@ -208,14 +210,16 @@ final class PostgresBlogRepo implements BlogRepo {
       );
 
   @override
-  Future<Blog?> findUrlIfExists(String blogUrl) =>
-      _findOne(whereClause: 'b.blog_url = @blogUrl', params: {'blogUrl': blogUrl});
+  Future<Blog?> findUrlIfExists(String blogUrl) => _findOne(
+      whereClause: 'b.blog_url = @blogUrl', params: {'blogUrl': blogUrl});
 
   @override
-  Future<List<Blog>> findByTagAndPaginated(String tag, int pageNumber, int limit) async {
+  Future<List<Blog>> findByTagAndPaginated(
+      String tag, int pageNumber, int limit) async {
     final offset = _offset(pageNumber, limit);
     return _findMany(
-      whereClause: 'b.status = TRUE AND b.is_published = TRUE AND @tag = ANY(b.tags)',
+      whereClause:
+          'b.status = TRUE AND b.is_published = TRUE AND @tag = ANY(b.tags)',
       params: {'tag': tag, 'limit': limit, 'offset': offset},
       orderBy: 'b.updated_at DESC',
       limit: true,
@@ -225,15 +229,17 @@ final class PostgresBlogRepo implements BlogRepo {
   @override
   Future<List<Blog>> findAllPublishedForAuthor(User user) {
     return _findMany(
-      whereClause: 'b.author_id = @authorId AND b.status = TRUE AND b.is_published = TRUE',
+      whereClause:
+          'b.author_id = @authorId AND b.status = TRUE AND b.is_published = TRUE',
       params: {'authorId': user.id},
       orderBy: 'b.updated_at DESC',
     );
   }
 
   @override
-  Future<List<Blog>> findAllDrafts() =>
-      _findMany(whereClause: 'b.is_draft = TRUE AND b.status = TRUE', orderBy: 'b.updated_at DESC');
+  Future<List<Blog>> findAllDrafts() => _findMany(
+      whereClause: 'b.is_draft = TRUE AND b.status = TRUE',
+      orderBy: 'b.updated_at DESC');
 
   @override
   Future<List<Blog>> findAllSubmissions() => _findMany(
@@ -242,26 +248,30 @@ final class PostgresBlogRepo implements BlogRepo {
       );
 
   @override
-  Future<List<Blog>> findAllPublished() =>
-      _findMany(whereClause: 'b.is_published = TRUE AND b.status = TRUE', orderBy: 'b.updated_at DESC');
+  Future<List<Blog>> findAllPublished() => _findMany(
+      whereClause: 'b.is_published = TRUE AND b.status = TRUE',
+      orderBy: 'b.updated_at DESC');
 
   @override
   Future<List<Blog>> findAllSubmissionsForWriter(User user) => _findMany(
-        whereClause: 'b.author_id = @authorId AND b.status = TRUE AND b.is_submitted = TRUE',
+        whereClause:
+            'b.author_id = @authorId AND b.status = TRUE AND b.is_submitted = TRUE',
         params: {'authorId': user.id},
         orderBy: 'b.updated_at DESC',
       );
 
   @override
   Future<List<Blog>> findAllPublishedForWriter(User user) => _findMany(
-        whereClause: 'b.author_id = @authorId AND b.status = TRUE AND b.is_published = TRUE',
+        whereClause:
+            'b.author_id = @authorId AND b.status = TRUE AND b.is_published = TRUE',
         params: {'authorId': user.id},
         orderBy: 'b.updated_at DESC',
       );
 
   @override
   Future<List<Blog>> findAllDraftsForWriter(User user) => _findMany(
-        whereClause: 'b.author_id = @authorId AND b.status = TRUE AND b.is_draft = TRUE',
+        whereClause:
+            'b.author_id = @authorId AND b.status = TRUE AND b.is_draft = TRUE',
         params: {'authorId': user.id},
         orderBy: 'b.updated_at DESC',
       );
@@ -287,7 +297,12 @@ final class PostgresBlogRepo implements BlogRepo {
         AND to_tsvector('simple', coalesce(b.title,'') || ' ' || coalesce(b.description,''))
             @@ plainto_tsquery('simple', @query)
       ''',
-      params: {'query': blog.title, 'title': blog.title, 'limit': limit, 'offset': 0},
+      params: {
+        'query': blog.title,
+        'title': blog.title,
+        'limit': limit,
+        'offset': 0
+      },
       orderBy: '''
         ts_rank(
           to_tsvector('simple', coalesce(b.title,'') || ' ' || coalesce(b.description,'')),

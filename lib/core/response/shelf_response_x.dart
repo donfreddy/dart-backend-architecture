@@ -17,7 +17,8 @@ extension ShelfResponseX on ApiResponse<dynamic> {
       headers: {
         'content-type': 'application/json',
         ...?headers,
-        if (this case Failure(error: final error) when error.type == ErrorType.accessToken)
+        if (this case Failure(error: final error)
+            when error.type == ErrorType.accessToken)
           'instruction': 'refresh_token',
       },
     );

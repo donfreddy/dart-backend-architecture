@@ -7,7 +7,8 @@ import 'package:dart_backend_architecture/routes/v1/blog/schema.dart';
 import 'package:dart_backend_architecture/services/blog_service.dart';
 import 'package:shelf/shelf.dart';
 
-String _formatEndpoint(String endpoint) => endpoint.replaceAll(RegExp(r'\s+'), '').replaceAll('/', '-');
+String _formatEndpoint(String endpoint) =>
+    endpoint.replaceAll(RegExp(r'\s+'), '').replaceAll('/', '-');
 
 Future<Response> writerCreateBlogHandler(
   Request request,
@@ -17,7 +18,8 @@ Future<Response> writerCreateBlogHandler(
   final validated = validateSchema(blogCreateSchema, body);
 
   final authUser = request.authUser;
-  final endpoint = _formatEndpoint(validateUrlEndpoint(validated['blogUrl'] as String));
+  final endpoint =
+      _formatEndpoint(validateUrlEndpoint(validated['blogUrl'] as String));
 
   final existingByUrl = await blogService.findUrlIfExists(endpoint);
   if (existingByUrl != null) {
@@ -64,7 +66,8 @@ Future<Response> writerUpdateBlogHandler(
   final validatedBody = validateSchema(blogUpdateSchema, body);
 
   final authUser = request.authUser;
-  final blog = await blogService.findBlogAllDataById(validatedParams['id'] as String);
+  final blog =
+      await blogService.findBlogAllDataById(validatedParams['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (blog.author.id != authUser.id) {
     throw const ForbiddenError("You don't have necessary permissions");
@@ -86,7 +89,8 @@ Future<Response> writerUpdateBlogHandler(
     title: validatedBody['title'] as String? ?? updated.title,
     description: validatedBody['description'] as String? ?? updated.description,
     draftText: validatedBody['text'] as String? ?? updated.draftText,
-    tags: (validatedBody['tags'] as List<dynamic>?)?.cast<String>() ?? updated.tags,
+    tags: (validatedBody['tags'] as List<dynamic>?)?.cast<String>() ??
+        updated.tags,
     imgUrl: validatedBody['imgUrl'] as String? ?? updated.imgUrl,
     score: validatedBody['score'] as num? ?? updated.score,
     updatedBy: authUser,

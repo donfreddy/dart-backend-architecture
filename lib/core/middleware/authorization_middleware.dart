@@ -26,7 +26,8 @@ Middleware authorizationMiddleware({
         throw const AuthFailureError('Permission denied');
       }
 
-      final hasRole = user.roles.any((userRoleCode) => userRoleCode == role.code);
+      final hasRole =
+          user.roles.any((userRoleCode) => userRoleCode == role.code);
       if (!hasRole) {
         throw const AuthFailureError('Permission denied');
       }

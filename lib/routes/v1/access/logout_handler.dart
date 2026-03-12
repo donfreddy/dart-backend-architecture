@@ -13,7 +13,8 @@ Future<Response> logoutHandler(
     {'authorization': request.headers['authorization']},
     source: ValidationSource.header,
   );
-  final accessToken = validateAuthBearer(headerValidated['authorization'] as String);
+  final accessToken =
+      validateAuthBearer(headerValidated['authorization'] as String);
   await authService.logout(accessToken);
   return ok<Object?>(message: 'Logout success');
 }

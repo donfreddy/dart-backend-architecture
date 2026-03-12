@@ -77,7 +77,8 @@ final class BlogService implements BlogRepo {
   }
 
   @override
-  Future<List<Blog>> findByTagAndPaginated(String tag, int pageNumber, int limit) {
+  Future<List<Blog>> findByTagAndPaginated(
+      String tag, int pageNumber, int limit) {
     _requireNonEmpty(tag, field: 'tag');
     final page = pageNumber < 1 ? 1 : pageNumber;
     final size = limit < 1 ? 1 : limit;

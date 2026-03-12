@@ -15,7 +15,8 @@ Future<Response> tokenHandler(
     },
     source: ValidationSource.header,
   );
-  final accessToken = validateAuthBearer(headerValidated['authorization'] as String);
+  final accessToken =
+      validateAuthBearer(headerValidated['authorization'] as String);
 
   final decoded = await readJsonBody(request);
   final bodyValidated = validateSchema(refreshTokenSchema, decoded);

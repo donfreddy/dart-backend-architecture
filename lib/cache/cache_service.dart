@@ -40,7 +40,8 @@ final class CacheService {
     Duration ttl = const Duration(minutes: 15),
   }) async {
     try {
-      await _execute((cmd) => cmd.send_object(['SET', key, value, 'EX', ttl.inSeconds]));
+      await _execute(
+          (cmd) => cmd.send_object(['SET', key, value, 'EX', ttl.inSeconds]));
     } catch (e) {
       _log.warning('Cache SET failed for key $key: $e');
     }
@@ -61,7 +62,8 @@ final class CacheService {
       var removed = 0;
 
       do {
-        final result = await _execute((cmd) => cmd.send_object(['SCAN', cursor, 'MATCH', pattern, 'COUNT', 200]));
+        final result = await _execute((cmd) =>
+            cmd.send_object(['SCAN', cursor, 'MATCH', pattern, 'COUNT', 200]));
         final parts = result as List<dynamic>;
         cursor = parts.first.toString();
         final keys = (parts[1] as List<dynamic>).cast<String>();
@@ -87,12 +89,14 @@ final class CacheService {
         final int value => value,
         final String value => int.parse(value),
         final num value => value.toInt(),
-        _ => throw StateError('Unexpected INCR response type: ${result.runtimeType}'),
+        _ => throw StateError(
+            'Unexpected INCR response type: ${result.runtimeType}'),
       };
 
       // Set TTL only on first increment — avoids resetting the window
       if (count == 1) {
-        await _execute((cmd) => cmd.send_object(['EXPIRE', key, window.inSeconds]));
+        await _execute(
+            (cmd) => cmd.send_object(['EXPIRE', key, window.inSeconds]));
       }
 
       return count;
@@ -156,7 +160,8 @@ final class CacheService {
       try {
         return await action(_cmd);
       } catch (e) {
-        _log.warning('Redis command failed (attempt ${attempt + 1}) — reconnecting: $e');
+        _log.warning(
+            'Redis command failed (attempt ${attempt + 1}) — reconnecting: $e');
         await _reconnect();
       }
     }
@@ -178,7 +183,8 @@ final class CacheService {
 
       _conn = RedisConnection();
       _cmd = await _open(_config, _conn);
-      _log.info('Redis reconnected -> ${_config.host}:${_config.port}/${_config.dbIndex}');
+      _log.info(
+          'Redis reconnected -> ${_config.host}:${_config.port}/${_config.dbIndex}');
       completer.complete();
     } catch (e) {
       completer.completeError(e);
@@ -188,7 +194,8 @@ final class CacheService {
     }
   }
 
-  static Future<Command> _open(_RedisConfig config, RedisConnection conn) async {
+  static Future<Command> _open(
+      _RedisConfig config, RedisConnection conn) async {
     if (config.host.isEmpty) {
       throw ArgumentError.value(
         config.rawUrl,
@@ -208,7 +215,8 @@ final class CacheService {
     }
 
     await cmd.send_object(['PING']);
-    _log.info('Redis connected -> ${config.host}:${config.port}/${config.dbIndex}');
+    _log.info(
+        'Redis connected -> ${config.host}:${config.port}/${config.dbIndex}');
     return cmd;
   }
 }
