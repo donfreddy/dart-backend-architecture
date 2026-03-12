@@ -63,7 +63,7 @@ final class AuthResult {
       };
 }
 
-final class AuthService {
+class AuthService {
   final UserRepo _userRepo;
   final KeystoreRepo _keystoreRepo;
   final JwtService _jwt;

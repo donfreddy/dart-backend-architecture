@@ -8,6 +8,8 @@ import 'package:dart_backend_architecture/database/repository/interfaces/user_re
 import 'package:dart_backend_architecture/messaging/nats_service.dart';
 import 'package:dart_backend_architecture/workers/crypto_worker.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:dart_backend_architecture/services/auth_service.dart';
+import 'package:dart_backend_architecture/services/blog_service.dart';
 
 class MockUserRepo extends Mock implements UserRepo {}
 
@@ -26,3 +28,7 @@ class MockBlogCache extends Mock implements BlogCache {}
 class MockCacheService extends Mock implements CacheService {}
 
 class MockNatsService extends Mock implements NatsService {}
+
+class MockAuthService extends Mock implements AuthService {}
+
+class MockBlogService extends Mock implements BlogService {}

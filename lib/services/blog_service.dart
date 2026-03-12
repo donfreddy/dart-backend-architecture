@@ -6,7 +6,7 @@ import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/messaging/nats_service.dart';
 
 /// Blog domain service that wraps the repo with caching and event emission.
-final class BlogService implements BlogRepo {
+class BlogService implements BlogRepo {
   final BlogRepo _blogRepo;
   final BlogCache _blogCache;
   final NatsService _nats;
