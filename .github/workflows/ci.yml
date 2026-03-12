@@ -12,10 +12,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true # Cancel outdated runs on new push
 
-env:
-  # Node 24 is required for the latest version of `actions/cache` and `actions/upload-artifact`
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
 
   analyze:
