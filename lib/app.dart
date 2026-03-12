@@ -1,4 +1,5 @@
 import 'package:dart_backend_architecture/core/middleware/api_key_middleware.dart';
+import 'package:dart_backend_architecture/core/middleware/body_limit_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/cors_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/error_handler_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/rate_limit_middleware.dart';
@@ -13,6 +14,7 @@ Handler buildApp(
   RateLimitStore? rateLimitStore,
   int rateLimitMaxRequests = 100,
   Duration rateLimitWindow = const Duration(minutes: 1),
+  int maxRequestBodyBytes = 1024 * 1024,
 }) {
   var pipeline = const Pipeline()
       // ── Error boundary (outermost) ───────────────────────
@@ -23,6 +25,7 @@ Handler buildApp(
       .addMiddleware(logRequests())
 
       // ── Security baseline ─────────────────────────────────
+      .addMiddleware(bodyLimitMiddleware(maxBytes: maxRequestBodyBytes))
       .addMiddleware(
         corsMiddleware(
           allowedOrigins: corsAllowedOrigins,

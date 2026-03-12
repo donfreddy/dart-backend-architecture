@@ -13,6 +13,7 @@ final class AppConfig {
   final int jwtRefreshTokenExpiry;
   final String otelEndpoint;
   final String environment;
+  final int maxRequestBodyBytes;
 
   const AppConfig._({
     required this.port,
@@ -25,6 +26,7 @@ final class AppConfig {
     required this.jwtRefreshTokenExpiry,
     required this.otelEndpoint,
     required this.environment,
+    required this.maxRequestBodyBytes,
   });
 
   factory AppConfig.fromEnv() {
@@ -44,6 +46,7 @@ final class AppConfig {
       'JWT_REFRESH_TOKEN_EXPIRY': z.coerce().integer(min: 1).withDefault(2592000),
       'OTEL_ENDPOINT': z.string().withDefault(''),
       'ENVIRONMENT': z.string().min(1).withDefault('development'),
+      'MAX_REQUEST_BODY_BYTES': z.coerce().integer(min: 1024).withDefault(1024 * 1024),
     });
 
     final result = schema.safeParse(envSource);
@@ -64,6 +67,7 @@ final class AppConfig {
       jwtRefreshTokenExpiry: env['JWT_REFRESH_TOKEN_EXPIRY'] as int,
       otelEndpoint: env['OTEL_ENDPOINT'] as String,
       environment: env['ENVIRONMENT'] as String,
+      maxRequestBodyBytes: env['MAX_REQUEST_BODY_BYTES'] as int,
     );
   }
 

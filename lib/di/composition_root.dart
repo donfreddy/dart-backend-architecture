@@ -88,6 +88,12 @@ final class CompositionRoot {
         userRepo: _userRepo,
         keystoreRepo: _keystoreRepo,
         roleRepo: _roleRepo,
+        dbCheck: () async {
+          await _db.pool.execute('SELECT 1');
+          return true;
+        },
+        cacheCheck: () => _cache.ping(),
+        natsCheck: () => _nats.ping(),
       );
 
   // Release resources in reverse dependency order.

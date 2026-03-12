@@ -113,6 +113,16 @@ final class NatsService {
     _log.info('NATS connection closed');
   }
 
+  Future<bool> ping({Duration timeout = const Duration(seconds: 2)}) async {
+    try {
+      await _ensureConnected();
+      return _connected;
+    } catch (e) {
+      _log.warning('NATS ping failed: $e');
+      return false;
+    }
+  }
+
   // ── Internal helpers ──────────────────────────────────────────
 
   Future<void> _ensureConnected() async {

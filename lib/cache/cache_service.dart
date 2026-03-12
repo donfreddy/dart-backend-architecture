@@ -137,6 +137,16 @@ final class CacheService {
     _log.info('Redis connection closed');
   }
 
+  Future<bool> ping() async {
+    try {
+      await _execute((cmd) => cmd.send_object(['PING']));
+      return true;
+    } catch (e) {
+      _log.warning('Redis PING failed: $e');
+      return false;
+    }
+  }
+
   // ── Connection management ─────────────────────────────────────
 
   Future<T> _execute<T>(Future<T> Function(Command cmd) action) async {

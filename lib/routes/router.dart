@@ -2,6 +2,7 @@ import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/keystore_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/role_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/user_repo.dart';
+import 'package:dart_backend_architecture/routes/health_handler.dart';
 import 'package:dart_backend_architecture/routes/v1/router.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
 import 'package:dart_backend_architecture/services/blog_service.dart';
@@ -15,8 +16,21 @@ Handler buildRouter({
   required UserRepo userRepo,
   required KeystoreRepo keystoreRepo,
   required RoleRepo roleRepo,
+  required Probe dbCheck,
+  required Probe cacheCheck,
+  required Probe natsCheck,
 }) {
   final root = Router();
+
+  // Liveness / readiness — no auth / no versioning
+  root.get('/healthz', healthzHandler);
+  root.get('/readyz', (Request _) {
+    return readyzHandler(
+      dbCheck: dbCheck,
+      cacheCheck: cacheCheck,
+      natsCheck: natsCheck,
+    );
+  });
 
   root.mount(
     '/v1',

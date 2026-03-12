@@ -56,8 +56,15 @@ Future<void> _spawnServer(int workerId) async {
     );
 
     server.autoCompress = true;
+    server.idleTimeout = const Duration(seconds: 30);
 
-    shelf_io.serveRequests(server, buildApp(root.router));
+    shelf_io.serveRequests(
+      server,
+      buildApp(
+        root.router,
+        maxRequestBodyBytes: config.maxRequestBodyBytes,
+      ),
+    );
     log.info('Listening on :${server.port}');
 
     // ── Graceful shutdown ─────────────────────────────────────

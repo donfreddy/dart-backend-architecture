@@ -214,6 +214,7 @@ Copy `.env.example` to `.env`.
 | Variable                   | Description                                  |
 |----------------------------|----------------------------------------------|
 | `PORT`                     | API port                                     |
+| `MAX_REQUEST_BODY_BYTES`   | Max allowed request payload size in bytes    |
 | `DATABASE_URL`             | PostgreSQL connection string                 |
 | `DB_PORT`                  | Postgres published port (docker convenience) |
 | `REDIS_URL`                | Redis connection string                      |
@@ -318,3 +319,5 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+<!-- Analise mon archecture complet de mon backend tu me dis ce qui est bien et qui n'est pas et ce qui faut ameliore pour scaling et maintenabilité. -->

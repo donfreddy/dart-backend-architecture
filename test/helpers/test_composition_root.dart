@@ -37,5 +37,8 @@ final class TestCompositionRoot {
         userRepo: userRepo,
         keystoreRepo: keystoreRepo,
         roleRepo: roleRepo,
+        dbCheck: () async => true,
+        cacheCheck: () async => true,
+        natsCheck: () async => true,
       );
 }
