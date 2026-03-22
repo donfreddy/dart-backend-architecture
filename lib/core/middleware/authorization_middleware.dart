@@ -1,10 +1,9 @@
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/middleware/auth_middleware.dart';
+import 'package:dart_backend_architecture/core/request_context_keys.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/role_repo.dart';
 import 'package:shelf/shelf.dart';
-
-const currentRoleCodeKey = 'current_role_code';
 
 Middleware authorizationMiddleware({
   required RoleRepo roleRepo,
@@ -36,7 +35,7 @@ Middleware authorizationMiddleware({
         request.change(
           context: {
             ...request.context,
-            currentRoleCodeKey: roleCode,
+            RequestContextKeys.currentRoleCode: roleCode,
           },
         ),
       );
@@ -46,7 +45,7 @@ Middleware authorizationMiddleware({
 
 extension AuthorizedRequest on Request {
   String get currentRoleCode {
-    final roleCode = context[currentRoleCodeKey];
+    final roleCode = context[RequestContextKeys.currentRoleCode];
     if (roleCode is String && roleCode.isNotEmpty) return roleCode;
     throw StateError('current_role_code not found in request context');
   }
