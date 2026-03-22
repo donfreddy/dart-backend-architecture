@@ -3,12 +3,22 @@ import 'package:dart_backend_architecture/core/middleware/body_limit_middleware.
 import 'package:dart_backend_architecture/core/middleware/cors_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/error_handler_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/rate_limit_middleware.dart';
+import 'package:dart_backend_architecture/core/middleware/security_headers_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/tracing_middleware.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/api_key_repo.dart';
 import 'package:shelf/shelf.dart';
 
 /// Builds the top-level Shelf pipeline used by the server.
-/// Order matters: errors → tracing/logs → security (body limit, CORS) → optional auth/rate-limit → router.
+///
+/// Pipeline order (outermost → innermost):
+///   errorHandler → tracing → logging → bodyLimit → securityHeaders
+///   → [rateLimit] → cors → [apiKey] → router
+///
+/// Key ordering decisions:
+/// - [securityHeadersMiddleware] is before rateLimit so headers appear on 429s.
+/// - [rateLimitMiddleware] is before [corsMiddleware] so OPTIONS preflight
+///   requests are also rate-limited (prevents preflight flooding bypass).
+/// - [apiKeyMiddleware] is after cors because preflight is already handled.
 Handler buildApp(
   Handler router, {
   List<String> corsAllowedOrigins = const [],
@@ -26,18 +36,13 @@ Handler buildApp(
       .addMiddleware(tracingMiddleware())
       .addMiddleware(logRequests())
 
-      // ── Security baseline ─────────────────────────────────
+      // ── Request hygiene ───────────────────────────────────
       .addMiddleware(bodyLimitMiddleware(maxBytes: maxRequestBodyBytes))
-      .addMiddleware(
-        corsMiddleware(
-          allowedOrigins: corsAllowedOrigins,
-        ),
-      );
 
-  if (apiKeyRepo != null) {
-    pipeline = pipeline.addMiddleware(apiKeyMiddleware(apiKeyRepo));
-  }
+      // ── Security headers (on every response, including errors) ────────────
+      .addMiddleware(securityHeadersMiddleware());
 
+  // ── Rate limiting (before CORS so preflight is also covered) ─────────────
   if (rateLimitStore != null) {
     pipeline = pipeline.addMiddleware(
       rateLimitMiddleware(
@@ -46,6 +51,16 @@ Handler buildApp(
         window: rateLimitWindow,
       ),
     );
+  }
+
+  // ── CORS (handles OPTIONS preflight after rate limiting) ──────────────────
+  pipeline = pipeline.addMiddleware(
+    corsMiddleware(allowedOrigins: corsAllowedOrigins),
+  );
+
+  // ── API key validation (skips OPTIONS internally) ─────────────────────────
+  if (apiKeyRepo != null) {
+    pipeline = pipeline.addMiddleware(apiKeyMiddleware(apiKeyRepo));
   }
 
   return pipeline.addHandler(router);
