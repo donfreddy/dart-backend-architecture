@@ -1,3 +1,4 @@
+import 'package:dart_backend_architecture/cache/repository/user_cache.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/core/middleware/authorization_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/auth_middleware.dart';
@@ -26,12 +27,14 @@ Handler buildV1Router({
   required UserRepo userRepo,
   required KeystoreRepo keystoreRepo,
   required RoleRepo roleRepo,
+  UserCache? userCache,
 }) {
   final router = Router();
   final requireAuth = authMiddleware(
     jwtService: jwtService,
     userRepo: userRepo,
     keystoreRepo: keystoreRepo,
+    userCache: userCache,
   );
   final requireEditor = authorizationMiddleware(
     roleRepo: roleRepo,

@@ -1,5 +1,6 @@
 import 'package:dart_backend_architecture/cache/cache_service.dart';
 import 'package:dart_backend_architecture/cache/repository/blog_cache.dart';
+import 'package:dart_backend_architecture/cache/repository/user_cache.dart';
 import 'package:dart_backend_architecture/config.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/database/db_pool.dart';
@@ -63,6 +64,7 @@ final class CompositionRoot {
   PostgresKeystoreRepo get _keystoreRepo => PostgresKeystoreRepo(_db.pool);
   PostgresRoleRepo get _roleRepo => PostgresRoleRepo(_db.pool);
   BlogCache get _blogCache => BlogCache(_cache);
+  UserCache get _userCache => UserCache(_cache);
 
   // Core services
   JwtService get _jwtService => JwtService(
@@ -94,6 +96,7 @@ final class CompositionRoot {
         userRepo: _userRepo,
         keystoreRepo: _keystoreRepo,
         roleRepo: _roleRepo,
+        userCache: _userCache,
         dbCheck: () async {
           await _db.pool.execute('SELECT 1');
           return true;

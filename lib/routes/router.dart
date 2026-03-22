@@ -1,3 +1,4 @@
+import 'package:dart_backend_architecture/cache/repository/user_cache.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/keystore_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/role_repo.dart';
@@ -20,6 +21,7 @@ Handler buildRouter({
   required Probe dbCheck,
   required Probe cacheCheck,
   required Probe natsCheck,
+  UserCache? userCache,
 }) {
   final root = Router();
 
@@ -42,6 +44,7 @@ Handler buildRouter({
       userRepo: userRepo,
       keystoreRepo: keystoreRepo,
       roleRepo: roleRepo,
+      userCache: userCache,
     ),
   );
 
