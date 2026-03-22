@@ -35,6 +35,26 @@ final class AppConfig {
     required this.workerCount,
   });
 
+  static final _schema = z.object({
+    'PORT': z.coerce().integer(min: 1, max: 65535).withDefault(8080),
+    'DATABASE_URL': z.string().min(1),
+    'REDIS_URL': z.string().min(1),
+    'NATS_URL': z.string().min(1),
+    'JWT_PRIVATE_KEY_PATH': z.string().min(1),
+    'JWT_PUBLIC_KEY_PATH': z.string().min(1),
+    'JWT_ACCESS_TOKEN_EXPIRY': z.coerce().integer(min: 1).withDefault(3600),
+    'JWT_REFRESH_TOKEN_EXPIRY': z.coerce().integer(min: 1).withDefault(2592000),
+    'OTEL_ENDPOINT': z.string().withDefault(''),
+    'ENVIRONMENT': z
+        .string()
+        .oneOf(['development', 'test', 'production'])
+        .withDefault('development'),
+    'MAX_REQUEST_BODY_BYTES':
+        z.coerce().integer(min: 1024).withDefault(1024 * 1024),
+    'DB_POOL_SIZE': z.coerce().integer(min: 1).withDefault(20),
+    'WORKER_COUNT': z.coerce().integer(min: 0).withDefault(0),
+  });
+
   /// Load configuration from `.env` (if present) and environment variables.
   factory AppConfig.fromEnv() {
     final envSource = <String, String>{
@@ -42,26 +62,7 @@ final class AppConfig {
       ...Platform.environment,
     };
 
-    final schema = z.object({
-      'PORT': z.coerce().integer(min: 1, max: 65535).withDefault(8080),
-      'DATABASE_URL': z.string().min(1),
-      'REDIS_URL': z.string().min(1),
-      'NATS_URL': z.string().min(1),
-      'JWT_PRIVATE_KEY_PATH': z.string().min(1),
-      'JWT_PUBLIC_KEY_PATH': z.string().min(1),
-      'JWT_ACCESS_TOKEN_EXPIRY': z.coerce().integer(min: 1).withDefault(3600),
-      'JWT_REFRESH_TOKEN_EXPIRY':
-          z.coerce().integer(min: 1).withDefault(2592000),
-      'OTEL_ENDPOINT': z.string().withDefault(''),
-      'ENVIRONMENT': z.string().min(1).withDefault('development'),
-      'MAX_REQUEST_BODY_BYTES':
-          z.coerce().integer(min: 1024).withDefault(1024 * 1024),
-      'DB_POOL_SIZE': z.coerce().integer(min: 1).withDefault(20),
-      'WORKER_COUNT':
-          z.coerce().integer(min: 0).withDefault(0), // 0 = auto (cpu count)
-    });
-
-    final result = schema.safeParse(envSource);
+    final result = _schema.safeParse(envSource);
     if (result.isFailure) {
       throw Exception(
         'Invalid environment config: \n${result.errors.format()}',

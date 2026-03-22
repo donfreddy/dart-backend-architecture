@@ -14,31 +14,61 @@ enum ValidationSource {
 
 final _log = AppLogger.get('Validator');
 
-// extension ZemaCustomValidators on ZemaString {
-//   ZemaSchema<String, String> bearer() =>
-//       transform((v) {
-//         if (!v.startsWith('Bearer ')) throw 'Missing Bearer prefix';
-//         final token = v.substring(7).trim();
-//         if (token.isEmpty) throw 'Empty token';
-//         return token;
-//       });
-// }
+// ─── Schemas ─────────────────────────────────────────────────────────────────
 
-Map<String, dynamic> validateSchema<O extends Map<String, dynamic>>(
-  ZemaSchema<dynamic, O> schema,
-  Map<String, dynamic> input, {
-  ValidationSource source = ValidationSource.body,
-}) {
+final _urlEndpointSchema = z.string().refine(
+      (v) => !v.contains('://'),
+      message: 'Invalid url endpoint',
+    );
+
+final _bearerSchema = z
+    .string()
+    .refine(
+      (v) => v.startsWith('Bearer '),
+      message: 'Invalid authorization header',
+    )
+    .transform((v) => v.substring(7).trim())
+    .refine(
+      (v) => v.isNotEmpty,
+      message: 'Invalid authorization header',
+    );
+
+// ─── Internal helper ─────────────────────────────────────────────────────────
+
+T _validate<T>(
+  ZemaSchema<dynamic, T> schema,
+  dynamic input,
+  ValidationSource source,
+) {
   final result = schema.safeParse(input);
 
   if (result.isFailure) {
-    final message = result.errors.map((ZemaIssue e) => e.message).join(', ');
+    final message = result.errors.map((e) {
+      final prefix = e.path.isEmpty ? '' : '${e.pathString}: ';
+      return '$prefix${e.message}';
+    }).join(', ');
+
     _log.warning('Validation failed [${source.name}]: $message');
     throw BadRequestError(message);
   }
 
   return result.value;
 }
+
+// ─── Public API ──────────────────────────────────────────────────────────────
+
+Map<String, dynamic> validateSchema<O extends Map<String, dynamic>>(
+  ZemaSchema<dynamic, O> schema,
+  Map<String, dynamic> input, {
+  ValidationSource source = ValidationSource.body,
+}) =>
+    _validate(schema, input, source);
+
+String validateUrlEndpoint(String value) =>
+    _validate(_urlEndpointSchema, value, ValidationSource.param);
+
+String validateAuthBearer(String value) =>
+    _validate(_bearerSchema, value, ValidationSource.header);
 
 Future<Map<String, dynamic>> readJsonBody(Request request) async {
   final raw = await request.readAsString();
@@ -47,24 +77,4 @@ Future<Map<String, dynamic>> readJsonBody(Request request) async {
     throw const BadRequestError('Invalid request body');
   }
   return decoded;
-}
-
-String validateUrlEndpoint(String value) {
-  if (value.contains('://')) {
-    throw const BadRequestError('Invalid url endpoint');
-  }
-  return value;
-}
-
-String validateAuthBearer(String value) {
-  if (!value.startsWith('Bearer ')) {
-    throw const BadRequestError('Invalid authorization header');
-  }
-
-  final token = value.substring(7).trim();
-  if (token.isEmpty) {
-    throw const BadRequestError('Invalid authorization header');
-  }
-
-  return token;
 }
