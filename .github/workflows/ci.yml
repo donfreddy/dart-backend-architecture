@@ -43,6 +43,9 @@ jobs:
       - name: Analyze
         run: dart analyze --fatal-infos
 
+      - name: Security audit
+        run: dart pub audit
+
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
