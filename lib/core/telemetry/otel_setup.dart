@@ -10,7 +10,7 @@ final _log = AppLogger.get('otel');
 Future<void> initTelemetry() async {
   final config = AppConfig.fromEnv();
 
-  // Skip if no endpoint configured — local dev without collector
+  // Skip if no endpoint configured, local dev without collector
   if (config.otelEndpoint.isEmpty) {
     _log.info('OTEL_ENDPOINT not set — telemetry disabled');
     return;

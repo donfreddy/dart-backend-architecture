@@ -6,7 +6,7 @@ final userCredentialSchema = z.object({
 });
 
 final refreshTokenSchema = z.object({
-  'refreshToken': z.string().min(1),
+  'refresh_token': z.string().min(1),
 });
 
 final authHeaderSchema = z.object({
@@ -17,5 +17,5 @@ final signupSchema = z.object({
   'name': z.string().min(3),
   'email': z.string().email(),
   'password': z.string().min(6),
-  'profilePicUrl': z.string().url().optional(),
+  'profile_pic_url': z.string().url().optional(),
 });

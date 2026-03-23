@@ -75,7 +75,7 @@ Future<Response> writerUpdateBlogHandler(
 
   var updated = blog;
 
-  final blogUrl = validatedBody['blogUrl'] as String?;
+  final blogUrl = validatedBody['blog_url'] as String?;
   if (blogUrl != null) {
     final endpoint = _formatEndpoint(validateUrlEndpoint(blogUrl));
     final existingByUrl = await blogService.findUrlIfExists(endpoint);
@@ -91,7 +91,7 @@ Future<Response> writerUpdateBlogHandler(
     draftText: validatedBody['text'] as String? ?? updated.draftText,
     tags: (validatedBody['tags'] as List<dynamic>?)?.cast<String>() ??
         updated.tags,
-    imgUrl: validatedBody['imgUrl'] as String? ?? updated.imgUrl,
+    imgUrl: validatedBody['img_url'] as String? ?? updated.imgUrl,
     score: validatedBody['score'] as num? ?? updated.score,
     updatedBy: authUser,
   );

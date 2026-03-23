@@ -48,7 +48,7 @@ Middleware corsMiddleware({
         'Vary': 'Origin',
       };
 
-      // Preflight — return immediately without hitting handlers
+      // Preflight: return immediately without hitting handlers
       if (request.method == 'OPTIONS') {
         if (hasOrigin && !isAllowed) {
           return Response.forbidden('CORS origin not allowed');

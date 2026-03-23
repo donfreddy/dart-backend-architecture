@@ -14,7 +14,7 @@ Future<Response> healthzHandler(Request _) async {
     message: 'ok',
     data: {
       'status': 'live',
-      'startedAt': _startedAt.toIso8601String(),
+      'started_at': _startedAt.toIso8601String(),
     },
   );
 }
@@ -42,7 +42,7 @@ Future<Response> readyzHandler({
         r.name: {
           'ok': r.ok,
           if (r.error != null) 'error': r.error,
-          'durationMs': r.durationMs,
+          'duration_ms': r.durationMs,
         },
     },
   );

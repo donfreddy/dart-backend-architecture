@@ -56,16 +56,6 @@ final class Role {
     );
   }
 
-  factory Role.fromRow(List<dynamic> row) {
-    return Role(
-      id: row[0] as String,
-      code: row[1] as String,
-      status: row[2] as bool?,
-      createdAt: row[3] as DateTime?,
-      updatedAt: row[4] as DateTime?,
-    );
-  }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,

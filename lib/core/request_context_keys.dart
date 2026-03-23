@@ -5,15 +5,15 @@
 abstract final class RequestContextKeys {
   RequestContextKeys._();
 
-  // ── Auth middleware ──────────────────────────────────────────────────────
+  // ── Auth middleware ────────────────────────────────────────────────────────
   static const accessToken = 'access_token';
   static const userPayload = 'user_payload';
   static const authUser = 'auth_user';
   static const authKeystore = 'auth_keystore';
 
-  // ── Authorization middleware ─────────────────────────────────────────────
+  // ── Authorization middleware ───────────────────────────────────────────────
   static const currentRoleCode = 'current_role_code';
 
-  // ── API key middleware ───────────────────────────────────────────────────
+  // ── API key middleware ─────────────────────────────────────────────────────
   static const apiKey = 'api_key';
 }

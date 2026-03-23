@@ -24,7 +24,15 @@ final class PostgresRoleRepo implements RoleRepo {
       );
 
       if (result.isEmpty) return null;
-      return Role.fromRow(result.first);
+      final row = result.first;
+
+      return Role(
+        id: row[0] as String,
+        code: row[1] as String,
+        status: row[2] as bool?,
+        createdAt: row[3] as DateTime?,
+        updatedAt: row[4] as DateTime?,
+      );
     } catch (e, st) {
       _log.severe('findByCode failed', e, st);
       throw const InternalError();

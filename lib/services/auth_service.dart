@@ -45,7 +45,7 @@ final class SignupDto {
         name: json['name'] as String,
         email: json['email'] as String,
         password: json['password'] as String,
-        profilePicUrl: json['profilePicUrl'] as String?,
+        profilePicUrl: json['profile_pic_url'] as String?,
       );
 }
 
@@ -61,7 +61,7 @@ final class AuthResult {
           'name': user.name,
           'email': user.email,
           'roles': user.roles,
-          if (user.profilePicUrl != null) 'profilePicUrl': user.profilePicUrl,
+          if (user.profilePicUrl != null) 'profile_pic_url': user.profilePicUrl,
         },
         'tokens': tokens.toJson(),
       };

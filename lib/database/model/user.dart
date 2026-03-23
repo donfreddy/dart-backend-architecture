@@ -1,4 +1,4 @@
-import 'package:postgres/postgres.dart';
+// import 'package:postgres/postgres.dart';
 
 final class User {
   final String id;
@@ -47,24 +47,6 @@ final class User {
         createdAt: DateTime.parse(json['created_at'] as String),
         roles: ((json['roles'] as List?) ?? const []).cast<String>(),
       );
-
-  factory User.fromRow(ResultRow row) {
-    final rawRoles = row.length > 6 ? row[6] : null;
-    final roles = switch (rawRoles) {
-      final List<dynamic> values => values.cast<String>(),
-      _ => const <String>[],
-    };
-
-    return User(
-      id: row[0] as String,
-      email: row[1] as String,
-      name: row[2] as String,
-      profilePicUrl: row[3] as String?,
-      createdAt: row[4] as DateTime,
-      passwordHash: row.length > 5 ? row[5] as String? : null,
-      roles: roles,
-    );
-  }
 
   Map<String, dynamic> toJson() => {
         'id': id,

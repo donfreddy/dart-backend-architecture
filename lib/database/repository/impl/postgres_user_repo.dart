@@ -111,7 +111,7 @@ final class PostgresUserRepo implements UserRepo {
         parameters: {'email': email},
       );
       if (result.isEmpty) return null;
-      return User.fromRow(result.first);
+      return _mapUser(result.first);
     } catch (e, st) {
       _log.severe('findByEmail failed', e, st);
       throw const InternalError();
@@ -135,7 +135,7 @@ final class PostgresUserRepo implements UserRepo {
         parameters: {'id': id},
       );
       if (result.isEmpty) return null;
-      return User.fromRow(result.first);
+      return _mapUser(result.first);
     } catch (e, st) {
       _log.severe('findById failed', e, st);
       throw const InternalError();
@@ -159,7 +159,7 @@ final class PostgresUserRepo implements UserRepo {
         parameters: {'id': id},
       );
       if (result.isEmpty) return null;
-      return User.fromRow(result.first);
+      return _mapUser(result.first);
     } catch (e, st) {
       _log.severe('findProfileById failed', e, st);
       throw const InternalError();
@@ -183,7 +183,7 @@ final class PostgresUserRepo implements UserRepo {
         parameters: {'id': id},
       );
       if (result.isEmpty) return null;
-      return User.fromRow(result.first);
+      return _mapUser(result.first);
     } catch (e, st) {
       _log.severe('findPublicProfileById failed', e, st);
       throw const InternalError();
@@ -265,5 +265,23 @@ final class PostgresUserRepo implements UserRepo {
       _log.severe('updateInfo failed', e, st);
       throw const InternalError();
     }
+  }
+
+   User _mapUser(ResultRow row) {
+    final rawRoles = row.length > 6 ? row[6] : null;
+    final roles = switch (rawRoles) {
+      final List<dynamic> values => values.cast<String>(),
+      _ => const <String>[],
+    };
+
+    return User(
+      id: row[0] as String,
+      email: row[1] as String,
+      name: row[2] as String,
+      profilePicUrl: row[3] as String?,
+      createdAt: row[4] as DateTime,
+      passwordHash: row.length > 5 ? row[5] as String? : null,
+      roles: roles,
+    );
   }
 }

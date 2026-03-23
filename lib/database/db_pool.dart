@@ -47,7 +47,7 @@ final class DatabasePool {
       ),
     );
 
-    // Verify connectivity at startup — fail fast
+    // Verify connectivity at startup, fail fast
     await pool.execute('SELECT 1');
     log.info('PostgreSQL connected -> ${uri.host}:$port/$database');
 

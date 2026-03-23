@@ -9,7 +9,7 @@ import 'package:shelf/shelf.dart';
 final _log = AppLogger.get('RateLimit');
 
 // The OTel SDK caches instruments by name so calling createCounter() on every
-// bypass is idempotent and effectively free — no manual caching needed.
+// bypass is idempotent and effectively free, no manual caching needed.
 // Wrapped in try/catch so a disabled or uninitialised OTel stack never
 // blocks an HTTP request.
 void _incrementBypassCounter() {
@@ -18,8 +18,7 @@ void _incrementBypassCounter() {
         .getMeter(name: AppInfo.name)
         .createCounter<int>(
           name: 'rate_limit.bypass.total',
-          description:
-              'Requests that bypassed rate limiting due to store unavailability',
+          description: 'Requests that bypassed rate limiting due to store unavailability',
           unit: '{request}',
         )
         .add(1);
@@ -73,14 +72,13 @@ Middleware rateLimitMiddleware(
         return response.change(
           headers: {
             'X-RateLimit-Limit': maxRequests.toString(),
-            'X-RateLimit-Remaining':
-                (maxRequests - current).clamp(0, maxRequests).toString(),
+            'X-RateLimit-Remaining': (maxRequests - current).clamp(0, maxRequests).toString(),
           },
         );
       } catch (e) {
         // Redis failure must never block a request, but we log at SEVERE so
         // that alerting rules (log-based metrics, PagerDuty, etc.) can fire.
-        // Tag: RATE_LIMIT_BYPASS — use this string in alert filter queries.
+        // Tag: RATE_LIMIT_BYPASS: use this string in alert filter queries.
         _incrementBypassCounter();
         _log.severe(
           'RATE_LIMIT_BYPASS: Redis unavailable, skipping rate limit for IP $ip — $e',

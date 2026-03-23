@@ -30,8 +30,8 @@ class BlogService implements BlogRepo {
       subject: 'blog.created',
       payload: {
         if (created.id != null) 'id': created.id,
-        'authorId': created.author.id,
-        'blogUrl': created.blogUrl,
+        'author_id': created.author.id,
+        'blog_url': created.blogUrl,
       },
     );
     return created;
@@ -154,8 +154,8 @@ class BlogService implements BlogRepo {
       subject: 'blog.updated',
       payload: {
         if (blog.id != null) 'id': blog.id,
-        'authorId': blog.author.id,
-        'blogUrl': blog.blogUrl,
+        'author_id': blog.author.id,
+        'blog_url': blog.blogUrl,
       },
     );
   }

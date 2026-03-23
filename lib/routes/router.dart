@@ -25,7 +25,7 @@ Handler buildRouter({
 }) {
   final root = Router();
 
-  // Liveness / readiness — no auth / no versioning
+  // Liveness / readiness: no auth / no versioning
   root.get('/healthz', healthzHandler);
   root.get('/readyz', (Request _) {
     return readyzHandler(

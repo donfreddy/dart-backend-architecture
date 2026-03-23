@@ -6,5 +6,5 @@ final profileUserIdSchema = z.object({
 
 final profileUpdateSchema = z.object({
   'name': z.string().min(3).optional(),
-  'profilePicUrl': z.string().url().optional(),
+  'profile_pic_url': z.string().url().optional(),
 });

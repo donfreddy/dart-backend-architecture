@@ -6,7 +6,7 @@ import 'package:dart_backend_architecture/core/logger.dart';
 
 final _log = AppLogger.get('CryptoWorker');
 
-// ── Messages ──────────────────────────────────────────────────
+// ── Messages ─────────────────────────────────────────────────────────────────
 
 sealed class _CryptoMessage {
   const _CryptoMessage();
@@ -34,8 +34,7 @@ final class _ShutdownRequest extends _CryptoMessage {
   const _ShutdownRequest();
 }
 
-// ── Worker ────────────────────────────────────────────────────
-
+// ── Worker ───────────────────────────────────────────────────────────────────
 class CryptoWorker {
   final SendPort _sendPort;
   final Isolate _isolate;
@@ -59,7 +58,7 @@ class CryptoWorker {
     return CryptoWorker._(sendPort, isolate);
   }
 
-  // ── Public API ────────────────────────────────────────────────
+  // ── Public API ─────────────────────────────────────────────────────────────
 
   Future<String> hashPassword(String plaintext) async {
     final reply = ReceivePort();
@@ -87,7 +86,7 @@ class CryptoWorker {
     }
   }
 
-  // Constant-time dummy hash — prevents user enumeration via timing attacks
+  // Constant-time dummy hash:  prevents user enumeration via timing attacks
   Future<void> fakeHash() async {
     final reply = ReceivePort();
     _sendPort.send(_FakeHashRequest(reply.sendPort));
@@ -102,7 +101,7 @@ class CryptoWorker {
   }
 }
 
-// ── Worker entry point (runs inside the Isolate) ─────────────
+// ── Worker entry point (runs inside the Isolate) ─────────────────────────────
 
 void _workerEntryPoint(SendPort callerSendPort) {
   final receivePort = ReceivePort();
@@ -139,7 +138,7 @@ void _workerEntryPoint(SendPort callerSendPort) {
   });
 }
 
-// ── BCrypt implementation ─────────────────────────────────────
+// ── BCrypt implementation ────────────────────────────────────────────────────
 
 String _bcryptHash(String plaintext) {
   return BCrypt.hashpw(

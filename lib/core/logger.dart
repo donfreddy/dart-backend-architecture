@@ -32,7 +32,7 @@ class AppLogger {
       log['stack'] = record.stackTrace.toString();
     }
 
-    // Structured output — stderr for errors, stdout for the rest
+    // Structured output: stderr for errors, stdout for the rest
     final line = jsonEncode(log);
     if (record.level >= Level.SEVERE) {
       stderr.writeln(line);

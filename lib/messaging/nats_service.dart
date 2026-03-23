@@ -38,7 +38,7 @@ class NatsService {
     await _connectWithRetry();
   }
 
-  // ── Publish — fire and forget ─────────────────────────────────
+  // ── Publish: fire and forget ──────────────────────────────────────────────
 
   /// Publish a JSON payload. Retries once after reconnect on failure.
   Future<void> publish(String subject, Map<String, dynamic> payload) async {
@@ -60,7 +60,7 @@ class NatsService {
     }
   }
 
-  // ── Subscribe — returns a typed Dart Stream ───────────────────
+  // ── Subscribe: returns a typed Dart Stream ────────────────────────────────
 
   /// Subscribe to a subject and get a stream of decoded JSON maps.
   Future<Stream<Map<String, dynamic>>> subscribe(String subject) async {
@@ -85,7 +85,7 @@ class NatsService {
     }).where((msg) => msg.isNotEmpty);
   }
 
-  // ── Request / Reply ──────────────────────────────────────────
+  // ── Request / Reply ────────────────────────────────────────────────────────
 
   /// Send a request and await a JSON map response. Returns `null` on timeout or failure.
   Future<Map<String, dynamic>?> request(
@@ -131,7 +131,7 @@ class NatsService {
     }
   }
 
-  // ── Internal helpers ──────────────────────────────────────────
+  // ── Internal helpers ───────────────────────────────────────────────────────
 
   Future<void> _ensureConnected() async {
     if (_connected) return;

@@ -8,7 +8,7 @@ import 'package:shelf/shelf.dart';
 
 final _log = AppLogger.get('ErrorHandler');
 
-// OTel SDK caches instruments by name — calling createCounter each time is idempotent.
+// OTel SDK caches instruments by name, calling createCounter each time is idempotent.
 void _recordError(ApiError error) {
   try {
     OTel.meterProvider()

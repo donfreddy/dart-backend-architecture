@@ -16,7 +16,7 @@ class CachingBlogRepo implements BlogRepo {
       : _inner = inner,
         _cache = cache;
 
-  // ── Writes: delegate then invalidate ─────────────────────────────────────
+  // ── Writes: delegate then invalidate ───────────────────────────────────────
 
   @override
   Future<Blog> create(Blog blog) async {
@@ -33,7 +33,7 @@ class CachingBlogRepo implements BlogRepo {
     await _evictListsBestEffort();
   }
 
-  // ── Cached reads ──────────────────────────────────────────────────────────
+  // ── Cached reads ───────────────────────────────────────────────────────────
 
   @override
   Future<Blog?> findInfoWithTextById(String id) {
@@ -48,7 +48,7 @@ class CachingBlogRepo implements BlogRepo {
     );
   }
 
-  // ── Pass-through reads ────────────────────────────────────────────────────
+  // ── Pass-through reads ─────────────────────────────────────────────────────
 
   @override
   Future<Blog?> findInfoById(String id) => _inner.findInfoById(id);
@@ -114,7 +114,7 @@ class CachingBlogRepo implements BlogRepo {
   Future<List<Blog>> searchLike(String query, int limit) =>
       _inner.searchLike(query, limit);
 
-  // ── Private helpers ───────────────────────────────────────────────────────
+  // ── Private helpers ────────────────────────────────────────────────────────
 
   Future<void> _evictSingleBestEffort(Blog blog) async {
     try {

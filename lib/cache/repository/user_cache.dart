@@ -10,7 +10,7 @@ final class UserCache {
 
   const UserCache(this._cache);
 
-  // ── Profile ────────────────────────────────────────────────
+  // ── Profile ────────────────────────────────────────────────────────────────
 
   Future<User?> findProfile(String userId) async {
     final raw = await _cache.get(CacheKeys.userProfile(userId));
@@ -36,7 +36,7 @@ final class UserCache {
     await _cache.invalidate(CacheKeys.userProfile(userId));
   }
 
-  // ── Keystore ───────────────────────────────────────────────
+  // ── Keystore ───────────────────────────────────────────────────────────────
   // Cached to avoid a DB round-trip on every authenticated request
 
   Future<String?> findRefreshToken(String userId) async {
@@ -55,7 +55,7 @@ final class UserCache {
     await _cache.invalidate(CacheKeys.keystore(userId));
   }
 
-  // ── Keystore (per-session) ──────────────────────────────────────────────
+  // ── Keystore (per-session) ─────────────────────────────────────────────────
   // Avoids a DB round-trip on every authenticated request.
   // Keyed by (userId, primaryKey) to support multiple concurrent sessions.
 

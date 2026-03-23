@@ -26,7 +26,7 @@ Future<Response> publicProfileByIdHandler(
     message: 'success',
     data: {
       'name': user.name,
-      if (user.profilePicUrl != null) 'profilePicUrl': user.profilePicUrl,
+      if (user.profilePicUrl != null) 'profile_pic_url': user.profilePicUrl,
     },
   );
 }
@@ -45,7 +45,7 @@ Future<Response> myProfileHandler(
     message: 'success',
     data: {
       'name': user.name,
-      if (user.profilePicUrl != null) 'profilePicUrl': user.profilePicUrl,
+      if (user.profilePicUrl != null) 'profile_pic_url': user.profilePicUrl,
       'roles': user.roles,
     },
   );
@@ -69,7 +69,7 @@ Future<Response> updateProfileHandler(
 
   final updatedUser = user.copyWith(
     name: validated['name'] as String? ?? user.name,
-    profilePicUrl: validated['profilePicUrl'] as String? ?? user.profilePicUrl,
+    profilePicUrl: validated['profile_pic_url'] as String? ?? user.profilePicUrl,
   );
 
   await userRepo.updateInfo(updatedUser);
@@ -79,7 +79,7 @@ Future<Response> updateProfileHandler(
     data: {
       'name': updatedUser.name,
       if (updatedUser.profilePicUrl != null)
-        'profilePicUrl': updatedUser.profilePicUrl,
+        'profile_pic_url': updatedUser.profilePicUrl,
       'roles': updatedUser.roles,
     },
   );

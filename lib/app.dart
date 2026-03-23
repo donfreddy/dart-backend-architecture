@@ -29,20 +29,20 @@ Handler buildApp(
   int maxRequestBodyBytes = 1024 * 1024,
 }) {
   var pipeline = const Pipeline()
-      // ── Error boundary (outermost) ───────────────────────
+      // ── Error boundary (outermost) ─────────────────────────────────────────
       .addMiddleware(errorHandlerMiddleware())
 
-      // ── Observability ─────────────────────────────────────
+      // ── Observability ──────────────────────────────────────────────────────
       .addMiddleware(tracingMiddleware())
       .addMiddleware(logRequests())
 
-      // ── Request hygiene ───────────────────────────────────
+      // ── Request hygiene ────────────────────────────────────────────────────
       .addMiddleware(bodyLimitMiddleware(maxBytes: maxRequestBodyBytes))
 
-      // ── Security headers (on every response, including errors) ────────────
+      // ── Security headers (on every response, including errors) ─────────────
       .addMiddleware(securityHeadersMiddleware());
 
-  // ── Rate limiting (before CORS so preflight is also covered) ─────────────
+  // ── Rate limiting (before CORS so preflight is also covered) ───────────────
   if (rateLimitStore != null) {
     pipeline = pipeline.addMiddleware(
       rateLimitMiddleware(
@@ -53,12 +53,12 @@ Handler buildApp(
     );
   }
 
-  // ── CORS (handles OPTIONS preflight after rate limiting) ──────────────────
+  // ── CORS (handles OPTIONS preflight after rate limiting) ───────────────────
   pipeline = pipeline.addMiddleware(
     corsMiddleware(allowedOrigins: corsAllowedOrigins),
   );
 
-  // ── API key validation (skips OPTIONS internally) ─────────────────────────
+  // ── API key validation (skips OPTIONS internally) ──────────────────────────
   if (apiKeyRepo != null) {
     pipeline = pipeline.addMiddleware(apiKeyMiddleware(apiKeyRepo));
   }

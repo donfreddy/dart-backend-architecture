@@ -7,7 +7,7 @@ export 'blog_write_repo.dart';
 /// Combined blog repository interface (read + write).
 ///
 /// Use [BlogQueryRepo] or [BlogWriteRepo] directly when a consumer only needs
-/// one side of the contract — this keeps dependencies minimal (ISP).
+/// one side of the contract, this keeps dependencies minimal (ISP).
 ///
 /// [PostgresBlogRepo], [CachingBlogRepo], and [BlogService] all implement
 /// this interface so callers are not affected by the split.

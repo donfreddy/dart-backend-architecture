@@ -26,8 +26,8 @@ final blogCreateSchema = z.object({
   'description': z.string().min(1),
   'text': z.string().min(1),
   'tags': z.array(z.string().min(1)).min(1),
-  'blogUrl': z.string().min(1),
-  'imgUrl': z.string().url().optional(),
+  'blog_url': z.string().min(1),
+  'img_url': z.string().url().optional(),
   'score': z.coerce().integer(min: 0).withDefault(0),
 });
 
@@ -36,7 +36,7 @@ final blogUpdateSchema = z.object({
   'description': z.string().min(1).optional(),
   'text': z.string().min(1).optional(),
   'tags': z.array(z.string().min(1)).min(1).optional(),
-  'blogUrl': z.string().min(1).optional(),
-  'imgUrl': z.string().url().optional(),
+  'blog_url': z.string().min(1).optional(),
+  'img_url': z.string().url().optional(),
   'score': z.coerce().integer(min: 0).optional(),
 });

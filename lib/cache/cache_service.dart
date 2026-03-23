@@ -22,7 +22,7 @@ class CacheService {
     return CacheService._(config, conn, cmd);
   }
 
-  // ── Core operations ───────────────────────────────────────────
+  // ── Core operations ────────────────────────────────────────────────────────
 
   Future<String?> get(String key) async {
     try {
@@ -111,7 +111,7 @@ class CacheService {
     }
   }
 
-  // ── Cache-aside pattern ───────────────────────────────────────
+  // ── Cache-aside pattern ────────────────────────────────────────────────────
 
   Future<T> getOrSet<T>(
     String key,
@@ -158,7 +158,7 @@ class CacheService {
     }
   }
 
-  // ── Connection management ─────────────────────────────────────
+  // ── Connection management ──────────────────────────────────────────────────
 
   Future<T> _execute<T>(Future<T> Function(Command cmd) action) async {
     for (var attempt = 0; attempt < 2; attempt++) {

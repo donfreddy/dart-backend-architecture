@@ -9,8 +9,6 @@ class BlogCache {
 
   const BlogCache(this._cache);
 
-  // ── Single blog (read-through) ───────────────────────────────
-
   Future<Blog?> getByIdWithLoader(
     String id,
     Future<Blog?> Function() loader,
@@ -49,7 +47,7 @@ class BlogCache {
     await _cache.invalidate(CacheKeys.blogUrl(url));
   }
 
-  // Evict all paginated list entries — called on create / publish / unpublish
+  // Evict all paginated list entries: called on create / publish / unpublish
   Future<void> evictAllLists() async {
     await _cache.invalidatePattern(CacheKeys.blogListPattern);
   }

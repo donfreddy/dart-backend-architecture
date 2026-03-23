@@ -90,10 +90,12 @@ final class TokenPair {
   });
 
   Map<String, dynamic> toJson() => {
-        'accessToken': accessToken,
-        'refreshToken': refreshToken,
+        'access_token': accessToken,
+        'refresh_token': refreshToken,
       };
 }
+
+final _log = AppLogger.get('JwtService');
 
 /// JWT encoding / decoding service.
 ///
@@ -110,8 +112,6 @@ class JwtService {
   final String publicKeyPem;
   final Duration accessTokenExpiry;
   final Duration refreshTokenExpiry;
-
-  final _log = AppLogger.get('JwtService');
 
   late final RSAPrivateKey _privateKey;
   late final RSAPublicKey _publicKey;
@@ -159,7 +159,7 @@ class JwtService {
     _worker = null;
   }
 
-  // ── Encoding (sync — uses private key, called only on login/signup) ────────
+  // ── Encoding (sync: uses private key, called only on login/signup) ────────
 
   String encode(JwtPayload payload) {
     try {
@@ -171,7 +171,7 @@ class JwtService {
     }
   }
 
-  // ── Verification (async — delegates to worker isolate when available) ──────
+  // ── Verification (async: delegates to worker isolate when available) ──────
 
   /// Verify [token] signature and expiry.
   /// Throws [TokenExpiredError] or [BadTokenError] on failure.

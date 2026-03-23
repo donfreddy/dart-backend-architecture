@@ -50,7 +50,7 @@ final class CompositionRoot {
         _tokenService = tokenService;
 
   /// Initialize infrastructure dependencies once at process start.
-  /// NATS connection is optional — if [NATS_URL] is empty a [NoOpEventBus]
+  /// NATS connection is optional: if [NATS_URL] is empty a [NoOpEventBus]
   /// is used so the application starts without a NATS broker.
   static Future<CompositionRoot> initialize(AppConfig config) async {
     final db = await DatabasePool.connect(
@@ -98,7 +98,7 @@ final class CompositionRoot {
     return NatsEventBus(nats);
   }
 
-  // ── Repositories ─────────────────────────────────────────────────────────
+  // ── Repositories ───────────────────────────────────────────────────────────
 
   PostgresUserRepo get _userRepo =>
       PostgresUserRepo(_db.pool, _keystoreRepo, _roleRepo);
@@ -113,7 +113,7 @@ final class CompositionRoot {
         cache: BlogCache(_cache),
       );
 
-  // ── Application services ──────────────────────────────────────────────────
+  // ── Application services ───────────────────────────────────────────────────
 
   AuthService get _authService => AuthService(
         userRepo: _userRepo,
@@ -127,7 +127,7 @@ final class CompositionRoot {
         eventBus: _eventBus,
       );
 
-  // ── HTTP handler ──────────────────────────────────────────────────────────
+  // ── HTTP handler ───────────────────────────────────────────────────────────
 
   /// Fully-wired HTTP handler including health/readiness endpoints.
   Handler get router => buildRouter(

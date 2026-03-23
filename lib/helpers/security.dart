@@ -9,9 +9,9 @@ abstract final class Security {
 
   static final _random = Random.secure();
 
-  // ── Random tokens ────────────────────────────────────────────
+  // ── Random tokens ──────────────────────────────────────────────────────────
 
-  // Cryptographically secure random string — used for API keys, reset tokens
+  // Cryptographically secure random string: used for API keys, reset tokens
   static String generateToken([int byteLength = 32]) {
     final bytes = Uint8List(byteLength);
     for (var i = 0; i < byteLength; i++) {
@@ -20,15 +20,15 @@ abstract final class Security {
     return base64Url.encode(bytes).replaceAll('=', '');
   }
 
-  // Short numeric OTP — for email / SMS verification
+  // Short numeric OTP: for email / SMS verification
   static String generateOtp([int digits = 6]) {
     final max = pow(10, digits).toInt();
     return _random.nextInt(max).toString().padLeft(digits, '0');
   }
 
-  // ── Hashing ───────────────────────────────────────────────────
+  // ── Hashing ────────────────────────────────────────────────────────────────
 
-  // SHA-256 — for API key hashing before DB storage
+  // SHA-256: for API key hashing before DB storage
   // Never store raw API keys in the database
   static String sha256Hash(String input) {
     final bytes = utf8.encode(input);
@@ -43,9 +43,9 @@ abstract final class Security {
     return hmac.convert(bytes).toString();
   }
 
-  // ── Comparison ────────────────────────────────────────────────
+  // ── Comparison ─────────────────────────────────────────────────────────────
 
-  // Constant-time string comparison — prevents timing attacks
+  // Constant-time string comparison: prevents timing attacks
   // Use this whenever comparing secrets, tokens, or hashes
   static bool constantTimeEquals(String a, String b) {
     if (a.length != b.length) return false;
@@ -57,18 +57,17 @@ abstract final class Security {
     return result == 0;
   }
 
-  // ── API key ───────────────────────────────────────────────────
+  // ── API key ────────────────────────────────────────────────────────────────
 
-  // Generate a prefixed API key — easy to identify in logs and scanners
-  // Format: dba_<random> — e.g. dba_Xk9mP2qL...
+  // Generate a prefixed API key: easy to identify in logs and scanners
+  // Format: dba_<random>, e.g. dba_Xk9mP2qL...
   static ({String raw, String hashed}) generateApiKey() {
     final raw = 'dba_${generateToken(24)}';
     final hashed = sha256Hash(raw);
     return (raw: raw, hashed: hashed);
   }
 
-  // ── Bearer token extraction ───────────────────────────────────
-
+  // ── Bearer token extraction ────────────────────────────────────────────────
   static String? extractBearer(String? authorizationHeader) {
     if (authorizationHeader == null) return null;
     if (!authorizationHeader.startsWith('Bearer ')) return null;
