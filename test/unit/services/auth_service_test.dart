@@ -155,16 +155,17 @@ void main() {
       when(() => mockUserRepo.findByEmail(any())).thenAnswer((_) async => null);
       when(() => mockCrypto.hashPassword(any()))
           .thenAnswer((inv) async => 'hashed-${inv.positionalArguments.first}');
-      when(() => mockUserRepo.create(any(), any(), any(), any()))
-          .thenAnswer((inv) async => (
-                user: newUser,
-                keystore: Keystore(
-                  id: 'k1',
-                  client: newUser,
-                  primaryKey: 'pk',
-                  secondaryKey: 'sk',
-                ),
-              ),);
+      when(() => mockUserRepo.create(any(), any(), any(), any())).thenAnswer(
+        (inv) async => (
+          user: newUser,
+          keystore: Keystore(
+            id: 'k1',
+            client: newUser,
+            primaryKey: 'pk',
+            secondaryKey: 'sk',
+          ),
+        ),
+      );
       when(() => mockTokenService.buildForExistingKeys(any(), any(), any()))
           .thenReturn(tokenPair);
 
@@ -209,8 +210,9 @@ void main() {
 
       await sut.logout('access');
 
-      verify(() => mockTokenService.revoke(user: user, primaryKey: 'access-key'))
-          .called(1);
+      verify(
+        () => mockTokenService.revoke(user: user, primaryKey: 'access-key'),
+      ).called(1);
     });
 
     test('throws AuthFailureError when user not found', () async {
@@ -248,11 +250,13 @@ void main() {
       when(() => mockJwt.decode('access'))
           .thenAnswer((_) async => accessPayload);
       when(() => mockUserRepo.findById('u-1')).thenAnswer((_) async => user);
-      when(() => mockTokenService.rotate(
-            user: user,
-            accessToken: 'access',
-            refreshToken: 'refresh',
-          ),).thenAnswer((_) async => tokenPair);
+      when(
+        () => mockTokenService.rotate(
+          user: user,
+          accessToken: 'access',
+          refreshToken: 'refresh',
+        ),
+      ).thenAnswer((_) async => tokenPair);
 
       final tokens = await sut.refreshToken(
         accessToken: 'access',
@@ -260,11 +264,13 @@ void main() {
       );
 
       expect(tokens.accessToken, 'access-jwt');
-      verify(() => mockTokenService.rotate(
-            user: user,
-            accessToken: 'access',
-            refreshToken: 'refresh',
-          ),).called(1);
+      verify(
+        () => mockTokenService.rotate(
+          user: user,
+          accessToken: 'access',
+          refreshToken: 'refresh',
+        ),
+      ).called(1);
     });
 
     test('throws AuthFailureError when user not found', () async {

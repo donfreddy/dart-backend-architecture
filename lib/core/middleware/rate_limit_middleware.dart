@@ -82,7 +82,9 @@ Middleware rateLimitMiddleware(
         // that alerting rules (log-based metrics, PagerDuty, etc.) can fire.
         // Tag: RATE_LIMIT_BYPASS — use this string in alert filter queries.
         _incrementBypassCounter();
-        _log.severe('RATE_LIMIT_BYPASS: Redis unavailable, skipping rate limit for IP $ip — $e');
+        _log.severe(
+          'RATE_LIMIT_BYPASS: Redis unavailable, skipping rate limit for IP $ip — $e',
+        );
         return inner(request);
       }
     };

@@ -53,68 +53,103 @@ void main() {
     });
 
     test('returns 400 when name is missing', () async {
-      final res = await app(_post(endpoint, {
-        'email': 'x$_emailSuffix',
-        'password': _password,
-      },),);
+      final res = await app(
+        _post(
+          endpoint,
+          {
+            'email': 'x$_emailSuffix',
+            'password': _password,
+          },
+        ),
+      );
       expect(res.statusCode, 400);
       final body = _json(await res.readAsString());
       expect(body['data']['errors'].toString(), contains('name'));
     });
 
     test('returns 400 when email is missing', () async {
-      final res = await app(_post(endpoint, {
-        'name': 'Test User',
-        'password': _password,
-      },),);
+      final res = await app(
+        _post(
+          endpoint,
+          {
+            'name': 'Test User',
+            'password': _password,
+          },
+        ),
+      );
       expect(res.statusCode, 400);
       final body = _json(await res.readAsString());
       expect(body['data']['errors'].toString(), contains('email'));
     });
 
     test('returns 400 when password is missing', () async {
-      final res = await app(_post(endpoint, {
-        'name': 'Test User',
-        'email': 'x$_emailSuffix',
-      },),);
+      final res = await app(
+        _post(
+          endpoint,
+          {
+            'name': 'Test User',
+            'email': 'x$_emailSuffix',
+          },
+        ),
+      );
       expect(res.statusCode, 400);
       final body = _json(await res.readAsString());
       expect(body['data']['errors'].toString(), contains('password'));
     });
 
     test('returns 400 when email format is invalid', () async {
-      final res = await app(_post(endpoint, {
-        'name': 'Test User',
-        'email': 'not-an-email',
-        'password': _password,
-      },),);
+      final res = await app(
+        _post(
+          endpoint,
+          {
+            'name': 'Test User',
+            'email': 'not-an-email',
+            'password': _password,
+          },
+        ),
+      );
       expect(res.statusCode, 400);
     });
 
     test('returns 400 when name is shorter than 3 chars', () async {
-      final res = await app(_post(endpoint, {
-        'name': 'AB',
-        'email': 'x$_emailSuffix',
-        'password': _password,
-      },),);
+      final res = await app(
+        _post(
+          endpoint,
+          {
+            'name': 'AB',
+            'email': 'x$_emailSuffix',
+            'password': _password,
+          },
+        ),
+      );
       expect(res.statusCode, 400);
     });
 
     test('returns 400 when password is shorter than 6 chars', () async {
-      final res = await app(_post(endpoint, {
-        'name': 'Test User',
-        'email': 'x$_emailSuffix',
-        'password': 'abc',
-      },),);
+      final res = await app(
+        _post(
+          endpoint,
+          {
+            'name': 'Test User',
+            'email': 'x$_emailSuffix',
+            'password': 'abc',
+          },
+        ),
+      );
       expect(res.statusCode, 400);
     });
 
     test('returns 200 with user and tokens on valid signup', () async {
-      final res = await app(_post(endpoint, {
-        'name': 'Test User',
-        'email': 'signup$_emailSuffix',
-        'password': _password,
-      },),);
+      final res = await app(
+        _post(
+          endpoint,
+          {
+            'name': 'Test User',
+            'email': 'signup$_emailSuffix',
+            'password': _password,
+          },
+        ),
+      );
 
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
@@ -159,11 +194,16 @@ void main() {
 
     setUpAll(() async {
       // Create the user we will login with
-      final res = await app(_post('/v1/signup/basic', {
-        'name': 'Login Test User',
-        'email': loginEmail,
-        'password': _password,
-      },),);
+      final res = await app(
+        _post(
+          '/v1/signup/basic',
+          {
+            'name': 'Login Test User',
+            'email': loginEmail,
+            'password': _password,
+          },
+        ),
+      );
       await res.readAsString(); // drain response
       expect(res.statusCode, 200, reason: 'setUpAll: signup must succeed');
     });
@@ -195,46 +235,77 @@ void main() {
     });
 
     test('returns 400 when email format is invalid', () async {
-      final res = await app(_post(endpoint, {
-        'email': 'not-valid',
-        'password': _password,
-      },),);
+      final res = await app(
+        _post(
+          endpoint,
+          {
+            'email': 'not-valid',
+            'password': _password,
+          },
+        ),
+      );
       expect(res.statusCode, 400);
     });
 
     test('returns 400 when password is shorter than 6 chars', () async {
-      final res = await app(_post(endpoint, {
-        'email': loginEmail,
-        'password': 'abc',
-      },),);
+      final res = await app(
+        _post(
+          endpoint,
+          {
+            'email': loginEmail,
+            'password': 'abc',
+          },
+        ),
+      );
       expect(res.statusCode, 400);
     });
 
     test('returns 400 when user is not registered', () async {
-      final res = await app(_post(endpoint, {
-        'email': 'notregistered$_emailSuffix',
-        'password': _password,
-      },),);
+      final res = await app(
+        _post(
+          endpoint,
+          {
+            'email': 'notregistered$_emailSuffix',
+            'password': _password,
+          },
+        ),
+      );
       expect(res.statusCode, 400);
       final body = _json(await res.readAsString());
-      expect(body['message'].toString().toLowerCase(), contains('not registered'));
+      expect(
+        body['message'].toString().toLowerCase(),
+        contains('not registered'),
+      );
     });
 
     test('returns 401 for wrong password', () async {
-      final res = await app(_post(endpoint, {
-        'email': loginEmail,
-        'password': 'wrongpassword',
-      },),);
+      final res = await app(
+        _post(
+          endpoint,
+          {
+            'email': loginEmail,
+            'password': 'wrongpassword',
+          },
+        ),
+      );
       expect(res.statusCode, 401);
       final body = _json(await res.readAsString());
-      expect(body['message'].toString().toLowerCase(), contains('authentication'));
+      expect(
+        body['message'].toString().toLowerCase(),
+        contains('authentication'),
+      );
     });
 
     test('returns 200 with user and tokens for correct credentials', () async {
-      final res = await app(_post(endpoint, {
-        'email': loginEmail,
-        'password': _password,
-      },),);
+      final res = await app(
+        _post(
+          endpoint,
+          {
+            'email': loginEmail,
+            'password': _password,
+          },
+        ),
+      );
 
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
@@ -254,14 +325,24 @@ void main() {
     });
 
     test('returns 200 on repeated logins (new keystore each time)', () async {
-      final res1 = await app(_post(endpoint, {
-        'email': loginEmail,
-        'password': _password,
-      },),);
-      final res2 = await app(_post(endpoint, {
-        'email': loginEmail,
-        'password': _password,
-      },),);
+      final res1 = await app(
+        _post(
+          endpoint,
+          {
+            'email': loginEmail,
+            'password': _password,
+          },
+        ),
+      );
+      final res2 = await app(
+        _post(
+          endpoint,
+          {
+            'email': loginEmail,
+            'password': _password,
+          },
+        ),
+      );
 
       expect(res1.statusCode, 200);
       expect(res2.statusCode, 200);

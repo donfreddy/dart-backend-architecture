@@ -43,7 +43,8 @@ final class AppConfig {
     'PORT': z.coerce().integer(min: 1, max: 65535).withDefault(8080),
     'DATABASE_URL': z.string().min(1),
     'REDIS_URL': z.string().min(1),
-    'NATS_URL': z.string().withDefault(''), // empty = NATS disabled (NoOpEventBus)
+    'NATS_URL':
+        z.string().withDefault(''), // empty = NATS disabled (NoOpEventBus)
     // Keys can be supplied as file paths OR as raw PEM content via env vars.
     // At least one form must be non-empty for each key (validated in JwtService).
     'JWT_PRIVATE_KEY_PATH': z.string().withDefault(''),
@@ -53,10 +54,9 @@ final class AppConfig {
     'JWT_ACCESS_TOKEN_EXPIRY': z.coerce().integer(min: 1).withDefault(3600),
     'JWT_REFRESH_TOKEN_EXPIRY': z.coerce().integer(min: 1).withDefault(2592000),
     'OTEL_ENDPOINT': z.string().withDefault(''),
-    'ENVIRONMENT': z
-        .string()
-        .oneOf(['development', 'test', 'production'])
-        .withDefault('development'),
+    'ENVIRONMENT': z.string().oneOf(
+      ['development', 'test', 'production'],
+    ).withDefault('development'),
     'MAX_REQUEST_BODY_BYTES':
         z.coerce().integer(min: 1024).withDefault(1024 * 1024),
     'DB_POOL_SIZE': z.coerce().integer(min: 1).withDefault(20),
@@ -67,8 +67,10 @@ final class AppConfig {
   factory AppConfig.fromEnv() {
     final envSource = <String, String>{
       ..._loadDotEnv('.env'),
-      ..._loadDotEnv('.env.test'), // overrides .env when present (local test runs)
-      ...Platform.environment,    // process env always wins (Docker, CI)
+      ..._loadDotEnv(
+        '.env.test',
+      ), // overrides .env when present (local test runs)
+      ...Platform.environment, // process env always wins (Docker, CI)
     };
 
     final result = _schema.safeParse(envSource);
