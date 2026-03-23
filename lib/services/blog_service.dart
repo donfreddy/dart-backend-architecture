@@ -2,7 +2,7 @@ import 'package:dart_backend_architecture/database/model/blog.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/blog_repo.dart';
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
-import 'package:dart_backend_architecture/messaging/nats_service.dart';
+import 'package:dart_backend_architecture/messaging/event_bus.dart';
 
 /// Blog domain service.
 ///
@@ -15,13 +15,13 @@ import 'package:dart_backend_architecture/messaging/nats_service.dart';
 /// focused on domain logic and free of infrastructure concerns.
 class BlogService implements BlogRepo {
   final BlogRepo _blogRepo;
-  final NatsService _nats;
+  final EventBus _eventBus;
 
   const BlogService({
     required BlogRepo blogRepo,
-    required NatsService nats,
+    required EventBus eventBus,
   })  : _blogRepo = blogRepo,
-        _nats = nats;
+        _eventBus = eventBus;
 
   @override
   Future<Blog> create(Blog blog) async {
@@ -177,7 +177,7 @@ class BlogService implements BlogRepo {
     required Map<String, dynamic> payload,
   }) async {
     try {
-      await _nats.publish(subject, payload);
+      await _eventBus.publish(subject, payload);
     } catch (_) {}
   }
 }

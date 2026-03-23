@@ -39,7 +39,7 @@ final class AppConfig {
     'PORT': z.coerce().integer(min: 1, max: 65535).withDefault(8080),
     'DATABASE_URL': z.string().min(1),
     'REDIS_URL': z.string().min(1),
-    'NATS_URL': z.string().min(1),
+    'NATS_URL': z.string().withDefault(''), // empty = NATS disabled (NoOpEventBus)
     'JWT_PRIVATE_KEY_PATH': z.string().min(1),
     'JWT_PUBLIC_KEY_PATH': z.string().min(1),
     'JWT_ACCESS_TOKEN_EXPIRY': z.coerce().integer(min: 1).withDefault(3600),
