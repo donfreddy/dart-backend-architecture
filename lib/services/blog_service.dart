@@ -1,29 +1,31 @@
-import 'package:dart_backend_architecture/cache/repository/blog_cache.dart';
 import 'package:dart_backend_architecture/database/model/blog.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/blog_repo.dart';
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/messaging/nats_service.dart';
 
-/// Blog domain service that wraps the repo with caching and event emission.
+/// Blog domain service.
+///
+/// Responsibilities:
+///   - Business-rule validation (non-empty fields, page bounds).
+///   - NATS event publication on writes (best-effort, never fatal).
+///
+/// Cache read-through and write invalidation are handled by [CachingBlogRepo],
+/// which is injected as the [blogRepo] dependency. This keeps the service
+/// focused on domain logic and free of infrastructure concerns.
 class BlogService implements BlogRepo {
   final BlogRepo _blogRepo;
-  final BlogCache _blogCache;
   final NatsService _nats;
 
   const BlogService({
     required BlogRepo blogRepo,
-    required BlogCache blogCache,
     required NatsService nats,
   })  : _blogRepo = blogRepo,
-        _blogCache = blogCache,
         _nats = nats;
 
   @override
   Future<Blog> create(Blog blog) async {
     final created = await _blogRepo.create(blog);
-    await _evictListsBestEffort();
-    await _evictSingleBestEffort(created);
     await _publishBestEffort(
       subject: 'blog.created',
       payload: {
@@ -91,10 +93,7 @@ class BlogService implements BlogRepo {
   @override
   Future<Blog?> findByUrl(String blogUrl) {
     _requireNonEmpty(blogUrl, field: 'blogUrl');
-    return _blogCache.getByUrlWithLoader(
-      blogUrl,
-      () => _blogRepo.findByUrl(blogUrl),
-    );
+    return _blogRepo.findByUrl(blogUrl);
   }
 
   @override
@@ -112,10 +111,7 @@ class BlogService implements BlogRepo {
   @override
   Future<Blog?> findInfoWithTextById(String id) {
     _requireId(id);
-    return _blogCache.getByIdWithLoader(
-      id,
-      () => _blogRepo.findInfoWithTextById(id),
-    );
+    return _blogRepo.findInfoWithTextById(id);
   }
 
   @override
@@ -154,8 +150,6 @@ class BlogService implements BlogRepo {
   @override
   Future<void> update(Blog blog) async {
     await _blogRepo.update(blog);
-    await _evictListsBestEffort();
-    await _evictSingleBestEffort(blog);
     await _publishBestEffort(
       subject: 'blog.updated',
       payload: {
@@ -176,21 +170,6 @@ class BlogService implements BlogRepo {
     if (value.trim().isEmpty) {
       throw BadRequestError('$field is required');
     }
-  }
-
-  Future<void> _evictListsBestEffort() async {
-    try {
-      await _blogCache.evictAllLists();
-    } catch (_) {}
-  }
-
-  Future<void> _evictSingleBestEffort(Blog blog) async {
-    try {
-      if (blog.id != null) {
-        await _blogCache.evictById(blog.id!);
-      }
-      await _blogCache.evictByUrl(blog.blogUrl);
-    } catch (_) {}
   }
 
   Future<void> _publishBestEffort({

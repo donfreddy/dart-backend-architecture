@@ -4,7 +4,9 @@ import 'package:dart_backend_architecture/cache/repository/user_cache.dart';
 import 'package:dart_backend_architecture/config.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/database/db_pool.dart';
+import 'package:dart_backend_architecture/database/repository/caching_blog_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_blog_repo.dart';
+import 'package:dart_backend_architecture/database/repository/interfaces/blog_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_keystore_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_role_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_user_repo.dart';
@@ -60,11 +62,16 @@ final class CompositionRoot {
   // Repositories
   PostgresUserRepo get _userRepo =>
       PostgresUserRepo(_db.pool, _keystoreRepo, _roleRepo);
-  PostgresBlogRepo get _blogRepo => PostgresBlogRepo(_db.pool);
   PostgresKeystoreRepo get _keystoreRepo => PostgresKeystoreRepo(_db.pool);
   PostgresRoleRepo get _roleRepo => PostgresRoleRepo(_db.pool);
-  BlogCache get _blogCache => BlogCache(_cache);
   UserCache get _userCache => UserCache(_cache);
+
+  // CachingBlogRepo wraps the Postgres implementation with read-through caching
+  // and write-through invalidation, keeping BlogService free of cache concerns.
+  BlogRepo get _cachingBlogRepo => CachingBlogRepo(
+        inner: PostgresBlogRepo(_db.pool),
+        cache: BlogCache(_cache),
+      );
 
   // Core services
   JwtService get _jwtService => JwtService(
@@ -80,11 +87,11 @@ final class CompositionRoot {
         keystoreRepo: _keystoreRepo,
         jwt: _jwtService,
         crypto: _crypto,
+        userCache: _userCache,
       );
 
   BlogService get _blogService => BlogService(
-        blogRepo: _blogRepo,
-        blogCache: _blogCache,
+        blogRepo: _cachingBlogRepo,
         nats: _nats,
       );
 
