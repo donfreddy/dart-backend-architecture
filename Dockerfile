@@ -9,7 +9,6 @@ COPY --from=deps /root/.pub-cache /root/.pub-cache
 COPY pubspec.* ./
 RUN dart pub get --offline
 COPY . .
-RUN dart run build_runner build --delete-conflicting-outputs
 RUN dart compile exe bin/server.dart -o bin/server --verbosity=warning
 
 FROM scratch AS production

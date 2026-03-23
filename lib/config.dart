@@ -67,7 +67,8 @@ final class AppConfig {
   factory AppConfig.fromEnv() {
     final envSource = <String, String>{
       ..._loadDotEnv('.env'),
-      ...Platform.environment,
+      ..._loadDotEnv('.env.test'), // overrides .env when present (local test runs)
+      ...Platform.environment,    // process env always wins (Docker, CI)
     };
 
     final result = _schema.safeParse(envSource);
