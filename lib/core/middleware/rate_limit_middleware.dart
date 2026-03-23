@@ -58,8 +58,10 @@ Middleware rateLimitMiddleware(
           },
         );
       } catch (e) {
-        // Redis failure must never block a request
-        _log.warning('Rate limit check failed — bypassing: $e');
+        // Redis failure must never block a request, but we log at SEVERE so
+        // that alerting rules (log-based metrics, PagerDuty, etc.) can fire.
+        // Tag: RATE_LIMIT_BYPASS — use this string in alert filter queries.
+        _log.severe('RATE_LIMIT_BYPASS: Redis unavailable, skipping rate limit for IP $ip — $e');
         return inner(request);
       }
     };

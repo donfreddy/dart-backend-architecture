@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:dart_backend_architecture/cache/repository/user_cache.dart';
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
@@ -68,6 +69,7 @@ class AuthService {
   final KeystoreRepo _keystoreRepo;
   final JwtService _jwt;
   final CryptoWorker _crypto;
+  final UserCache? _userCache;
   final Uuid _uuid;
   final String _issuer;
   final String _audience;
@@ -79,6 +81,7 @@ class AuthService {
     required KeystoreRepo keystoreRepo,
     required JwtService jwt,
     required CryptoWorker crypto,
+    UserCache? userCache,
     Uuid? uuid,
     String issuer = 'dart-backend-architecture',
     String audience = 'dba-users',
@@ -86,6 +89,7 @@ class AuthService {
         _keystoreRepo = keystoreRepo,
         _jwt = jwt,
         _crypto = crypto,
+        _userCache = userCache,
         _uuid = uuid ?? const Uuid(),
         _issuer = issuer,
         _audience = audience;
@@ -171,6 +175,9 @@ class AuthService {
     }
 
     await _keystoreRepo.remove(keystore!.id!);
+    // Evict cached keystore so subsequent requests with the same token
+    // are rejected immediately rather than after the TTL expires.
+    await _userCache?.evictKeystore(user.id, payload.prm);
   }
 
   Future<TokenPair> refreshToken({
@@ -197,7 +204,9 @@ class AuthService {
       throw const AuthFailureError('Invalid access token');
     }
 
+    // Remove old keystore from DB and cache before creating the new one.
     await _keystoreRepo.remove(currentKeystore!.id!);
+    await _userCache?.evictKeystore(user.id, accessPayload.prm);
 
     final nextAccessTokenKey = _randomHex(64);
     final nextRefreshTokenKey = _randomHex(64);
