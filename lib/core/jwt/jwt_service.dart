@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
+import 'package:dart_backend_architecture/workers/jwt_worker.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 
 final class JwtPayload {
@@ -94,6 +95,14 @@ final class TokenPair {
       };
 }
 
+/// JWT encoding / decoding service.
+///
+/// - [encode] signs tokens with the RSA private key (sync, called rarely).
+/// - [validate] and [decode] verify tokens via a [JwtWorker] isolate when
+///   available, keeping RSA CPU work off the HTTP event loop.
+///
+/// Call [initWorker] after construction to enable isolate-based verification.
+/// Call [dispose] on graceful shutdown to kill the worker isolate.
 class JwtService {
   final String privateKeyPath;
   final String publicKeyPath;
@@ -104,6 +113,9 @@ class JwtService {
 
   late final RSAPrivateKey _privateKey;
   late final RSAPublicKey _publicKey;
+  late final String _publicKeyPem;
+
+  JwtWorker? _worker;
 
   JwtService({
     required this.privateKeyPath,
@@ -116,12 +128,28 @@ class JwtService {
 
   void _loadKeys() {
     try {
-      _privateKey = RSAPrivateKey(File(privateKeyPath).readAsStringSync());
-      _publicKey = RSAPublicKey(File(publicKeyPath).readAsStringSync());
+      final privatePem = File(privateKeyPath).readAsStringSync();
+      _publicKeyPem = File(publicKeyPath).readAsStringSync();
+      _privateKey = RSAPrivateKey(privatePem);
+      _publicKey = RSAPublicKey(_publicKeyPem);
     } catch (e) {
       throw const InternalError('Token generation failure');
     }
   }
+
+  /// Spawn the [JwtWorker] isolate. Should be called once at startup.
+  Future<void> initWorker() async {
+    _worker = await JwtWorker.spawn(_publicKeyPem);
+    _log.info('JwtService: worker isolate active');
+  }
+
+  /// Kill the worker isolate. Call on graceful shutdown.
+  Future<void> dispose() async {
+    await _worker?.dispose();
+    _worker = null;
+  }
+
+  // ── Encoding (sync — uses private key, called only on login/signup) ────────
 
   String encode(JwtPayload payload) {
     try {
@@ -133,7 +161,31 @@ class JwtService {
     }
   }
 
-  JwtPayload validate(String token) {
+  // ── Verification (async — delegates to worker isolate when available) ──────
+
+  /// Verify [token] signature and expiry.
+  /// Throws [TokenExpiredError] or [BadTokenError] on failure.
+  Future<JwtPayload> validate(String token) async {
+    if (_worker != null) {
+      final map = await _worker!.validate(token);
+      return JwtPayload.fromMap(map);
+    }
+    return _validateSync(token);
+  }
+
+  /// Decode [token] without checking expiry.
+  /// Throws [BadTokenError] on structural failures.
+  Future<JwtPayload> decode(String token) async {
+    if (_worker != null) {
+      final map = await _worker!.decode(token);
+      return JwtPayload.fromMap(map);
+    }
+    return _decodeSync(token);
+  }
+
+  // ── Sync fallbacks (used when worker not yet initialised / in tests) ───────
+
+  JwtPayload _validateSync(String token) {
     try {
       final jwt = JWT.verify(token, _publicKey);
       return JwtPayload.fromMap(jwt.payload as Map<String, dynamic>);
@@ -148,13 +200,9 @@ class JwtService {
     }
   }
 
-  JwtPayload decode(String token) {
+  JwtPayload _decodeSync(String token) {
     try {
-      final jwt = JWT.verify(
-        token,
-        _publicKey,
-        checkExpiresIn: false,
-      );
+      final jwt = JWT.verify(token, _publicKey, checkExpiresIn: false);
       return JwtPayload.fromMap(jwt.payload as Map<String, dynamic>);
     } on JWTException catch (e) {
       _log.warning('JWT decode failed: ${e.message}');
@@ -165,7 +213,8 @@ class JwtService {
     }
   }
 
-  // Backward-compatible helpers
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
   TokenPair issue(JwtPayload payload) {
     return TokenPair(
       accessToken: encode(payload.withValidity(accessTokenExpiry)),
@@ -173,13 +222,12 @@ class JwtService {
     );
   }
 
-  JwtPayload verifyAccessToken(String token) => validate(token);
+  Future<JwtPayload> verifyAccessToken(String token) => validate(token);
+  Future<JwtPayload> verifyRefreshToken(String token) => validate(token);
 
-  JwtPayload verifyRefreshToken(String token) => validate(token);
-
-  JwtPayload? extractUnverified(String token) {
+  Future<JwtPayload?> extractUnverified(String token) async {
     try {
-      return decode(token);
+      return await decode(token);
     } catch (_) {
       return null;
     }

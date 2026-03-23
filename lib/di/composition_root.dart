@@ -18,6 +18,7 @@ import 'package:dart_backend_architecture/messaging/no_op_event_bus.dart';
 import 'package:dart_backend_architecture/routes/router.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
 import 'package:dart_backend_architecture/services/blog_service.dart';
+import 'package:dart_backend_architecture/services/token_service.dart';
 import 'package:dart_backend_architecture/workers/crypto_worker.dart';
 import 'package:shelf/shelf.dart';
 
@@ -27,23 +28,26 @@ final _log = AppLogger.get('CompositionRoot');
 /// Keeps creation order, lifetimes and disposal in one place so the rest
 /// of the code can depend purely on abstractions/interfaces.
 final class CompositionRoot {
-  final AppConfig _config;
   final DatabasePool _db;
   final CacheService _cache;
   final EventBus _eventBus;
   final CryptoWorker _crypto;
+  final JwtService _jwtService;
+  final TokenService _tokenService;
 
   CompositionRoot._({
-    required AppConfig config,
     required DatabasePool db,
     required CacheService cache,
     required EventBus eventBus,
     required CryptoWorker crypto,
-  })  : _config = config,
-        _db = db,
+    required JwtService jwtService,
+    required TokenService tokenService,
+  })  : _db = db,
         _cache = cache,
         _eventBus = eventBus,
-        _crypto = crypto;
+        _crypto = crypto,
+        _jwtService = jwtService,
+        _tokenService = tokenService;
 
   /// Initialize infrastructure dependencies once at process start.
   /// NATS connection is optional — if [NATS_URL] is empty a [NoOpEventBus]
@@ -57,12 +61,29 @@ final class CompositionRoot {
     final eventBus = await _initEventBus(config.natsUrl);
     final crypto = await CryptoWorker.spawn();
 
+    final jwtService = JwtService(
+      privateKeyPath: config.jwtPrivateKeyPath,
+      publicKeyPath: config.jwtPublicKeyPath,
+      accessTokenExpiry: Duration(seconds: config.jwtAccessTokenExpiry),
+      refreshTokenExpiry: Duration(seconds: config.jwtRefreshTokenExpiry),
+    );
+    await jwtService.initWorker();
+
+    final keystoreRepo = PostgresKeystoreRepo(db.pool);
+    final userCache = UserCache(cache);
+    final tokenService = TokenService(
+      keystoreRepo: keystoreRepo,
+      jwt: jwtService,
+      userCache: userCache,
+    );
+
     return CompositionRoot._(
-      config: config,
       db: db,
       cache: cache,
       eventBus: eventBus,
       crypto: crypto,
+      jwtService: jwtService,
+      tokenService: tokenService,
     );
   }
 
@@ -90,23 +111,13 @@ final class CompositionRoot {
         cache: BlogCache(_cache),
       );
 
-  // ── Core services ─────────────────────────────────────────────────────────
-
-  JwtService get _jwtService => JwtService(
-        privateKeyPath: _config.jwtPrivateKeyPath,
-        publicKeyPath: _config.jwtPublicKeyPath,
-        accessTokenExpiry: Duration(seconds: _config.jwtAccessTokenExpiry),
-        refreshTokenExpiry: Duration(seconds: _config.jwtRefreshTokenExpiry),
-      );
-
   // ── Application services ──────────────────────────────────────────────────
 
   AuthService get _authService => AuthService(
         userRepo: _userRepo,
-        keystoreRepo: _keystoreRepo,
         jwt: _jwtService,
         crypto: _crypto,
-        userCache: _userCache,
+        tokenService: _tokenService,
       );
 
   BlogService get _blogService => BlogService(
@@ -135,6 +146,7 @@ final class CompositionRoot {
 
   /// Release resources in reverse dependency order. Call on graceful shutdown.
   Future<void> dispose() async {
+    await _jwtService.dispose();
     await _eventBus.close();
     await _cache.close();
     await _db.close();

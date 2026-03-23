@@ -1,18 +1,21 @@
-import 'dart:math';
-
-import 'package:dart_backend_architecture/cache/repository/user_cache.dart';
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_backend_architecture/database/model/role.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
-import 'package:dart_backend_architecture/database/repository/interfaces/keystore_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/user_repo.dart';
+import 'package:dart_backend_architecture/services/token_service.dart';
 import 'package:dart_backend_architecture/workers/crypto_worker.dart';
 import 'package:uuid/uuid.dart';
 
-/// Authentication/authorization use-cases (signup, login, refresh, logout).
-/// Stateless tokens with per-user keystore; delegates hashing to CryptoWorker.
+/// Authentication/authorization use-cases: signup, login, logout, token refresh.
+///
+/// Responsibilities:
+///   - Credential validation (email uniqueness, password verification).
+///   - User creation and retrieval.
+///
+/// Token lifecycle (keystore creation/rotation/revocation + JWT issuance) is
+/// delegated to [TokenService], keeping this class focused on auth concerns.
 final class LoginDto {
   final String email;
   final String password;
@@ -66,33 +69,24 @@ final class AuthResult {
 
 class AuthService {
   final UserRepo _userRepo;
-  final KeystoreRepo _keystoreRepo;
   final JwtService _jwt;
   final CryptoWorker _crypto;
-  final UserCache? _userCache;
+  final TokenService _tokenService;
   final Uuid _uuid;
-  final String _issuer;
-  final String _audience;
 
   static final _log = AppLogger.get('AuthService');
 
   AuthService({
     required UserRepo userRepo,
-    required KeystoreRepo keystoreRepo,
     required JwtService jwt,
     required CryptoWorker crypto,
-    UserCache? userCache,
+    required TokenService tokenService,
     Uuid? uuid,
-    String issuer = 'dart-backend-architecture',
-    String audience = 'dba-users',
   })  : _userRepo = userRepo,
-        _keystoreRepo = keystoreRepo,
         _jwt = jwt,
         _crypto = crypto,
-        _userCache = userCache,
-        _uuid = uuid ?? const Uuid(),
-        _issuer = issuer,
-        _audience = audience;
+        _tokenService = tokenService,
+        _uuid = uuid ?? const Uuid();
 
   Future<AuthResult> signup(SignupDto dto) async {
     _log.info('Signup attempt: ${dto.email}');
@@ -102,8 +96,10 @@ class AuthService {
       throw const BadRequestError('User already registered');
     }
 
-    final accessTokenKey = _randomHex(64);
-    final refreshTokenKey = _randomHex(64);
+    // Keys are generated here so they can be passed to userRepo.create, which
+    // creates user + keystore atomically in a single transaction.
+    final accessKey = TokenService.generateKey();
+    final refreshKey = TokenService.generateKey();
 
     final user = User(
       id: _uuid.v4(),
@@ -116,15 +112,15 @@ class AuthService {
 
     final created = await _userRepo.create(
       user,
-      accessTokenKey,
-      refreshTokenKey,
+      accessKey,
+      refreshKey,
       RoleCode.learner.value,
     );
 
-    final tokens = _createTokens(
-      userId: created.user.id,
-      accessTokenKey: created.keystore.primaryKey,
-      refreshTokenKey: created.keystore.secondaryKey,
+    final tokens = _tokenService.buildForExistingKeys(
+      created.user.id,
+      created.keystore.primaryKey,
+      created.keystore.secondaryKey,
     );
 
     _log.info('Signup successful: ${created.user.id}');
@@ -147,113 +143,38 @@ class AuthService {
       throw const AuthFailureError('Authentication failure');
     }
 
-    final accessTokenKey = _randomHex(64);
-    final refreshTokenKey = _randomHex(64);
-    await _keystoreRepo.create(user, accessTokenKey, refreshTokenKey);
-
-    final tokens = _createTokens(
-      userId: user.id,
-      accessTokenKey: accessTokenKey,
-      refreshTokenKey: refreshTokenKey,
-    );
+    final tokens = await _tokenService.issue(user);
 
     _log.info('Login successful: ${user.id}');
     return AuthResult(user: user, tokens: tokens);
   }
 
   Future<void> logout(String accessToken) async {
-    final payload = _jwt.validate(accessToken);
+    final payload = await _jwt.validate(accessToken);
 
     final user = await _userRepo.findById(payload.sub);
     if (user == null) {
       throw const AuthFailureError('User not registered');
     }
 
-    final keystore = await _keystoreRepo.findForKey(user, payload.prm);
-    if (keystore?.id == null) {
-      throw const AuthFailureError('Invalid access token');
-    }
-
-    await _keystoreRepo.remove(keystore!.id!);
-    // Evict cached keystore so subsequent requests with the same token
-    // are rejected immediately rather than after the TTL expires.
-    await _userCache?.evictKeystore(user.id, payload.prm);
+    await _tokenService.revoke(user: user, primaryKey: payload.prm);
   }
 
   Future<TokenPair> refreshToken({
     required String accessToken,
     required String refreshToken,
   }) async {
-    final accessPayload = _jwt.decode(accessToken);
+    final accessPayload = await _jwt.decode(accessToken);
+
     final user = await _userRepo.findById(accessPayload.sub);
     if (user == null) {
       throw const AuthFailureError('User not registered');
     }
 
-    final refreshPayload = _jwt.validate(refreshToken);
-    if (accessPayload.sub != refreshPayload.sub) {
-      throw const AuthFailureError('Invalid access token');
-    }
-
-    final currentKeystore = await _keystoreRepo.find(
-      user,
-      accessPayload.prm,
-      refreshPayload.prm,
+    return _tokenService.rotate(
+      user: user,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
     );
-    if (currentKeystore?.id == null) {
-      throw const AuthFailureError('Invalid access token');
-    }
-
-    // Remove old keystore from DB and cache before creating the new one.
-    await _keystoreRepo.remove(currentKeystore!.id!);
-    await _userCache?.evictKeystore(user.id, accessPayload.prm);
-
-    final nextAccessTokenKey = _randomHex(64);
-    final nextRefreshTokenKey = _randomHex(64);
-    await _keystoreRepo.create(user, nextAccessTokenKey, nextRefreshTokenKey);
-
-    return _createTokens(
-      userId: user.id,
-      accessTokenKey: nextAccessTokenKey,
-      refreshTokenKey: nextRefreshTokenKey,
-    );
-  }
-
-  TokenPair _createTokens({
-    required String userId,
-    required String accessTokenKey,
-    required String refreshTokenKey,
-  }) {
-    final accessPayload = JwtPayload.create(
-      issuer: _issuer,
-      audience: _audience,
-      subject: userId,
-      param: accessTokenKey,
-      validity: _jwt.accessTokenExpiry,
-    );
-
-    final refreshPayload = JwtPayload.create(
-      issuer: _issuer,
-      audience: _audience,
-      subject: userId,
-      param: refreshTokenKey,
-      validity: _jwt.refreshTokenExpiry,
-    );
-
-    return TokenPair(
-      accessToken: _jwt.encode(accessPayload),
-      refreshToken: _jwt.encode(refreshPayload),
-    );
-  }
-
-  static String _randomHex(int bytesLength) {
-    const chars = '0123456789abcdef';
-    final random = Random.secure();
-    final codeUnits = List<int>.generate(
-      bytesLength * 2,
-      (_) => chars.codeUnitAt(random.nextInt(chars.length)),
-      growable: false,
-    );
-    return String.fromCharCodes(codeUnits);
   }
 }

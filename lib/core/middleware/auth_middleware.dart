@@ -28,7 +28,7 @@ Middleware authMiddleware({
           validateAuthBearer(headerValidated['authorization'] as String);
 
       try {
-        final payload = jwtService.validate(accessToken);
+        final payload = await jwtService.validate(accessToken);
         _validateTokenData(payload);
 
         final user = await _resolveUser(
