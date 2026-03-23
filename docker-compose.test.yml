@@ -1,0 +1,91 @@
+name: dart-backend-architecture-test
+
+# Isolated test environment.
+#
+# Usage:
+#   docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
+#   docker compose -f docker-compose.test.yml down -v
+#
+# Key differences from docker-compose.yml:
+#   - Postgres runs on tmpfs (in-memory): no persistent volume, fast I/O
+#   - Separate DB credentials so dev data is never touched
+#   - NATS disabled (NoOpEventBus): event tests use mocks
+#   - OTel disabled: no collector required
+#   - `tester` runs `dart test` and exits; compose aborts on its exit code
+
+services:
+  # ── Test runner ───────────────────────────────────────────────
+  tester:
+    build:
+      context: .
+      target: builder
+    command: dart test --concurrency=1 --reporter=expanded
+    environment:
+      DATABASE_URL: postgres://dba_test:dba_test@postgres-test:5432/dba_test?sslmode=disable
+      REDIS_URL: redis://redis-test:6379
+      NATS_URL: ""
+      JWT_PRIVATE_KEY_PATH: keys/private.pem
+      JWT_PUBLIC_KEY_PATH: keys/public.pem
+      JWT_ACCESS_TOKEN_EXPIRY: "3600"
+      JWT_REFRESH_TOKEN_EXPIRY: "2592000"
+      OTEL_ENDPOINT: ""
+      ENVIRONMENT: test
+    volumes:
+      - .:/app
+    depends_on:
+      seed-test:
+        condition: service_completed_successfully
+      redis-test:
+        condition: service_healthy
+
+  # ── Seed (roles + vendor API key) ────────────────────────────
+  seed-test:
+    build:
+      context: .
+      target: builder
+    command: dart run bin/db_seed.dart
+    environment:
+      DATABASE_URL: postgres://dba_test:dba_test@postgres-test:5432/dba_test?sslmode=disable
+    volumes:
+      - .:/app
+    depends_on:
+      migrations-test:
+        condition: service_completed_successfully
+
+  # ── Migrations ───────────────────────────────────────────────
+  migrations-test:
+    image: amacneil/dbmate:latest
+    environment:
+      DATABASE_URL: postgres://dba_test:dba_test@postgres-test:5432/dba_test?sslmode=disable
+    volumes:
+      - ./db:/db
+    command: ["--wait", "--wait-timeout", "30s", "up"]
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+
+  # ── PostgreSQL (in-memory via tmpfs: no persistence needed) ─
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dba_test
+      POSTGRES_PASSWORD: dba_test
+      POSTGRES_DB: dba_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dba_test -d dba_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Redis (no persistence needed) ────────────────────────────
+  redis-test:
+    image: redis:7-alpine
+    command: redis-server --save ""
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

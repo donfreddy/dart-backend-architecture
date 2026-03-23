@@ -199,7 +199,7 @@ dart run bin/setup.dart
 
 If you want to keep the original package name unchanged, skip this script and run setup manually.
 
-### 2A) Run with Docker
+### 2A) Run with Docker (development)
 
 Requirements: Docker + Docker Compose
 
@@ -213,19 +213,34 @@ Services:
 - Grafana/OTel UI: `http://localhost:3000`
 - NATS monitor: `http://localhost:8222`
 
-### 2B) Run locally
+### 2B) Run tests with Docker
+
+Runs the full test suite against an isolated in-memory PostgreSQL database.
+No dev data is touched, the test DB is destroyed when the stack stops.
+
+```bash
+docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
+docker compose -f docker-compose.test.yml down -v
+```
+
+### 2C) Run locally
 
 Requirements: PostgreSQL 16, Redis 7, NATS 2, dbmate
 
 ```bash
+# Dev database
+cp .env.example .env
 dbmate --migrations-dir db/migrations up
-dart run bin/server.dart
-```
-
-Optional seed data (roles + vendor API key):
-
-```bash
 dart run bin/db_seed.dart
+dart run bin/server.dart
+
+# Test database (separate DB, never touches dev data)
+cp .env.test.example .env.test
+DATABASE_URL=postgres://dba_test:dba_test@localhost:5432/dba_test?sslmode=disable \
+  dbmate --migrations-dir db/migrations up
+DATABASE_URL=postgres://dba_test:dba_test@localhost:5432/dba_test?sslmode=disable \
+  dart run bin/db_seed.dart
+dart test
 ```
 
 ## Environment variables
