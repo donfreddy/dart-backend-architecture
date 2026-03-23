@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dart_backend_architecture/config.dart';
+import 'package:dart_backend_architecture/core/app_info.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
 
@@ -22,11 +23,11 @@ Future<void> initTelemetry() async {
     await OTel.initialize(
       endpoint: endpoint,
       secure: secure,
-      serviceName: 'dart-backend-architecture',
-      serviceVersion: '1.0.0',
+      serviceName: AppInfo.name,
+      serviceVersion: AppInfo.version,
       resourceAttributes: {
         'deployment.environment': config.environment,
-        'service.namespace': 'dba',
+        'service.namespace': AppInfo.namespace,
         'host.name': _hostname(),
       }.toAttributes(),
     );

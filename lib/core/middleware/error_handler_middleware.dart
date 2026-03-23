@@ -2,9 +2,31 @@ import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_backend_architecture/core/response/api_response.dart';
 import 'package:dart_backend_architecture/core/response/shelf_response_x.dart';
+import 'package:dart_backend_architecture/core/app_info.dart';
+import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
 import 'package:shelf/shelf.dart';
 
 final _log = AppLogger.get('ErrorHandler');
+
+// OTel SDK caches instruments by name — calling createCounter each time is idempotent.
+void _recordError(ApiError error) {
+  try {
+    OTel.meterProvider()
+        .getMeter(name: AppInfo.name)
+        .createCounter<int>(
+          name: 'api.errors.total',
+          description: 'Total API errors by type and HTTP status',
+          unit: '{error}',
+        )
+        .add(
+          1,
+          OTel.attributesFromMap({
+            'error.type': error.code,
+            'http.status_code': error.type.httpStatus,
+          }),
+        );
+  } catch (_) {}
+}
 
 Middleware errorHandlerMiddleware() {
   return (Handler inner) {
@@ -32,6 +54,8 @@ Middleware errorHandlerMiddleware() {
 }
 
 Response _handleApiError(Request request, ApiError error) {
+  _recordError(error);
+
   final status = error.type.httpStatus;
   if (status >= 500) {
     _log.severe(

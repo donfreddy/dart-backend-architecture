@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:dart_backend_architecture/cache/repository/user_cache.dart';
+import 'package:dart_backend_architecture/core/app_info.dart';
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
@@ -25,7 +26,7 @@ class TokenService {
     required KeystoreRepo keystoreRepo,
     required JwtService jwt,
     UserCache? userCache,
-    String issuer = 'dart-backend-architecture',
+    String issuer = AppInfo.name,
     String audience = 'dba-users',
   })  : _keystoreRepo = keystoreRepo,
         _jwt = jwt,
