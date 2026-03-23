@@ -11,6 +11,8 @@ final class AppConfig {
   final String natsUrl;
   final String jwtPrivateKeyPath;
   final String jwtPublicKeyPath;
+  final String jwtPrivateKeyPem;
+  final String jwtPublicKeyPem;
   final int jwtAccessTokenExpiry;
   final int jwtRefreshTokenExpiry;
   final String otelEndpoint;
@@ -26,6 +28,8 @@ final class AppConfig {
     required this.natsUrl,
     required this.jwtPrivateKeyPath,
     required this.jwtPublicKeyPath,
+    required this.jwtPrivateKeyPem,
+    required this.jwtPublicKeyPem,
     required this.jwtAccessTokenExpiry,
     required this.jwtRefreshTokenExpiry,
     required this.otelEndpoint,
@@ -40,8 +44,12 @@ final class AppConfig {
     'DATABASE_URL': z.string().min(1),
     'REDIS_URL': z.string().min(1),
     'NATS_URL': z.string().withDefault(''), // empty = NATS disabled (NoOpEventBus)
-    'JWT_PRIVATE_KEY_PATH': z.string().min(1),
-    'JWT_PUBLIC_KEY_PATH': z.string().min(1),
+    // Keys can be supplied as file paths OR as raw PEM content via env vars.
+    // At least one form must be non-empty for each key (validated in JwtService).
+    'JWT_PRIVATE_KEY_PATH': z.string().withDefault(''),
+    'JWT_PUBLIC_KEY_PATH': z.string().withDefault(''),
+    'JWT_PRIVATE_KEY_PEM': z.string().withDefault(''),
+    'JWT_PUBLIC_KEY_PEM': z.string().withDefault(''),
     'JWT_ACCESS_TOKEN_EXPIRY': z.coerce().integer(min: 1).withDefault(3600),
     'JWT_REFRESH_TOKEN_EXPIRY': z.coerce().integer(min: 1).withDefault(2592000),
     'OTEL_ENDPOINT': z.string().withDefault(''),
@@ -78,6 +86,8 @@ final class AppConfig {
       natsUrl: env['NATS_URL'] as String,
       jwtPrivateKeyPath: env['JWT_PRIVATE_KEY_PATH'] as String,
       jwtPublicKeyPath: env['JWT_PUBLIC_KEY_PATH'] as String,
+      jwtPrivateKeyPem: env['JWT_PRIVATE_KEY_PEM'] as String,
+      jwtPublicKeyPem: env['JWT_PUBLIC_KEY_PEM'] as String,
       jwtAccessTokenExpiry: env['JWT_ACCESS_TOKEN_EXPIRY'] as int,
       jwtRefreshTokenExpiry: env['JWT_REFRESH_TOKEN_EXPIRY'] as int,
       otelEndpoint: env['OTEL_ENDPOINT'] as String,

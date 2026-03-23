@@ -64,6 +64,8 @@ final class CompositionRoot {
     final jwtService = JwtService(
       privateKeyPath: config.jwtPrivateKeyPath,
       publicKeyPath: config.jwtPublicKeyPath,
+      privateKeyPem: config.jwtPrivateKeyPem,
+      publicKeyPem: config.jwtPublicKeyPem,
       accessTokenExpiry: Duration(seconds: config.jwtAccessTokenExpiry),
       refreshTokenExpiry: Duration(seconds: config.jwtRefreshTokenExpiry),
     );

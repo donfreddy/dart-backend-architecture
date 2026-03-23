@@ -106,6 +106,8 @@ final class TokenPair {
 class JwtService {
   final String privateKeyPath;
   final String publicKeyPath;
+  final String privateKeyPem;
+  final String publicKeyPem;
   final Duration accessTokenExpiry;
   final Duration refreshTokenExpiry;
 
@@ -118,18 +120,26 @@ class JwtService {
   JwtWorker? _worker;
 
   JwtService({
-    required this.privateKeyPath,
-    required this.publicKeyPath,
+    this.privateKeyPath = '',
+    this.publicKeyPath = '',
+    this.privateKeyPem = '',
+    this.publicKeyPem = '',
     this.accessTokenExpiry = const Duration(hours: 1),
     this.refreshTokenExpiry = const Duration(days: 30),
   }) {
     _loadKeys();
   }
 
+  /// Resolves keys in priority order: inline PEM → file path.
+  /// Throws [InternalError] if neither source is provided or readable.
   void _loadKeys() {
     try {
-      final privatePem = File(privateKeyPath).readAsStringSync();
-      _publicKeyPem = File(publicKeyPath).readAsStringSync();
+      final privatePem = privateKeyPem.isNotEmpty
+          ? privateKeyPem
+          : File(privateKeyPath).readAsStringSync();
+      _publicKeyPem = publicKeyPem.isNotEmpty
+          ? publicKeyPem
+          : File(publicKeyPath).readAsStringSync();
       _privateKey = RSAPrivateKey(privatePem);
       _publicKey = RSAPublicKey(_publicKeyPem);
     } catch (e) {
