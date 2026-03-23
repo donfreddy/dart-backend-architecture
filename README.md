@@ -54,34 +54,38 @@ dart-backend-architecture/
 │   ├── private.pem.example
 │   └── public.pem.example
 ├── lib/
-│   ├── app.dart
-│   ├── config.dart
+│   ├── app.dart                        # Shelf pipeline builder
+│   ├── config.dart                     # Typed config from env / .env
 │   ├── cache/
-│   │   ├── cache_service.dart
-│   │   ├── keys.dart
+│   │   ├── cache_service.dart          # Redis client wrapper
+│   │   ├── keys.dart                   # Cache key constants
 │   │   └── repository/
 │   │       ├── blog_cache.dart
-│   │       └── user_cache.dart
+│   │       └── user_cache.dart         # User profile + keystore caching
 │   ├── core/
+│   │   ├── app_info.dart               # Service name, version, namespace constants
+│   │   ├── logger.dart
+│   │   ├── request_context_keys.dart   # Shelf request context key constants
 │   │   ├── errors/
-│   │   │   └── api_error.dart
+│   │   │   └── api_error.dart          # Sealed error hierarchy + HTTP status mapping
 │   │   ├── jwt/
-│   │   │   └── jwt_service.dart
+│   │   │   └── jwt_service.dart        # RSA JWT encode/validate/decode (async via worker)
 │   │   ├── middleware/
 │   │   │   ├── api_key_middleware.dart
-│   │   │   ├── auth_middleware.dart
+│   │   │   ├── auth_middleware.dart    # JWT validation + user/keystore resolution
 │   │   │   ├── authorization_middleware.dart
+│   │   │   ├── body_limit_middleware.dart
 │   │   │   ├── cors_middleware.dart
-│   │   │   ├── error_handler_middleware.dart
-│   │   │   ├── rate_limit_middleware.dart
-│   │   │   ├── schema.dart
-│   │   │   └── tracing_middleware.dart
+│   │   │   ├── error_handler_middleware.dart  # Catches ApiError + emits OTel error counter
+│   │   │   ├── rate_limit_middleware.dart     # Redis sliding window + OTel bypass counter
+│   │   │   ├── schema.dart             # Shared middleware validation schemas
+│   │   │   ├── security_headers_middleware.dart
+│   │   │   └── tracing_middleware.dart # OTel HTTP span per request
 │   │   ├── response/
 │   │   │   ├── api_response.dart
 │   │   │   └── shelf_response_x.dart
-│   │   ├── telemetry/
-│   │   │   └── otel_setup.dart
-│   │   └── logger.dart
+│   │   └── telemetry/
+│   │       └── otel_setup.dart         # OTel SDK init/shutdown
 │   ├── database/
 │   │   ├── db_pool.dart
 │   │   ├── model/
@@ -91,6 +95,7 @@ dart-backend-architecture/
 │   │   │   ├── role.dart
 │   │   │   └── user.dart
 │   │   └── repository/
+│   │       ├── caching_blog_repo.dart  # Decorator: read-through cache + write invalidation
 │   │       ├── impl/
 │   │       │   ├── postgres_api_key_repo.dart
 │   │       │   ├── postgres_blog_repo.dart
@@ -99,51 +104,67 @@ dart-backend-architecture/
 │   │       │   └── postgres_user_repo.dart
 │   │       └── interfaces/
 │   │           ├── api_key_repo.dart
-│   │           ├── blog_repo.dart
+│   │           ├── blog_query_repo.dart  # ISP: read-only blog operations
+│   │           ├── blog_repo.dart        # Combines BlogQueryRepo + BlogWriteRepo
+│   │           ├── blog_write_repo.dart  # ISP: write-only blog operations
 │   │           ├── keystore_repo.dart
 │   │           ├── role_repo.dart
 │   │           └── user_repo.dart
 │   ├── di/
-│   │   └── composition_root.dart
+│   │   └── composition_root.dart       # Single wiring point for all dependencies
 │   ├── helpers/
 │   │   ├── permission.dart
 │   │   ├── security.dart
 │   │   └── validator.dart
 │   ├── messaging/
-│   │   └── nats_service.dart
+│   │   ├── event_bus.dart              # Abstract interface: publish/ping/close
+│   │   ├── nats_event_bus.dart         # EventBus backed by NATS
+│   │   ├── nats_service.dart           # Raw NATS client wrapper
+│   │   └── no_op_event_bus.dart        # No-op EventBus (NATS disabled)
 │   ├── routes/
+│   │   ├── health_handler.dart         # /healthz + /readyz probes
 │   │   ├── router.dart
 │   │   └── v1/
+│   │       ├── router.dart
 │   │       ├── access/
 │   │       │   ├── login_handler.dart
-│   │       │   ├── signup_handler.dart
 │   │       │   ├── logout_handler.dart
-│   │       │   ├── token_handler.dart
-│   │       │   └── schema.dart
+│   │       │   ├── schema.dart
+│   │       │   ├── signup_handler.dart
+│   │       │   └── token_handler.dart
 │   │       ├── blog/
-│   │       │   ├── writer_handler.dart
-│   │       │   ├── editor_handler.dart
 │   │       │   ├── blog_detail_handler.dart
-│   │       │   └── schema.dart
+│   │       │   ├── editor_handler.dart
+│   │       │   ├── schema.dart
+│   │       │   └── writer_handler.dart
 │   │       ├── blogs/
 │   │       │   └── list_handler.dart
-│   │       ├── profile/
-│   │       │   ├── profile_handler.dart
-│   │       │   └── schema.dart
-│   │       └── router.dart
+│   │       └── profile/
+│   │           ├── profile_handler.dart
+│   │           └── schema.dart
 │   ├── services/
-│   │   ├── auth_service.dart
-│   │   └── blog_service.dart
+│   │   ├── auth_service.dart           # Signup, login, logout, refresh — credential concerns only
+│   │   ├── blog_service.dart
+│   │   └── token_service.dart          # JWT issuance, rotation, revocation + keystore lifecycle
 │   └── workers/
-│       └── crypto_worker.dart
+│       ├── crypto_worker.dart          # BCrypt hashing in a dedicated isolate
+│       └── jwt_worker.dart             # RSA JWT verification in a dedicated isolate
 ├── test/
 │   ├── helpers/
 │   │   └── test_composition_root.dart
+│   ├── integration/
+│   │   └── access_routes_test.dart
 │   ├── mocks/
 │   │   └── mocks.dart
 │   └── unit/
+│       ├── middleware/
+│       │   ├── body_limit_middleware_test.dart
+│       │   └── rate_limit_middleware_test.dart
+│       ├── routes/
+│       │   └── health_handler_test.dart
 │       └── services/
-│           └── auth_service_test.dart
+│           ├── auth_service_test.dart
+│           └── blog_service_test.dart
 ├── .env.example
 ├── .gitignore
 ├── .github/
@@ -211,24 +232,26 @@ dart run bin/db_seed.dart
 
 Copy `.env.example` to `.env`.
 
-| Variable                   | Description                                  |
-|----------------------------|----------------------------------------------|
-| `PORT`                     | API port                                     |
-| `MAX_REQUEST_BODY_BYTES`   | Max allowed request payload size in bytes    |
-| `WORKER_COUNT`             | Isolates per process (0 = auto by CPU count) |
-| `DATABASE_URL`             | PostgreSQL connection string                 |
-| `DB_PORT`                  | Postgres published port (docker convenience) |
-| `DB_POOL_SIZE`             | Max Postgres connections per process         |
-| `REDIS_URL`                | Redis connection string                      |
-| `REDIS_PORT`               | Redis published port (docker convenience)    |
-| `NATS_URL`                 | NATS connection string                       |
-| `NATS_PORT`                | NATS published port (docker convenience)     |
-| `JWT_PRIVATE_KEY_PATH`     | RSA private key path                         |
-| `JWT_PUBLIC_KEY_PATH`      | RSA public key path                          |
-| `JWT_ACCESS_TOKEN_EXPIRY`  | Access token TTL in seconds                  |
-| `JWT_REFRESH_TOKEN_EXPIRY` | Refresh token TTL in seconds                 |
-| `OTEL_ENDPOINT`            | OTLP collector endpoint                      |
-| `ENVIRONMENT`              | `development` or `production`                |
+| Variable                   | Description                                               |
+|----------------------------|-----------------------------------------------------------|
+| `PORT`                     | API port                                                  |
+| `MAX_REQUEST_BODY_BYTES`   | Max allowed request payload size in bytes                 |
+| `WORKER_COUNT`             | Isolates per process (0 = auto by CPU count)              |
+| `DATABASE_URL`             | PostgreSQL connection string                              |
+| `DB_PORT`                  | Postgres published port (docker convenience)              |
+| `DB_POOL_SIZE`             | Max Postgres connections per process                      |
+| `REDIS_URL`                | Redis connection string                                   |
+| `REDIS_PORT`               | Redis published port (docker convenience)                 |
+| `NATS_URL`                 | NATS connection string (empty = events disabled)          |
+| `NATS_PORT`                | NATS published port (docker convenience)                  |
+| `JWT_PRIVATE_KEY_PATH`     | RSA private key file path                                 |
+| `JWT_PUBLIC_KEY_PATH`      | RSA public key file path                                  |
+| `JWT_PRIVATE_KEY_PEM`      | RSA private key PEM content (alternative to path)         |
+| `JWT_PUBLIC_KEY_PEM`       | RSA public key PEM content (alternative to path)          |
+| `JWT_ACCESS_TOKEN_EXPIRY`  | Access token TTL in seconds                               |
+| `JWT_REFRESH_TOKEN_EXPIRY` | Refresh token TTL in seconds                              |
+| `OTEL_ENDPOINT`            | OTLP collector endpoint (empty = telemetry disabled)      |
+| `ENVIRONMENT`              | `development` or `production`                             |
 
 ## API base path
 
@@ -321,5 +344,3 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-<!-- Analise mon archecture complet de mon backend tu me dis ce qui est bien et qui n'est pas et ce qui faut ameliore pour scaling et maintenabilité. -->
