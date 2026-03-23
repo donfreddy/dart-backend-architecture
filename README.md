@@ -305,6 +305,36 @@ All endpoints are mounted under:
 - `GET /v1/profile/my`
 - `PUT /v1/profile`
 
+## Request path — Signup API
+
+Trace of a `POST /v1/signup/basic` call through the system:
+
+```text
+bin/server.dart
+  → lib/app.dart                           # Shelf pipeline
+      → errorHandlerMiddleware             # catches ApiError, emits OTel error counter
+      → tracingMiddleware                  # starts OTel HTTP span
+      → logRequests                        # structured log line
+      → bodyLimitMiddleware                # rejects oversized payloads
+      → securityHeadersMiddleware          # injects CSP, HSTS, etc.
+      → rateLimitMiddleware                # Redis sliding window check
+      → corsMiddleware
+      → apiKeyMiddleware                   # validates x-api-key header
+  → lib/routes/router.dart
+  → lib/routes/v1/router.dart
+  → lib/routes/v1/access/signup_handler.dart
+      → validateSchema(signupSchema)       # Zema body validation
+      → AuthService.signup
+          → UserRepo.findByEmail           # duplicate check
+          → TokenService.generateKey × 2  # pre-generate access + refresh keys
+          → CryptoWorker.hashPassword      # BCrypt in dedicated isolate
+          → UserRepo.create                # user + keystore in one transaction
+          → TokenService.buildForExistingKeys
+              → JwtService.encode × 2     # RSA RS256 sign access + refresh tokens
+  → lib/core/response/api_response.dart   # Success envelope
+  → lib/core/response/shelf_response_x.dart
+```
+
 ## Response format
 
 Success envelope:
@@ -312,8 +342,19 @@ Success envelope:
 ```json
 {
   "status": "10000",
-  "message": "Login success",
-  "data": {}
+  "message": "Signup Successful",
+  "data": {
+    "user": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Jane Doe",
+      "email": "jane@example.com",
+      "roles": ["LEARNER"]
+    },
+    "tokens": {
+      "accessToken": "<jwt>",
+      "refreshToken": "<jwt>"
+    }
+  }
 }
 ```
 
@@ -323,6 +364,21 @@ Error envelope:
 {
   "status": "10001",
   "message": "Authentication failure"
+}
+```
+
+Validation error envelope:
+
+```json
+{
+  "status": "10001",
+  "message": "Validation failed",
+  "data": {
+    "errors": {
+      "email": ["Invalid email format"],
+      "password": ["Must be at least 8 characters"]
+    }
+  }
 }
 ```
 
