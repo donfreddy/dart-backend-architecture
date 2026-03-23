@@ -29,9 +29,8 @@ void main() {
     isPublished: true,
   );
 
-  group('BlogService caching + events', () {
+  group('BlogService — NATS event publication', () {
     late MockBlogRepo blogRepo;
-    late MockBlogCache blogCache;
     late MockNatsService nats;
     late BlogService sut;
 
@@ -41,74 +40,48 @@ void main() {
 
     setUp(() {
       blogRepo = MockBlogRepo();
-      blogCache = MockBlogCache();
       nats = MockNatsService();
-      sut = BlogService(blogRepo: blogRepo, blogCache: blogCache, nats: nats);
+      // BlogService receives a CachingBlogRepo in production.
+      // In unit tests we pass a plain MockBlogRepo — cache behaviour
+      // is covered separately in caching_blog_repo_test.dart.
+      sut = BlogService(blogRepo: blogRepo, nats: nats);
     });
 
-    test('findByUrl uses cache hit', () async {
-      when(() => blogCache.getByUrlWithLoader('hello-world', any()))
-          .thenAnswer((_) async => blog);
+    test('create publishes blog.created event', () async {
+      when(() => blogRepo.create(any())).thenAnswer((_) async => blog);
+      when(() => nats.publish(any(), any())).thenAnswer((_) async {});
 
-      final result = await sut.findByUrl('hello-world');
+      await sut.create(blog);
 
-      expect(result, blog);
-      verifyNever(() => blogRepo.findByUrl(any()));
+      verify(() => nats.publish('blog.created', any())).called(1);
     });
 
-    test('findByUrl loads and caches on miss', () async {
+    test('update publishes blog.updated event', () async {
+      when(() => blogRepo.update(blog)).thenAnswer((_) async {});
+      when(() => nats.publish(any(), any())).thenAnswer((_) async {});
+
+      await sut.update(blog);
+
+      verify(() => nats.publish('blog.updated', any())).called(1);
+    });
+
+    test('create still succeeds when NATS is unavailable', () async {
+      when(() => blogRepo.create(any())).thenAnswer((_) async => blog);
+      when(() => nats.publish(any(), any()))
+          .thenThrow(Exception('NATS down'));
+
+      // Must not rethrow — NATS events are best-effort
+      await expectLater(sut.create(blog), completes);
+    });
+
+    test('findByUrl delegates to repo', () async {
       when(() => blogRepo.findByUrl('hello-world'))
           .thenAnswer((_) async => blog);
-      when(() => blogCache.getByUrlWithLoader(any(), any()))
-          .thenAnswer((inv) async {
-        final loader = inv.positionalArguments[1] as Future<Blog?> Function();
-        return loader();
-      });
 
       final result = await sut.findByUrl('hello-world');
 
       expect(result, blog);
       verify(() => blogRepo.findByUrl('hello-world')).called(1);
-    });
-
-    test('findInfoWithTextById uses cache', () async {
-      when(() => blogCache.getByIdWithLoader('b-1', any()))
-          .thenAnswer((_) async => blog);
-
-      final result = await sut.findInfoWithTextById('b-1');
-
-      expect(result, blog);
-      verifyNever(() => blogRepo.findInfoWithTextById(any()));
-    });
-
-    test('create evicts cache and publishes event', () async {
-      when(() => blogRepo.create(any())).thenAnswer((_) async => blog);
-      when(() => nats.publish(any(), any())).thenAnswer((_) async {});
-      when(() => blogCache.evictAllLists()).thenAnswer((_) async {});
-      when(() => blogCache.evictById(any())).thenAnswer((_) async {});
-      when(() => blogCache.evictByUrl(any())).thenAnswer((_) async {});
-
-      await sut.create(blog);
-
-      verify(() => blogCache.evictAllLists()).called(1);
-      verify(() => blogCache.evictById('b-1')).called(1);
-      verify(() => blogCache.evictByUrl('hello-world')).called(1);
-      verify(() => nats.publish('blog.created', any())).called(1);
-    });
-
-    test('update evicts caches and publishes event', () async {
-      when(() => blogRepo.update(blog)).thenAnswer((_) async {});
-      when(() => nats.publish(any(), any())).thenAnswer((_) async {});
-      when(() => blogCache.evictAllLists()).thenAnswer((_) async {});
-      when(() => blogCache.evictById(any())).thenAnswer((_) async {});
-      when(() => blogCache.evictByUrl(any())).thenAnswer((_) async {});
-
-      await sut.update(blog);
-
-      verify(() => blogCache.evictAllLists()).called(1);
-      verify(() => blogCache.evictById('b-1')).called(1);
-      verify(() => blogCache.evictByUrl('hello-world')).called(1);
-      verify(() => nats.publish('blog.updated', any())).called(1);
     });
   });
 }
