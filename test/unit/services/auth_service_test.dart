@@ -17,26 +17,20 @@ void main() {
     prm: 'access-key',
   );
 
-  const refreshPayload = JwtPayload(
-    aud: 'aud',
-    sub: 'u-1',
-    iss: 'iss',
-    iat: 0,
-    exp: 2,
-    prm: 'refresh-key',
+  final user = User(
+    id: 'u-1',
+    email: 'x@y.com',
+    name: 'X',
+    passwordHash: 'bcrypt-hash',
+    createdAt: DateTime.utc(2026, 1, 1),
+  );
+
+  const tokenPair = TokenPair(
+    accessToken: 'access-jwt',
+    refreshToken: 'refresh-jwt',
   );
 
   setUpAll(() {
-    registerFallbackValue(
-      const JwtPayload(
-        aud: 'aud',
-        sub: 'sub',
-        iss: 'iss',
-        iat: 0,
-        exp: 1,
-        prm: 'prm',
-      ),
-    );
     registerFallbackValue(
       User(
         id: 'fallback',
@@ -47,38 +41,35 @@ void main() {
     );
   });
 
-  group('AuthService.login', () {
-    late AuthService sut;
-    late MockUserRepo mockUserRepo;
-    late MockKeystoreRepo mockKeystoreRepo;
-    late MockJwtService mockJwtService;
-    late MockCryptoWorker mockCryptoWorker;
+  AuthService buildSut({
+    MockUserRepo? userRepo,
+    MockJwtService? jwt,
+    MockCryptoWorker? crypto,
+    MockTokenService? tokenService,
+  }) =>
+      AuthService(
+        userRepo: userRepo ?? MockUserRepo(),
+        jwt: jwt ?? MockJwtService(),
+        crypto: crypto ?? MockCryptoWorker(),
+        tokenService: tokenService ?? MockTokenService(),
+      );
 
-    final user = User(
-      id: 'u-1',
-      email: 'x@y.com',
-      name: 'X',
-      passwordHash: 'bcrypt-hash',
-      createdAt: DateTime.utc(2026, 1, 1),
-    );
+  // ── login ──────────────────────────────────────────────────────────────────
+
+  group('AuthService.login', () {
+    late MockUserRepo mockUserRepo;
+    late MockCryptoWorker mockCrypto;
+    late MockTokenService mockTokenService;
+    late AuthService sut;
 
     setUp(() {
       mockUserRepo = MockUserRepo();
-      mockKeystoreRepo = MockKeystoreRepo();
-      mockJwtService = MockJwtService();
-      mockCryptoWorker = MockCryptoWorker();
-
-      when(() => mockJwtService.accessTokenExpiry)
-          .thenReturn(const Duration(hours: 1));
-      when(() => mockJwtService.refreshTokenExpiry)
-          .thenReturn(const Duration(days: 30));
-      when(() => mockJwtService.encode(any())).thenReturn('jwt-token');
-
-      sut = AuthService(
+      mockCrypto = MockCryptoWorker();
+      mockTokenService = MockTokenService();
+      sut = buildSut(
         userRepo: mockUserRepo,
-        keystoreRepo: mockKeystoreRepo,
-        jwt: mockJwtService,
-        crypto: mockCryptoWorker,
+        crypto: mockCrypto,
+        tokenService: mockTokenService,
       );
     });
 
@@ -93,7 +84,7 @@ void main() {
 
     test('throws AuthFailureError on wrong password', () async {
       when(() => mockUserRepo.findByEmail(any())).thenAnswer((_) async => user);
-      when(() => mockCryptoWorker.verifyPassword(any(), any()))
+      when(() => mockCrypto.verifyPassword(any(), any()))
           .thenAnswer((_) async => false);
 
       await expectLater(
@@ -105,38 +96,29 @@ void main() {
     test('returns AuthResult on valid credentials', () async {
       when(() => mockUserRepo.findByEmail('x@y.com'))
           .thenAnswer((_) async => user);
-      when(() => mockCryptoWorker.verifyPassword('pass123', user.passwordHash!))
+      when(() => mockCrypto.verifyPassword('pass123', user.passwordHash!))
           .thenAnswer((_) async => true);
-      when(() => mockKeystoreRepo.create(user, any(), any())).thenAnswer(
-        (inv) async => Keystore(
-          id: 'k-1',
-          client: user,
-          primaryKey: inv.positionalArguments[1] as String,
-          secondaryKey: inv.positionalArguments[2] as String,
-          createdAt: DateTime.utc(2026, 1, 1),
-        ),
-      );
+      when(() => mockTokenService.issue(user))
+          .thenAnswer((_) async => tokenPair);
 
       final result = await sut
           .login(const LoginDto(email: 'x@y.com', password: 'pass123'));
 
       expect(result.user.id, 'u-1');
-      expect(result.tokens.accessToken, 'jwt-token');
-      expect(result.tokens.refreshToken, 'jwt-token');
-      verify(
-        () => mockCryptoWorker.verifyPassword('pass123', user.passwordHash!),
-      ).called(1);
-      verify(() => mockKeystoreRepo.create(user, any(), any())).called(1);
-      verify(() => mockJwtService.encode(any())).called(2);
+      expect(result.tokens.accessToken, 'access-jwt');
+      verify(() => mockCrypto.verifyPassword('pass123', user.passwordHash!))
+          .called(1);
+      verify(() => mockTokenService.issue(user)).called(1);
     });
   });
 
+  // ── signup ─────────────────────────────────────────────────────────────────
+
   group('AuthService.signup', () {
-    late AuthService sut;
     late MockUserRepo mockUserRepo;
-    late MockKeystoreRepo mockKeystoreRepo;
-    late MockJwtService mockJwtService;
-    late MockCryptoWorker mockCryptoWorker;
+    late MockCryptoWorker mockCrypto;
+    late MockTokenService mockTokenService;
+    late AuthService sut;
 
     final newUser = User(
       id: 'u-2',
@@ -148,23 +130,12 @@ void main() {
 
     setUp(() {
       mockUserRepo = MockUserRepo();
-      mockKeystoreRepo = MockKeystoreRepo();
-      mockJwtService = MockJwtService();
-      mockCryptoWorker = MockCryptoWorker();
-
-      when(() => mockJwtService.accessTokenExpiry)
-          .thenReturn(const Duration(hours: 1));
-      when(() => mockJwtService.refreshTokenExpiry)
-          .thenReturn(const Duration(days: 30));
-      when(() => mockJwtService.encode(any())).thenReturn('jwt-token');
-      when(() => mockCryptoWorker.hashPassword(any()))
-          .thenAnswer((inv) async => 'hashed-${inv.positionalArguments.first}');
-
-      sut = AuthService(
+      mockCrypto = MockCryptoWorker();
+      mockTokenService = MockTokenService();
+      sut = buildSut(
         userRepo: mockUserRepo,
-        keystoreRepo: mockKeystoreRepo,
-        jwt: mockJwtService,
-        crypto: mockCryptoWorker,
+        crypto: mockCrypto,
+        tokenService: mockTokenService,
       );
     });
 
@@ -182,148 +153,129 @@ void main() {
 
     test('creates user, hashes password, returns tokens', () async {
       when(() => mockUserRepo.findByEmail(any())).thenAnswer((_) async => null);
-      when(
-        () => mockUserRepo.create(any(), any(), any(), any()),
-      ).thenAnswer((inv) async {
-        return (
-          user: newUser,
-          keystore: Keystore(
-            id: 'k1',
-            client: newUser,
-            primaryKey: 'a',
-            secondaryKey: 'b',
-          )
-        );
-      });
+      when(() => mockCrypto.hashPassword(any()))
+          .thenAnswer((inv) async => 'hashed-${inv.positionalArguments.first}');
+      when(() => mockUserRepo.create(any(), any(), any(), any()))
+          .thenAnswer((inv) async => (
+                user: newUser,
+                keystore: Keystore(
+                  id: 'k1',
+                  client: newUser,
+                  primaryKey: 'pk',
+                  secondaryKey: 'sk',
+                ),
+              ),);
+      when(() => mockTokenService.buildForExistingKeys(any(), any(), any()))
+          .thenReturn(tokenPair);
 
       final result = await sut.signup(
         const SignupDto(name: 'X', email: 'new@y.com', password: 'p'),
       );
 
       expect(result.user.email, 'new@y.com');
-      expect(result.tokens.accessToken, isNotEmpty);
-      verify(() => mockCryptoWorker.hashPassword('p')).called(1);
+      expect(result.tokens.accessToken, 'access-jwt');
+      verify(() => mockCrypto.hashPassword('p')).called(1);
       verify(() => mockUserRepo.create(any(), any(), any(), any())).called(1);
-      verify(() => mockJwtService.encode(any())).called(2);
+      verify(() => mockTokenService.buildForExistingKeys(any(), any(), any()))
+          .called(1);
     });
   });
 
-  group('AuthService.logout', () {
-    late AuthService sut;
-    late MockUserRepo mockUserRepo;
-    late MockKeystoreRepo mockKeystoreRepo;
-    late MockJwtService mockJwtService;
-    late MockCryptoWorker mockCryptoWorker;
+  // ── logout ─────────────────────────────────────────────────────────────────
 
-    final user = User(
-      id: 'u-1',
-      email: 'x@y.com',
-      name: 'X',
-      passwordHash: 'hash',
-      createdAt: DateTime.utc(2026, 1, 1),
-    );
+  group('AuthService.logout', () {
+    late MockUserRepo mockUserRepo;
+    late MockJwtService mockJwt;
+    late MockTokenService mockTokenService;
+    late AuthService sut;
 
     setUp(() {
       mockUserRepo = MockUserRepo();
-      mockKeystoreRepo = MockKeystoreRepo();
-      mockJwtService = MockJwtService();
-      mockCryptoWorker = MockCryptoWorker();
-
-      sut = AuthService(
+      mockJwt = MockJwtService();
+      mockTokenService = MockTokenService();
+      sut = buildSut(
         userRepo: mockUserRepo,
-        keystoreRepo: mockKeystoreRepo,
-        jwt: mockJwtService,
-        crypto: mockCryptoWorker,
+        jwt: mockJwt,
+        tokenService: mockTokenService,
       );
     });
 
-    test('removes keystore for valid access token', () async {
-      when(() => mockJwtService.validate('access')).thenReturn(accessPayload);
+    test('delegates revoke to TokenService for valid access token', () async {
+      when(() => mockJwt.validate('access'))
+          .thenAnswer((_) async => accessPayload);
       when(() => mockUserRepo.findById('u-1')).thenAnswer((_) async => user);
-      when(() => mockKeystoreRepo.findForKey(user, 'access-key')).thenAnswer(
-        (_) async => Keystore(
-          id: 'k-1',
-          client: user,
-          primaryKey: 'access-key',
-          secondaryKey: 'refresh',
-        ),
-      );
-      when(() => mockKeystoreRepo.remove('k-1')).thenAnswer((_) async => null);
+      when(() => mockTokenService.revoke(user: user, primaryKey: 'access-key'))
+          .thenAnswer((_) async {});
 
       await sut.logout('access');
 
-      verify(() => mockKeystoreRepo.remove('k-1')).called(1);
+      verify(() => mockTokenService.revoke(user: user, primaryKey: 'access-key'))
+          .called(1);
+    });
+
+    test('throws AuthFailureError when user not found', () async {
+      when(() => mockJwt.validate('access'))
+          .thenAnswer((_) async => accessPayload);
+      when(() => mockUserRepo.findById('u-1')).thenAnswer((_) async => null);
+
+      await expectLater(
+        sut.logout('access'),
+        throwsA(isA<AuthFailureError>()),
+      );
     });
   });
 
-  group('AuthService.refreshToken', () {
-    late AuthService sut;
-    late MockUserRepo mockUserRepo;
-    late MockKeystoreRepo mockKeystoreRepo;
-    late MockJwtService mockJwtService;
-    late MockCryptoWorker mockCryptoWorker;
+  // ── refreshToken ───────────────────────────────────────────────────────────
 
-    final user = User(
-      id: 'u-1',
-      email: 'x@y.com',
-      name: 'X',
-      passwordHash: 'hash',
-      createdAt: DateTime.utc(2026, 1, 1),
-    );
+  group('AuthService.refreshToken', () {
+    late MockUserRepo mockUserRepo;
+    late MockJwtService mockJwt;
+    late MockTokenService mockTokenService;
+    late AuthService sut;
 
     setUp(() {
       mockUserRepo = MockUserRepo();
-      mockKeystoreRepo = MockKeystoreRepo();
-      mockJwtService = MockJwtService();
-      mockCryptoWorker = MockCryptoWorker();
-
-      when(() => mockJwtService.accessTokenExpiry)
-          .thenReturn(const Duration(hours: 1));
-      when(() => mockJwtService.refreshTokenExpiry)
-          .thenReturn(const Duration(days: 30));
-      when(() => mockJwtService.encode(any())).thenReturn('new-jwt');
-
-      sut = AuthService(
+      mockJwt = MockJwtService();
+      mockTokenService = MockTokenService();
+      sut = buildSut(
         userRepo: mockUserRepo,
-        keystoreRepo: mockKeystoreRepo,
-        jwt: mockJwtService,
-        crypto: mockCryptoWorker,
+        jwt: mockJwt,
+        tokenService: mockTokenService,
       );
     });
 
-    test('returns new tokens and rotates keys', () async {
-      when(() => mockJwtService.decode('access')).thenReturn(accessPayload);
-      when(() => mockJwtService.validate('refresh')).thenReturn(refreshPayload);
+    test('delegates rotation to TokenService', () async {
+      when(() => mockJwt.decode('access'))
+          .thenAnswer((_) async => accessPayload);
       when(() => mockUserRepo.findById('u-1')).thenAnswer((_) async => user);
-      when(() => mockKeystoreRepo.find(user, 'access-key', 'refresh-key'))
-          .thenAnswer(
-        (_) async => Keystore(
-          id: 'k-1',
-          client: user,
-          primaryKey: 'access-key',
-          secondaryKey: 'refresh-key',
-        ),
-      );
-      when(() => mockKeystoreRepo.remove('k-1')).thenAnswer((_) async => null);
-      when(() => mockKeystoreRepo.create(user, any(), any())).thenAnswer(
-        (inv) async => Keystore(
-          id: 'k-2',
-          client: user,
-          primaryKey: inv.positionalArguments[1] as String,
-          secondaryKey: inv.positionalArguments[2] as String,
-        ),
-      );
+      when(() => mockTokenService.rotate(
+            user: user,
+            accessToken: 'access',
+            refreshToken: 'refresh',
+          ),).thenAnswer((_) async => tokenPair);
 
       final tokens = await sut.refreshToken(
         accessToken: 'access',
         refreshToken: 'refresh',
       );
 
-      expect(tokens.accessToken, 'new-jwt');
-      expect(tokens.refreshToken, 'new-jwt');
-      verify(() => mockKeystoreRepo.remove('k-1')).called(1);
-      verify(() => mockKeystoreRepo.create(user, any(), any())).called(1);
-      verify(() => mockJwtService.encode(any())).called(2);
+      expect(tokens.accessToken, 'access-jwt');
+      verify(() => mockTokenService.rotate(
+            user: user,
+            accessToken: 'access',
+            refreshToken: 'refresh',
+          ),).called(1);
+    });
+
+    test('throws AuthFailureError when user not found', () async {
+      when(() => mockJwt.decode('access'))
+          .thenAnswer((_) async => accessPayload);
+      when(() => mockUserRepo.findById('u-1')).thenAnswer((_) async => null);
+
+      await expectLater(
+        sut.refreshToken(accessToken: 'access', refreshToken: 'refresh'),
+        throwsA(isA<AuthFailureError>()),
+      );
     });
   });
 }

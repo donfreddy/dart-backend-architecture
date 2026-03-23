@@ -29,9 +29,9 @@ void main() {
     isPublished: true,
   );
 
-  group('BlogService — NATS event publication', () {
+  group('BlogService — event publication', () {
     late MockBlogRepo blogRepo;
-    late MockNatsService nats;
+    late MockEventBus eventBus;
     late BlogService sut;
 
     setUpAll(() {
@@ -40,37 +40,34 @@ void main() {
 
     setUp(() {
       blogRepo = MockBlogRepo();
-      nats = MockNatsService();
-      // BlogService receives a CachingBlogRepo in production.
-      // In unit tests we pass a plain MockBlogRepo — cache behaviour
-      // is covered separately in caching_blog_repo_test.dart.
-      sut = BlogService(blogRepo: blogRepo, nats: nats);
+      eventBus = MockEventBus();
+      sut = BlogService(blogRepo: blogRepo, eventBus: eventBus);
     });
 
     test('create publishes blog.created event', () async {
       when(() => blogRepo.create(any())).thenAnswer((_) async => blog);
-      when(() => nats.publish(any(), any())).thenAnswer((_) async {});
+      when(() => eventBus.publish(any(), any())).thenAnswer((_) async {});
 
       await sut.create(blog);
 
-      verify(() => nats.publish('blog.created', any())).called(1);
+      verify(() => eventBus.publish('blog.created', any())).called(1);
     });
 
     test('update publishes blog.updated event', () async {
       when(() => blogRepo.update(blog)).thenAnswer((_) async {});
-      when(() => nats.publish(any(), any())).thenAnswer((_) async {});
+      when(() => eventBus.publish(any(), any())).thenAnswer((_) async {});
 
       await sut.update(blog);
 
-      verify(() => nats.publish('blog.updated', any())).called(1);
+      verify(() => eventBus.publish('blog.updated', any())).called(1);
     });
 
-    test('create still succeeds when NATS is unavailable', () async {
+    test('create still succeeds when event bus is unavailable', () async {
       when(() => blogRepo.create(any())).thenAnswer((_) async => blog);
-      when(() => nats.publish(any(), any()))
-          .thenThrow(Exception('NATS down'));
+      when(() => eventBus.publish(any(), any()))
+          .thenThrow(Exception('event bus down'));
 
-      // Must not rethrow — NATS events are best-effort
+      // Must not rethrow — events are best-effort
       await expectLater(sut.create(blog), completes);
     });
 
