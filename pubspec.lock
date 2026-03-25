@@ -613,9 +613,9 @@ packages:
     dependency: "direct main"
     description:
       name: zema
-      sha256: "6f1b946bfc056c2032e99894f4220a74e0cefd834a4832b984395d9712eda5f5"
+      sha256: "83111f0c6cf44a9e92db9e99cb84e6c350ff36a50329e354989765472d3bdd1d"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.0"
+    version: "0.5.1"
 sdks:
   dart: ">=3.9.0 <4.0.0"

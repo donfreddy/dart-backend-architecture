@@ -16,26 +16,22 @@ final _log = AppLogger.get('Validator');
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
-// final _urlEndpointSchema = z.string().refine(
-//       (v) => !v.contains('://'),
-//       message: 'Invalid url endpoint',
-//     );
+final _urlEndpointSchema = z.string().refine(
+      (v) => !v.contains('://'),
+      message: 'Invalid url endpoint',
+    );
 
-// final _bearerSchema = z
-//     .string()
-//     .refine(
-//       (v) => v.startsWith('Bearer '),
-//       message: 'Invalid authorization header',
-//     )
-//     .transform((v) => v.substring(7).trim())
-//     .refine(
-//       (v) => v.isNotEmpty,
-//       message: 'Invalid authorization header',
-//     );
-
-// todo: remove this and re-enable the above refinements once we have a proper URL validator in place (e.g. via zod_url package or custom implementation)
-final _urlEndpointSchema = z.string();
-final _bearerSchema = z.string();
+final _bearerSchema = z
+    .string()
+    .refine(
+      (v) => v.startsWith('Bearer '),
+      message: 'Invalid authorization header',
+    )
+    .transform((v) => v.substring(7).trim())
+    .refine(
+      (v) => v.isNotEmpty,
+      message: 'Invalid authorization header',
+    );
 
 // ─── Internal helper ─────────────────────────────────────────────────────────
 
