@@ -18,8 +18,7 @@ Future<Response> writerCreateBlogHandler(
   final validated = validateSchema(blogCreateSchema, body);
 
   final authUser = request.authUser;
-  final endpoint =
-      _formatEndpoint(validateUrlEndpoint(validated['blogUrl'] as String));
+  final endpoint = _formatEndpoint(validateUrlEndpoint(validated['blog_url'] as String));
 
   final existingByUrl = await blogService.findUrlIfExists(endpoint);
   if (existingByUrl != null) {
@@ -34,7 +33,7 @@ Future<Response> writerCreateBlogHandler(
       tags: (validated['tags'] as List<dynamic>).cast<String>(),
       author: authUser,
       blogUrl: endpoint,
-      imgUrl: validated['imgUrl'] as String?,
+      imgUrl: validated['img_url'] as String?,
       score: validated['score'] as num,
       isSubmitted: false,
       isDraft: true,

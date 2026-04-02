@@ -5,20 +5,20 @@ final blogUrlQuerySchema = z.object({
 });
 
 final blogIdParamSchema = z.object({
-  'id': z.string().min(1),
+  'id': z.string().uuid(),
 });
 
 final blogTagParamSchema = z.object({
-  'tag': z.string().min(1),
+  'tag': z.string().uuid(),
 });
 
 final authorIdParamSchema = z.object({
-  'id': z.string().min(1),
+  'id': z.string().uuid(),
 });
 
 final blogPaginationQuerySchema = z.object({
-  'pageNumber': z.coerce().integer(min: 1).withDefault(1),
-  'pageItemCount': z.coerce().integer(min: 1).withDefault(10),
+  'page_number': z.coerce().integer(min: 1).withDefault(1),
+  'page_item_count': z.coerce().integer(min: 1).withDefault(10),
 });
 
 final blogCreateSchema = z.object({
@@ -28,7 +28,7 @@ final blogCreateSchema = z.object({
   'tags': z.array(z.string().min(1)).min(1),
   'blog_url': z.string().min(1),
   'img_url': z.string().url().optional(),
-  'score': z.coerce().integer(min: 0).withDefault(0),
+  'score': z.integer().withDefault(0),
 });
 
 final blogUpdateSchema = z.object({

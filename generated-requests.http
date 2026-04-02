@@ -9,7 +9,7 @@
 # -- Credentials (fill after signup/login) ------------------------------------
 
 @apiKey       = GCMUDiuY5a7WvyUNt9n3QztToSHzK7Uj
-@accessToken  = eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJkYmEtdXNlcnMiLCJzdWIiOiIyODNhZDRhMC1mMzFmLTQyMDQtODUwNy1iNzgwNGM5NmY2MTkiLCJpc3MiOiJkYXJ0LWJhY2tlbmQtYXJjaGl0ZWN0dXJlIiwiaWF0IjoxNzc1MTM2OTY2LCJleHAiOjE3NzUxNDA1NjYsInBybSI6IjQ0YTNhYmEzMjFhYzMwMTMyOTgwYzMxOTg0ZWU4NmQ2MDgwZmZmZmE5MDA3ODFjNmM5NzBiZjc1MDZmYjUzODhiYzNiMWE3N2EyMWQ2MzlmZWIyNmUzNzA3NTNlYjlmMzZkMjQ3YTJiOWEzZjg2NDkwNTQ4ODFjY2YzMDVhN2FmIn0.Jw8m9AR3aN49lKBhhI02tuLtsevBWweMi02a4wBtP10v8heGFklxMK3w3hkvw9gWva6Aix-NSlUr8NXMLVTW6g
+@accessToken  = eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJkYmEtdXNlcnMiLCJzdWIiOiI0NDg4ZTFlNi05ZTFiLTQxOTQtOGY3Ny1hYzFiZmZlYmJhNTkiLCJpc3MiOiJkYXJ0LWJhY2tlbmQtYXJjaGl0ZWN0dXJlIiwiaWF0IjoxNzc1MTY2MzkwLCJleHAiOjE3NzUxNjk5OTAsInBybSI6ImYyMTE2MDYxNTk5Y2QxOGYxMmZjNzllYTFhZWNjNzUzMzliMTMzMDNjZTBmZGUyNDIxZDhlMTc0NWVkNDI0NWMxYWYzNmZiYTYzMTJkYWVjYmQ5MzMxODVmN2ExNDM2NDAxMTFjYjgyOWFmZDk3MWJkOGNiNGU1M2Q2ZjVhYTg4In0.P99yJdHGbiMIUiTyy9KqUXxdv8zLNSqmsE-DgkUy6lrycRO1bKt2aIzXKq-ugrOMUNPxLx9akOQ_wf_BWWpkRg
 @refreshToken = <refresh_token>
 
 # -- Pagination defaults -------------------------------------------------------
@@ -24,7 +24,7 @@
 
 ### Readiness probe
 GET {{baseUrl}}/readyz
-#x-api-key: {{apiKey}}
+x-api-key: {{apiKey}}
 
 
 # =============================================================================
@@ -60,12 +60,13 @@ Content-Type: {{contentType}}
 x-api-key: {{apiKey}}
 
 {
-  "email": "jane@example.com",
+  "email": "jane-e@example.com",
   "password": "Jane@2026"
 }
 
 ### Refresh token
 POST {{baseUrl}}/v1/token/refresh
+Authorization: Bearer {{accessToken}}
 Content-Type: {{contentType}}
 x-api-key: {{apiKey}}
 
@@ -86,10 +87,6 @@ x-api-key: {{apiKey}}
 ### Get my profile
 GET {{baseUrl}}/v1/profile/my
 Authorization: Bearer {{accessToken}}
-x-api-key: {{apiKey}}
-
-### Get public profile by id
-GET {{baseUrl}}/v1/profile/public/id/01JQKZ9P0000000000000000
 x-api-key: {{apiKey}}
 
 ### Update profile
@@ -113,17 +110,20 @@ x-api-key: {{apiKey}}
   "name": "Jane Renamed"
 }
 
+### Get public profile by id
+GET {{baseUrl}}/v1/profile/public/id/283ad4a0-f31f-4204-8507-b7804c96f619
+x-api-key: {{apiKey}}
 
 # =============================================================================
 # Blogs — Public
 # =============================================================================
 
 ### Get blog by slug
-GET {{baseUrl}}/v1/blogs/url?endpoint=my-first-blog-post
+GET {{baseUrl}}/v1/blogs/url?endpoint=minimal-blog-post
 x-api-key: {{apiKey}}
 
 ### Get blog by id
-GET {{baseUrl}}/v1/blogs/id/01JQKZ9P0000000000000000
+GET {{baseUrl}}/v1/blogs/id/be3cef17-c52f-4362-b80b-e6261c24eae0
 x-api-key: {{apiKey}}
 
 ### Get blogs by tag (paginated)
@@ -131,7 +131,7 @@ GET {{baseUrl}}/v1/blogs/tag/dart?pageNumber={{pageNumber}}&pageItemCount={{page
 x-api-key: {{apiKey}}
 
 ### Get blogs by author id
-GET {{baseUrl}}/v1/blogs/author/id/01JQKZ9P0000000000000000
+GET {{baseUrl}}/v1/blogs/author/id/588961e4-4b51-4040-a882-2e80049f54e2
 x-api-key: {{apiKey}}
 
 ### Get latest blogs (paginated)
@@ -139,7 +139,7 @@ GET {{baseUrl}}/v1/blogs/latest?pageNumber={{pageNumber}}&pageItemCount={{pageIt
 x-api-key: {{apiKey}}
 
 ### Get similar blogs by id
-GET {{baseUrl}}/v1/blogs/similar/id/01JQKZ9P0000000000000000
+GET {{baseUrl}}/v1/blogs/similar/id/be3cef17-c52f-4362-b80b-e6261c24eae0
 x-api-key: {{apiKey}}
 
 
@@ -178,28 +178,28 @@ x-api-key: {{apiKey}}
 }
 
 ### Update blog
-PUT {{baseUrl}}/v1/blogs/writer/id/01JQKZ9P0000000000000000
+PUT {{baseUrl}}/v1/blogs/writer/id/115cd598-3c5a-438f-8830-91cad8a70c74
 Authorization: Bearer {{accessToken}}
 Content-Type: {{contentType}}
 x-api-key: {{apiKey}}
 
 {
-  "title": "Updated Title",
+  "title": "Updated Minimal Blog Post",
   "tags": ["dart", "updated"]
 }
 
 ### Submit blog for review
-PUT {{baseUrl}}/v1/blogs/writer/submit/01JQKZ9P0000000000000000
+PUT {{baseUrl}}/v1/blogs/writer/submit/115cd598-3c5a-438f-8830-91cad8a70c74
 Authorization: Bearer {{accessToken}}
 x-api-key: {{apiKey}}
 
 ### Withdraw blog from review
-PUT {{baseUrl}}/v1/blogs/writer/withdraw/01JQKZ9P0000000000000000
+PUT {{baseUrl}}/v1/blogs/writer/withdraw/115cd598-3c5a-438f-8830-91cad8a70c74
 Authorization: Bearer {{accessToken}}
 x-api-key: {{apiKey}}
 
 ### Delete blog (writer)
-DELETE {{baseUrl}}/v1/blogs/writer/id/01JQKZ9P0000000000000000
+DELETE {{baseUrl}}/v1/blogs/writer/id/115cd598-3c5a-438f-8830-91cad8a70c74
 Authorization: Bearer {{accessToken}}
 x-api-key: {{apiKey}}
 
@@ -219,7 +219,7 @@ Authorization: Bearer {{accessToken}}
 x-api-key: {{apiKey}}
 
 ### Get my blog by id (writer view)
-GET {{baseUrl}}/v1/blogs/writer/id/01JQKZ9P0000000000000000
+GET {{baseUrl}}/v1/blogs/writer/id/115cd598-3c5a-438f-8830-91cad8a70c74
 Authorization: Bearer {{accessToken}}
 x-api-key: {{apiKey}}
 
@@ -229,17 +229,17 @@ x-api-key: {{apiKey}}
 # =============================================================================
 
 ### Publish blog
-PUT {{baseUrl}}/v1/blogs/editor/publish/01JQKZ9P0000000000000000
+PUT {{baseUrl}}/v1/blogs/editor/publish/115cd598-3c5a-438f-8830-91cad8a70c74
 Authorization: Bearer {{accessToken}}
 x-api-key: {{apiKey}}
 
 ### Unpublish blog
-PUT {{baseUrl}}/v1/blogs/editor/unpublish/01JQKZ9P0000000000000000
+PUT {{baseUrl}}/v1/blogs/editor/unpublish/115cd598-3c5a-438f-8830-91cad8a70c74
 Authorization: Bearer {{accessToken}}
 x-api-key: {{apiKey}}
 
 ### Delete blog (editor)
-DELETE {{baseUrl}}/v1/blogs/editor/id/01JQKZ9P0000000000000000
+DELETE {{baseUrl}}/v1/blogs/editor/id/115cd598-3c5a-438f-8830-91cad8a70c74
 Authorization: Bearer {{accessToken}}
 x-api-key: {{apiKey}}
 
@@ -259,6 +259,6 @@ Authorization: Bearer {{accessToken}}
 x-api-key: {{apiKey}}
 
 ### Get blog by id (editor view)
-GET {{baseUrl}}/v1/blogs/editor/id/01JQKZ9P0000000000000000
+GET {{baseUrl}}/v1/blogs/editor/id/115cd598-3c5a-438f-8830-91cad8a70c74
 Authorization: Bearer {{accessToken}}
 x-api-key: {{apiKey}}

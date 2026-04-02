@@ -1,7 +1,7 @@
 import 'package:zema/zema.dart';
 
 final profileUserIdSchema = z.object({
-  'id': z.string().min(1),
+  'id': z.string().uuid(),
 });
 
 final profileUpdateSchema = z.object({
