@@ -210,7 +210,7 @@ Future<void> main() async {
 
   shelf_io.serveRequests(
     mainServer,
-    buildApp(mainRoot.router, maxRequestBodyBytes: config.maxRequestBodyBytes),
+    buildApp(mainRoot.router, maxRequestBodyBytes: config.maxRequestBodyBytes, apiKeyRepo: mainRoot.apiKeyRepo),
   );
 
   log.info('[worker-0] Listening on :${mainServer.port}');
@@ -273,7 +273,7 @@ Future<void> _workerEntryPoint(WorkerConfig config) async {
 
     shelf_io.serveRequests(
       server,
-      buildApp(root.router, maxRequestBodyBytes: appConfig.maxRequestBodyBytes),
+      buildApp(root.router, maxRequestBodyBytes: appConfig.maxRequestBodyBytes,apiKeyRepo: root.apiKeyRepo),
     );
 
     config.mainPort.send(WorkerReady(config.id, controlPort.sendPort));

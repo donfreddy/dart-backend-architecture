@@ -3,6 +3,7 @@ import 'package:shelf/shelf.dart';
 /// Adds security-related HTTP response headers on every response.
 ///
 /// Covers OWASP A05 (Security Misconfiguration) baseline:
+/// - [X-Powered-By] sets the server name.
 /// - [X-Content-Type-Options] prevents MIME-sniffing attacks.
 /// - [X-Frame-Options] blocks clickjacking via iframes.
 /// - [Strict-Transport-Security] enforces HTTPS for 1 year (includeSubDomains).
@@ -15,6 +16,7 @@ import 'package:shelf/shelf.dart';
 /// error ones.
 Middleware securityHeadersMiddleware() {
   const headers = <String, String>{
+    'x-powered-by': 'dba', // Replace with your app name
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'X-XSS-Protection': '0',

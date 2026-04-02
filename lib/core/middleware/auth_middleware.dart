@@ -18,14 +18,12 @@ Middleware authMiddleware({
 }) {
   return (Handler inner) {
     return (Request request) async {
-      final headerValidated = validateSchema(
-        authHeaderSchema,
-        {'authorization': request.headers['authorization']},
-        source: ValidationSource.header,
-      );
+      final rawAuth = request.headers['authorization'];
+      if (rawAuth == null || rawAuth.isEmpty) {
+        throw const AuthFailureError('Missing authorization header');
+      }
 
-      final accessToken =
-          validateAuthBearer(headerValidated['authorization'] as String);
+      final accessToken = validateAuthBearer(rawAuth);
 
       try {
         final payload = await jwtService.validate(accessToken);

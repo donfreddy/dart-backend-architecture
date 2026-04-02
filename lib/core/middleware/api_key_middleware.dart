@@ -16,9 +16,14 @@ Middleware apiKeyMiddleware(ApiKeyRepo apiKeyRepo) {
       // Skip preflight CORS requests
       if (request.method == 'OPTIONS') return inner(request);
 
+      final rawKey = request.headers[_apiKeyHeader];
+      if (rawKey == null || rawKey.isEmpty) {
+        throw const ForbiddenError('Missing x-api-key header');
+      }
+
       final headerValidated = validateSchema(
         apiKeyHeaderSchema,
-        {_apiKeyHeader: request.headers[_apiKeyHeader]},
+        {_apiKeyHeader: rawKey},
         source: ValidationSource.header,
       );
       final apiKey = headerValidated[_apiKeyHeader] as String;

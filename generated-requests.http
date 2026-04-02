@@ -3,12 +3,13 @@
 # Compatible with JetBrains HTTP Client and VS Code REST Client
 # =============================================================================
 
-@baseUrl = http://localhost:8080
-@contentType = application/json
+@baseUrl       = http://localhost:8080
+@contentType   = application/json
 
-# -- Tokens (fill after login/refresh) ----------------------------------------
+# -- Credentials (fill after signup/login) ------------------------------------
 
-@accessToken  = <access_token>
+@apiKey       = GCMUDiuY5a7WvyUNt9n3QztToSHzK7Uj
+@accessToken  = eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJkYmEtdXNlcnMiLCJzdWIiOiIyODNhZDRhMC1mMzFmLTQyMDQtODUwNy1iNzgwNGM5NmY2MTkiLCJpc3MiOiJkYXJ0LWJhY2tlbmQtYXJjaGl0ZWN0dXJlIiwiaWF0IjoxNzc1MTM2OTY2LCJleHAiOjE3NzUxNDA1NjYsInBybSI6IjQ0YTNhYmEzMjFhYzMwMTMyOTgwYzMxOTg0ZWU4NmQ2MDgwZmZmZmE5MDA3ODFjNmM5NzBiZjc1MDZmYjUzODhiYzNiMWE3N2EyMWQ2MzlmZWIyNmUzNzA3NTNlYjlmMzZkMjQ3YTJiOWEzZjg2NDkwNTQ4ODFjY2YzMDVhN2FmIn0.Jw8m9AR3aN49lKBhhI02tuLtsevBWweMi02a4wBtP10v8heGFklxMK3w3hkvw9gWva6Aix-NSlUr8NXMLVTW6g
 @refreshToken = <refresh_token>
 
 # -- Pagination defaults -------------------------------------------------------
@@ -23,6 +24,7 @@
 
 ### Readiness probe
 GET {{baseUrl}}/readyz
+#x-api-key: {{apiKey}}
 
 
 # =============================================================================
@@ -32,6 +34,7 @@ GET {{baseUrl}}/readyz
 ### Signup
 POST {{baseUrl}}/v1/signup/basic
 Content-Type: {{contentType}}
+x-api-key: {{apiKey}}
 
 {
   "name": "Jane Doe",
@@ -43,6 +46,7 @@ Content-Type: {{contentType}}
 ### Signup — minimal (no avatar)
 POST {{baseUrl}}/v1/signup/basic
 Content-Type: {{contentType}}
+x-api-key: {{apiKey}}
 
 {
   "name": "John Doe",
@@ -53,6 +57,7 @@ Content-Type: {{contentType}}
 ### Login
 POST {{baseUrl}}/v1/login/basic
 Content-Type: {{contentType}}
+x-api-key: {{apiKey}}
 
 {
   "email": "jane@example.com",
@@ -62,6 +67,7 @@ Content-Type: {{contentType}}
 ### Refresh token
 POST {{baseUrl}}/v1/token/refresh
 Content-Type: {{contentType}}
+x-api-key: {{apiKey}}
 
 {
   "refresh_token": "{{refreshToken}}"
@@ -70,6 +76,7 @@ Content-Type: {{contentType}}
 ### Logout
 DELETE {{baseUrl}}/v1/logout
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 
 # =============================================================================
@@ -79,14 +86,17 @@ Authorization: Bearer {{accessToken}}
 ### Get my profile
 GET {{baseUrl}}/v1/profile/my
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Get public profile by id
 GET {{baseUrl}}/v1/profile/public/id/01JQKZ9P0000000000000000
+x-api-key: {{apiKey}}
 
 ### Update profile
 PUT {{baseUrl}}/v1/profile
 Authorization: Bearer {{accessToken}}
 Content-Type: {{contentType}}
+x-api-key: {{apiKey}}
 
 {
   "name": "Jane Updated",
@@ -97,6 +107,7 @@ Content-Type: {{contentType}}
 PUT {{baseUrl}}/v1/profile
 Authorization: Bearer {{accessToken}}
 Content-Type: {{contentType}}
+x-api-key: {{apiKey}}
 
 {
   "name": "Jane Renamed"
@@ -109,21 +120,27 @@ Content-Type: {{contentType}}
 
 ### Get blog by slug
 GET {{baseUrl}}/v1/blogs/url?endpoint=my-first-blog-post
+x-api-key: {{apiKey}}
 
 ### Get blog by id
 GET {{baseUrl}}/v1/blogs/id/01JQKZ9P0000000000000000
+x-api-key: {{apiKey}}
 
 ### Get blogs by tag (paginated)
 GET {{baseUrl}}/v1/blogs/tag/dart?pageNumber={{pageNumber}}&pageItemCount={{pageItemCount}}
+x-api-key: {{apiKey}}
 
 ### Get blogs by author id
 GET {{baseUrl}}/v1/blogs/author/id/01JQKZ9P0000000000000000
+x-api-key: {{apiKey}}
 
 ### Get latest blogs (paginated)
 GET {{baseUrl}}/v1/blogs/latest?pageNumber={{pageNumber}}&pageItemCount={{pageItemCount}}
+x-api-key: {{apiKey}}
 
 ### Get similar blogs by id
 GET {{baseUrl}}/v1/blogs/similar/id/01JQKZ9P0000000000000000
+x-api-key: {{apiKey}}
 
 
 # =============================================================================
@@ -134,6 +151,7 @@ GET {{baseUrl}}/v1/blogs/similar/id/01JQKZ9P0000000000000000
 POST {{baseUrl}}/v1/blogs/writer
 Authorization: Bearer {{accessToken}}
 Content-Type: {{contentType}}
+x-api-key: {{apiKey}}
 
 {
   "title": "Getting Started with Dart Isolates",
@@ -149,6 +167,7 @@ Content-Type: {{contentType}}
 POST {{baseUrl}}/v1/blogs/writer
 Authorization: Bearer {{accessToken}}
 Content-Type: {{contentType}}
+x-api-key: {{apiKey}}
 
 {
   "title": "Minimal Blog Post",
@@ -162,6 +181,7 @@ Content-Type: {{contentType}}
 PUT {{baseUrl}}/v1/blogs/writer/id/01JQKZ9P0000000000000000
 Authorization: Bearer {{accessToken}}
 Content-Type: {{contentType}}
+x-api-key: {{apiKey}}
 
 {
   "title": "Updated Title",
@@ -171,30 +191,37 @@ Content-Type: {{contentType}}
 ### Submit blog for review
 PUT {{baseUrl}}/v1/blogs/writer/submit/01JQKZ9P0000000000000000
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Withdraw blog from review
 PUT {{baseUrl}}/v1/blogs/writer/withdraw/01JQKZ9P0000000000000000
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Delete blog (writer)
 DELETE {{baseUrl}}/v1/blogs/writer/id/01JQKZ9P0000000000000000
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Get my submitted blogs
 GET {{baseUrl}}/v1/blogs/writer/submitted/all
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Get my published blogs
 GET {{baseUrl}}/v1/blogs/writer/published/all
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Get my drafts
 GET {{baseUrl}}/v1/blogs/writer/drafts/all
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Get my blog by id (writer view)
 GET {{baseUrl}}/v1/blogs/writer/id/01JQKZ9P0000000000000000
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 
 # =============================================================================
@@ -204,27 +231,34 @@ Authorization: Bearer {{accessToken}}
 ### Publish blog
 PUT {{baseUrl}}/v1/blogs/editor/publish/01JQKZ9P0000000000000000
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Unpublish blog
 PUT {{baseUrl}}/v1/blogs/editor/unpublish/01JQKZ9P0000000000000000
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Delete blog (editor)
 DELETE {{baseUrl}}/v1/blogs/editor/id/01JQKZ9P0000000000000000
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Get all published blogs (editor view)
 GET {{baseUrl}}/v1/blogs/editor/published/all
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Get all submitted blogs (editor view)
 GET {{baseUrl}}/v1/blogs/editor/submitted/all
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Get all drafts (editor view)
 GET {{baseUrl}}/v1/blogs/editor/drafts/all
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}
 
 ### Get blog by id (editor view)
 GET {{baseUrl}}/v1/blogs/editor/id/01JQKZ9P0000000000000000
 Authorization: Bearer {{accessToken}}
+x-api-key: {{apiKey}}

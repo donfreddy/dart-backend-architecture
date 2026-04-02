@@ -6,7 +6,9 @@ import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_backend_architecture/database/db_pool.dart';
 import 'package:dart_backend_architecture/database/repository/caching_blog_repo.dart';
+import 'package:dart_backend_architecture/database/repository/impl/postgres_api_key_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_blog_repo.dart';
+import 'package:dart_backend_architecture/database/repository/interfaces/api_key_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/blog_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_keystore_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_role_repo.dart';
@@ -34,6 +36,7 @@ final class CompositionRoot {
   final CryptoWorker _crypto;
   final JwtService _jwtService;
   final TokenService _tokenService;
+  final ApiKeyRepo apiKeyRepo;
 
   CompositionRoot._({
     required DatabasePool db,
@@ -42,6 +45,7 @@ final class CompositionRoot {
     required CryptoWorker crypto,
     required JwtService jwtService,
     required TokenService tokenService,
+    required  this.apiKeyRepo,
   })  : _db = db,
         _cache = cache,
         _eventBus = eventBus,
@@ -78,6 +82,7 @@ final class CompositionRoot {
       jwt: jwtService,
       userCache: userCache,
     );
+    final apiKeyRepo = PostgresApiKeyRepo(db.pool);
 
     return CompositionRoot._(
       db: db,
@@ -86,6 +91,7 @@ final class CompositionRoot {
       crypto: crypto,
       jwtService: jwtService,
       tokenService: tokenService,
+      apiKeyRepo: apiKeyRepo,
     );
   }
 
@@ -102,8 +108,11 @@ final class CompositionRoot {
 
   PostgresUserRepo get _userRepo =>
       PostgresUserRepo(_db.pool, _keystoreRepo, _roleRepo);
+
   PostgresKeystoreRepo get _keystoreRepo => PostgresKeystoreRepo(_db.pool);
+
   PostgresRoleRepo get _roleRepo => PostgresRoleRepo(_db.pool);
+
   UserCache get _userCache => UserCache(_cache);
 
   // CachingBlogRepo wraps the Postgres implementation with read-through caching
