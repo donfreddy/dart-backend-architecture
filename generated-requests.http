@@ -1,0 +1,230 @@
+# =============================================================================
+# dart-backend-architecture — API Requests
+# Compatible with JetBrains HTTP Client and VS Code REST Client
+# =============================================================================
+
+@baseUrl = http://localhost:8080
+@contentType = application/json
+
+# -- Tokens (fill after login/refresh) ----------------------------------------
+
+@accessToken  = <access_token>
+@refreshToken = <refresh_token>
+
+# -- Pagination defaults -------------------------------------------------------
+
+@pageNumber    = 1
+@pageItemCount = 10
+
+
+# =============================================================================
+# Health
+# =============================================================================
+
+### Readiness probe
+GET {{baseUrl}}/readyz
+
+
+# =============================================================================
+# Auth
+# =============================================================================
+
+### Signup
+POST {{baseUrl}}/v1/signup/basic
+Content-Type: {{contentType}}
+
+{
+  "name": "Jane Doe",
+  "email": "jane@example.com",
+  "password": "Jane@2026",
+  "profile_pic_url": "https://example.com/avatar.png"
+}
+
+### Signup — minimal (no avatar)
+POST {{baseUrl}}/v1/signup/basic
+Content-Type: {{contentType}}
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "John@2026"
+}
+
+### Login
+POST {{baseUrl}}/v1/login/basic
+Content-Type: {{contentType}}
+
+{
+  "email": "jane@example.com",
+  "password": "Jane@2026"
+}
+
+### Refresh token
+POST {{baseUrl}}/v1/token/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### Logout
+DELETE {{baseUrl}}/v1/logout
+Authorization: Bearer {{accessToken}}
+
+
+# =============================================================================
+# Profile
+# =============================================================================
+
+### Get my profile
+GET {{baseUrl}}/v1/profile/my
+Authorization: Bearer {{accessToken}}
+
+### Get public profile by id
+GET {{baseUrl}}/v1/profile/public/id/01JQKZ9P0000000000000000
+
+### Update profile
+PUT {{baseUrl}}/v1/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Jane Updated",
+  "profile_pic_url": "https://example.com/new-avatar.png"
+}
+
+### Update profile — name only
+PUT {{baseUrl}}/v1/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "name": "Jane Renamed"
+}
+
+
+# =============================================================================
+# Blogs — Public
+# =============================================================================
+
+### Get blog by slug
+GET {{baseUrl}}/v1/blogs/url?endpoint=my-first-blog-post
+
+### Get blog by id
+GET {{baseUrl}}/v1/blogs/id/01JQKZ9P0000000000000000
+
+### Get blogs by tag (paginated)
+GET {{baseUrl}}/v1/blogs/tag/dart?pageNumber={{pageNumber}}&pageItemCount={{pageItemCount}}
+
+### Get blogs by author id
+GET {{baseUrl}}/v1/blogs/author/id/01JQKZ9P0000000000000000
+
+### Get latest blogs (paginated)
+GET {{baseUrl}}/v1/blogs/latest?pageNumber={{pageNumber}}&pageItemCount={{pageItemCount}}
+
+### Get similar blogs by id
+GET {{baseUrl}}/v1/blogs/similar/id/01JQKZ9P0000000000000000
+
+
+# =============================================================================
+# Blogs — Writer
+# =============================================================================
+
+### Create blog (draft)
+POST {{baseUrl}}/v1/blogs/writer
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "title": "Getting Started with Dart Isolates",
+  "description": "A deep dive into Dart isolate architecture for backend services.",
+  "text": "Dart isolates share no memory and communicate via message passing...",
+  "tags": ["dart", "backend", "isolates"],
+  "blog_url": "getting-started-with-dart-isolates",
+  "img_url": "https://example.com/cover.png",
+  "score": 0
+}
+
+### Create blog — minimal (no image)
+POST {{baseUrl}}/v1/blogs/writer
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "title": "Minimal Blog Post",
+  "description": "Short description.",
+  "text": "Content goes here.",
+  "tags": ["dart"],
+  "blog_url": "minimal-blog-post"
+}
+
+### Update blog
+PUT {{baseUrl}}/v1/blogs/writer/id/01JQKZ9P0000000000000000
+Authorization: Bearer {{accessToken}}
+Content-Type: {{contentType}}
+
+{
+  "title": "Updated Title",
+  "tags": ["dart", "updated"]
+}
+
+### Submit blog for review
+PUT {{baseUrl}}/v1/blogs/writer/submit/01JQKZ9P0000000000000000
+Authorization: Bearer {{accessToken}}
+
+### Withdraw blog from review
+PUT {{baseUrl}}/v1/blogs/writer/withdraw/01JQKZ9P0000000000000000
+Authorization: Bearer {{accessToken}}
+
+### Delete blog (writer)
+DELETE {{baseUrl}}/v1/blogs/writer/id/01JQKZ9P0000000000000000
+Authorization: Bearer {{accessToken}}
+
+### Get my submitted blogs
+GET {{baseUrl}}/v1/blogs/writer/submitted/all
+Authorization: Bearer {{accessToken}}
+
+### Get my published blogs
+GET {{baseUrl}}/v1/blogs/writer/published/all
+Authorization: Bearer {{accessToken}}
+
+### Get my drafts
+GET {{baseUrl}}/v1/blogs/writer/drafts/all
+Authorization: Bearer {{accessToken}}
+
+### Get my blog by id (writer view)
+GET {{baseUrl}}/v1/blogs/writer/id/01JQKZ9P0000000000000000
+Authorization: Bearer {{accessToken}}
+
+
+# =============================================================================
+# Blogs — Editor
+# =============================================================================
+
+### Publish blog
+PUT {{baseUrl}}/v1/blogs/editor/publish/01JQKZ9P0000000000000000
+Authorization: Bearer {{accessToken}}
+
+### Unpublish blog
+PUT {{baseUrl}}/v1/blogs/editor/unpublish/01JQKZ9P0000000000000000
+Authorization: Bearer {{accessToken}}
+
+### Delete blog (editor)
+DELETE {{baseUrl}}/v1/blogs/editor/id/01JQKZ9P0000000000000000
+Authorization: Bearer {{accessToken}}
+
+### Get all published blogs (editor view)
+GET {{baseUrl}}/v1/blogs/editor/published/all
+Authorization: Bearer {{accessToken}}
+
+### Get all submitted blogs (editor view)
+GET {{baseUrl}}/v1/blogs/editor/submitted/all
+Authorization: Bearer {{accessToken}}
+
+### Get all drafts (editor view)
+GET {{baseUrl}}/v1/blogs/editor/drafts/all
+Authorization: Bearer {{accessToken}}
+
+### Get blog by id (editor view)
+GET {{baseUrl}}/v1/blogs/editor/id/01JQKZ9P0000000000000000
+Authorization: Bearer {{accessToken}}
