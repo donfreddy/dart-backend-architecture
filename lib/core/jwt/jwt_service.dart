@@ -162,9 +162,10 @@ class JwtService {
   // ── Encoding (sync: uses private key, called only on login/signup) ────────
 
   String encode(JwtPayload payload) {
+    _log.info('JwtService: ${payload.toMap()}');
     try {
       final jwt = JWT(payload.toMap());
-      return jwt.sign(_privateKey);
+      return jwt.sign(_privateKey,algorithm: JWTAlgorithm.RS256);
     } catch (e, st) {
       _log.severe('JWT encode failed', e, st);
       throw const InternalError('Token generation failure');
@@ -233,6 +234,7 @@ class JwtService {
   }
 
   Future<JwtPayload> verifyAccessToken(String token) => validate(token);
+
   Future<JwtPayload> verifyRefreshToken(String token) => validate(token);
 
   Future<JwtPayload?> extractUnverified(String token) async {

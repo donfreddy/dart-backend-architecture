@@ -2,43 +2,50 @@ name: dart-backend-architecture
 
 services:
   # ── API ──────────────────────────────────────────────────────
-  api:
-    build:
-      context: .
-      target: builder # JIT en dev — hot reload possible
-    command: dart run bin/server.dart
-    ports:
-      - "${PORT:-8080}:8080"
-    environment:
-      PORT: 8080
-      DATABASE_URL: postgres://dba:dba@postgres:5432/dba?sslmode=disable
-      REDIS_URL: redis://redis:6379
-      NATS_URL: nats://nats:4222
-      JWT_PRIVATE_KEY_PATH: keys/private.pem
-      JWT_PUBLIC_KEY_PATH: keys/public.pem
-      OTEL_ENDPOINT: http://otel-collector:4317
-      ENVIRONMENT: development
-    volumes:
-      - .:/app # source montée pour dart run
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      nats:
-        condition: service_started
-      migrations:
-        condition: service_completed_successfully
-    restart: on-failure
+#  api:
+#    build:
+#      context: .
+#      target: deps
+#    container_name: api
+#    command: >
+#      sh -c "dart pub get --offline 2>/dev/null || dart pub get &&
+#             dart run bin/server.dart"
+#    ports:
+#      - "${PORT:-8080}:8080"
+#    environment:
+#      PORT: 8080
+#      DATABASE_URL: postgres://dba:dba@postgres:5432/dba?sslmode=disable
+#      REDIS_URL: redis://redis:6379
+#      NATS_URL: nats://nats:4222
+#      JWT_PRIVATE_KEY_PATH: keys/private.pem
+#      JWT_PUBLIC_KEY_PATH: keys/public.pem
+#      OTEL_ENDPOINT: http://otel-collector:4317
+#      ENVIRONMENT: development
+#      WORKER_COUNT: 1
+#    volumes:
+#      - .:/app
+#      - ./keys:/app/keys:ro
+#      - pub-cache:/root/.pub-cache
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      redis:
+#        condition: service_healthy
+#      nats:
+#        condition: service_started
+#      migrations:
+#        condition: service_completed_successfully
+#    restart: on-failure
 
   # ── Migrations ───────────────────────────────────────────────
   migrations:
     image: amacneil/dbmate:latest
+    container_name: migrations
     environment:
       DATABASE_URL: postgres://dba:dba@postgres:5432/dba?sslmode=disable
     volumes:
       - ./db:/db
-    command: ["--wait", "--wait-timeout", "30s", "up"]
+    command: [ "--wait", "--wait-timeout", "30s", "up" ]
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,6 +53,7 @@ services:
   # ── PostgreSQL ───────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
+    container_name: postgres
     environment:
       POSTGRES_USER: dba
       POSTGRES_PASSWORD: dba
@@ -55,7 +63,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U dba -d dba"]
+      test: [ "CMD-SHELL", "pg_isready -U dba -d dba" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -64,12 +72,13 @@ services:
   # ── Redis ────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
+    container_name: redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -77,6 +86,7 @@ services:
   # ── NATS ─────────────────────────────────────────────────────
   nats:
     image: nats:2-alpine
+    container_name: nats
     ports:
       - "${NATS_PORT:-4222}:4222"
       - "8222:8222" # HTTP monitoring UI
@@ -84,6 +94,7 @@ services:
   # ── OpenTelemetry Collector ───────────────────────────────────
   otel-collector:
     image: grafana/otel-lgtm:latest
+    container_name: otel-collector
     ports:
       - "3000:3000" # Grafana UI
       - "4317:4317" # OTLP gRPC
@@ -95,3 +106,4 @@ volumes:
   postgres_data:
   redis_data:
   otel_data:
+  pub-cache:

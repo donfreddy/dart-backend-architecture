@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:shelf/shelf.dart';
 
@@ -20,8 +21,8 @@ Middleware bodyLimitMiddleware({int maxBytes = 1024 * 1024}) {
 
       var total = 0;
       final limitedStream = request.read().transform(
-        StreamTransformer.fromHandlers(
-          handleData: (chunk, sink) {
+        StreamTransformer<Uint8List, Uint8List>.fromHandlers(
+          handleData: (Uint8List chunk, EventSink<Uint8List> sink) {
             total += chunk.length;
             if (total > maxBytes) {
               sink.addError(_BodyTooLarge());

@@ -14,7 +14,10 @@ Middleware tracingMiddleware() {
         // OTel not initialized: keep request path fast and skip tracing.
         return inner(request);
       } catch (e, st) {
-        _log.warning('Unable to initialize tracer for request', e, st);
+        //_log.warning('Unable to initialize tracer for request', e, st);
+        if (e is! StateError && e is! TypeError) {
+          _log.warning('Unable to initialize tracer for request', e, st);
+        }
         return inner(request);
       }
 

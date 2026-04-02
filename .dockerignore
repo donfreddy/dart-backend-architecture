@@ -18,6 +18,9 @@ build/**/*
 # ignore test converage
 coverage
 
+# ignore dart tool files
+.dart_tool
+
 # git
 .gitignore
 .git
