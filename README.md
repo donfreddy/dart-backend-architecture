@@ -28,6 +28,7 @@ It is inspired by the AfterAcademy Node.js architecture and adapted to Dart idio
 - Redis (cache-aside)
 - NATS (async events)
 - Zema (validation) by [@meragix](https://github.com/meragix/zema)
+- Axon (Http logging middleware) by [@meragix](https://github.com/meragix/axon)
 - JWT RS256 (access + refresh)
 - OpenTelemetry
 - dbmate migrations

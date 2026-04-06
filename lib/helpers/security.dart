@@ -35,7 +35,7 @@ abstract final class Security {
     return sha256.convert(bytes).toString();
   }
 
-  // HMAC-SHA256 — for webhook signature verification
+  // HMAC-SHA256: for webhook signature verification
   static String hmacSha256(String payload, String secret) {
     final key = utf8.encode(secret);
     final bytes = utf8.encode(payload);

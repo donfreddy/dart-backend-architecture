@@ -1,3 +1,4 @@
+import 'package:axon_shelf/axon_shelf.dart';
 import 'package:dart_backend_architecture/core/middleware/api_key_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/body_limit_middleware.dart';
 import 'package:dart_backend_architecture/core/middleware/cors_middleware.dart';
@@ -34,7 +35,15 @@ Handler buildApp(
 
       // ── Observability ──────────────────────────────────────────────────────
       .addMiddleware(tracingMiddleware())
-      .addMiddleware(logRequests())
+      .addMiddleware(
+        axonShelf(
+          config: const AxonShelfConfig(
+            format:
+                ':remote-addr - [:date.iso] ":method :path" :status :response-time.ms ms',
+            // skip: SkipPredicates.successfulRequests,
+          ),
+        ),
+      )
 
       // ── Request hygiene ────────────────────────────────────────────────────
       .addMiddleware(bodyLimitMiddleware(maxBytes: maxRequestBodyBytes))

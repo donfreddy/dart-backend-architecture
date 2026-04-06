@@ -1,5 +1,3 @@
-// import 'package:postgres/postgres.dart';
-
 final class User {
   final String id;
   final String email;

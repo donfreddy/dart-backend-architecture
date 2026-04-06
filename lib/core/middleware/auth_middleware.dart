@@ -1,7 +1,6 @@
 import 'package:dart_backend_architecture/cache/repository/user_cache.dart';
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
-import 'package:dart_backend_architecture/core/middleware/schema.dart';
 import 'package:dart_backend_architecture/core/request_context_keys.dart';
 import 'package:dart_backend_architecture/helpers/validator.dart';
 import 'package:dart_backend_architecture/database/model/keystore.dart';

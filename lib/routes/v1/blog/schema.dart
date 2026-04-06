@@ -9,7 +9,7 @@ final blogIdParamSchema = z.object({
 });
 
 final blogTagParamSchema = z.object({
-  'tag': z.string().uuid(),
+  'tag': z.coerce().string(),
 });
 
 final authorIdParamSchema = z.object({
@@ -17,8 +17,8 @@ final authorIdParamSchema = z.object({
 });
 
 final blogPaginationQuerySchema = z.object({
-  'page_number': z.coerce().integer(min: 1).withDefault(1),
-  'page_item_count': z.coerce().integer(min: 1).withDefault(10),
+  'pageNumber': z.coerce().integer(min: 1).withDefault(1),
+  'pageItemCount': z.coerce().integer(min: 1).withDefault(10),
 });
 
 final blogCreateSchema = z.object({

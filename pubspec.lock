@@ -41,6 +41,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.1"
+  axon_core:
+    dependency: transitive
+    description:
+      name: axon_core
+      sha256: "435b520d6b563e8ac1513240d61fc2159c42f54cb52f661a54f5993927254fb7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
+  axon_shelf:
+    dependency: "direct main"
+    description:
+      name: axon_shelf
+      sha256: "046c3253842549503d0f25ef4dece0a3d0fff66293d7a29fd7976c117430aaf5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   base32:
     dependency: transitive
     description:
