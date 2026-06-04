@@ -42,13 +42,15 @@ What makes it different:
 | Migrations | **dbmate** | SQL migration files, no ORM |
 | Tests | **test + mocktail** | Official Dart test runner + mock library |
 
-## Architecture at a glance
+## Architecture
 
 ```mermaid
 graph TD
     subgraph MW["Middleware Pipeline"]
         direction LR
-        A[errorHandler] --> B[tracing] --> C[logging] --> D[bodyLimit] --> E[headers] --> F[rateLimit] --> G[cors] --> H[apiKey] --> I[router]
+        A[errorHandler] --> B[tracing] --> C[logging]
+        C --> D[bodyLimit] --> E[securityHeaders]
+        E --> F[rateLimit] --> G[cors] --> H[apiKey] --> I[router]
     end
 
     subgraph Routes["Routes"]
@@ -62,29 +64,38 @@ graph TD
         S3[BlogService]
     end
 
-    subgraph Repos["Repositories"]
-        PG[(PostgreSQL · raw SQL)]
-        subgraph CACHE["CachingBlogRepo (decorator)"]
-            BR[BlogRepo · Postgres]
-            BC[BlogCache · Redis]
-        end
-    end
-
     subgraph Workers["Isolate Workers"]
         W1[CryptoWorker · BCrypt]
         W2[JwtWorker · RSA verify]
     end
 
-    NATS([Messaging · NATS · optional])
+    subgraph Repos["Repositories"]
+        subgraph CACHE["CachingBlogRepo (decorator)"]
+            BR[PostgresBlogRepo]
+            BC[BlogCache · Redis]
+        end
+        UR[UserRepo]
+        KR[KeystoreRepo]
+    end
+
+    subgraph Storage["Storage"]
+        PG[(PostgreSQL)]
+        RD[(Redis)]
+    end
+
+    EB{EventBus · NATS · optional}
 
     MW --> Routes
     Routes --> Services
-    S1 <--> S2
-    S2 <--> S3
+    S1 --> W1
+    S1 --> S2
+    S2 --> W2
+    S3 --> EB
     Services --> Repos
+    UR --> PG
+    KR --> PG
     CACHE --> PG
-    Repos --> Workers
-    Workers -.-> NATS
+    CACHE --> RD
 ```
 
 ## Project structure
