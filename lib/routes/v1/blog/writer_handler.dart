@@ -18,7 +18,8 @@ Future<Response> writerCreateBlogHandler(
   final validated = validateSchema(blogCreateSchema, body);
 
   final authUser = request.authUser;
-  final endpoint = _formatEndpoint(validateUrlEndpoint(validated['blog_url'] as String));
+  final endpoint =
+      _formatEndpoint(validateUrlEndpoint(validated['blog_url'] as String));
 
   final existingByUrl = await blogService.findUrlIfExists(endpoint);
   if (existingByUrl != null) {

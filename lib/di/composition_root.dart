@@ -45,7 +45,7 @@ final class CompositionRoot {
     required CryptoWorker crypto,
     required JwtService jwtService,
     required TokenService tokenService,
-    required  this.apiKeyRepo,
+    required this.apiKeyRepo,
   })  : _db = db,
         _cache = cache,
         _eventBus = eventBus,

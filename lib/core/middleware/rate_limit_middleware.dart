@@ -18,7 +18,8 @@ void _incrementBypassCounter() {
         .getMeter(name: AppInfo.name)
         .createCounter<int>(
           name: 'rate_limit.bypass.total',
-          description: 'Requests that bypassed rate limiting due to store unavailability',
+          description:
+              'Requests that bypassed rate limiting due to store unavailability',
           unit: '{request}',
         )
         .add(1);
@@ -72,7 +73,8 @@ Middleware rateLimitMiddleware(
         return response.change(
           headers: {
             'X-RateLimit-Limit': maxRequests.toString(),
-            'X-RateLimit-Remaining': (maxRequests - current).clamp(0, maxRequests).toString(),
+            'X-RateLimit-Remaining':
+                (maxRequests - current).clamp(0, maxRequests).toString(),
           },
         );
       } catch (e) {

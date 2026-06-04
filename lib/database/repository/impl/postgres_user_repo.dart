@@ -267,7 +267,7 @@ final class PostgresUserRepo implements UserRepo {
     }
   }
 
-   User _mapUser(ResultRow row) {
+  User _mapUser(ResultRow row) {
     final rawRoles = row.length > 6 ? row[6] : null;
     final roles = switch (rawRoles) {
       final List<dynamic> values => values.cast<String>(),

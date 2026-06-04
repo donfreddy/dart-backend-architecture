@@ -1,6 +1,5 @@
 import 'package:dart_backend_architecture/routes/router.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
-import 'package:dart_backend_architecture/services/blog_service.dart';
 import 'package:shelf/shelf.dart';
 
 import '../mocks/mocks.dart';
@@ -30,8 +29,7 @@ final class TestCompositionRoot {
         tokenService: tokenService,
       );
 
-  BlogService get blogService =>
-      throw UnimplementedError('BlogService is not used in current unit tests');
+  late final MockBlogService blogService = MockBlogService();
 
   Handler get router => buildRouter(
         authService: authService,

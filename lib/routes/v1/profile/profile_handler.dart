@@ -69,7 +69,8 @@ Future<Response> updateProfileHandler(
 
   final updatedUser = user.copyWith(
     name: validated['name'] as String? ?? user.name,
-    profilePicUrl: validated['profile_pic_url'] as String? ?? user.profilePicUrl,
+    profilePicUrl:
+        validated['profile_pic_url'] as String? ?? user.profilePicUrl,
   );
 
   await userRepo.updateInfo(updatedUser);

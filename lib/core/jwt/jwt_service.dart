@@ -165,7 +165,7 @@ class JwtService {
     _log.info('JwtService: ${payload.toMap()}');
     try {
       final jwt = JWT(payload.toMap());
-      return jwt.sign(_privateKey,algorithm: JWTAlgorithm.RS256);
+      return jwt.sign(_privateKey, algorithm: JWTAlgorithm.RS256);
     } catch (e, st) {
       _log.severe('JWT encode failed', e, st);
       throw const InternalError('Token generation failure');
