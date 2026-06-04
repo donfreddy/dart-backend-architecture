@@ -1,8 +1,6 @@
 # Contributing
 
-Thanks for contributing to this project.
-
-This repository is a clean-architecture backend template, so consistency matters more than speed. Please read and follow the rules below before opening a PR.
+Thanks for contributing to this project. This is a clean-architecture backend reference, so consistency matters more than speed. Please read and follow the rules below before opening a PR.
 
 ## Development setup
 
@@ -10,38 +8,39 @@ This repository is a clean-architecture backend template, so consistency matters
 2. Bootstrap project:
 
 ```bash
-dart run bin/setup.dart
+make setup
 ```
 
-3. Start dependencies (choose one):
+3. Start dependencies:
 
 ```bash
-# Docker
-docker compose up --build
-```
+# Docker (recommended)
+make up
 
-```bash
 # Local
-dbmate --migrations-dir db/migrations up
-dart run bin/server.dart
+make migrate
+make run
 ```
 
-4. (Optional) Seed roles + API key:
+4. Seed roles and API key:
 
 ```bash
-dart run bin/db_seed.dart
+make seed
 ```
 
 ## Branch and commits
 
 - Create a feature branch from `main`.
 - Keep commits focused and atomic.
-- Use clear commit messages (imperative form), e.g.:
-  - `feat(blog): add writer submit endpoint`
-  - `fix(auth): reject expired refresh token`
-  - `docs: update route table in README`
+- Use clear commit messages (imperative form):
 
-## Architecture rules (must follow)
+```
+feat(blog): add writer submit endpoint
+fix(auth): reject expired refresh token
+docs: update route table in README
+```
+
+## Architecture rules
 
 1. Keep concrete wiring in `lib/di/composition_root.dart`.
 2. Do not use service locator patterns.
@@ -50,7 +49,7 @@ dart run bin/db_seed.dart
 5. Keep persistence details in repository implementations (`lib/database/repository/impl/**`).
 6. Use repository interfaces for dependencies (`lib/database/repository/interfaces/**`).
 7. Use typed `ApiError` variants instead of raw `Exception`.
-8. Keep API contracts versioned under `/v1` (or future `/v2`), do not break existing routes silently.
+8. Keep API contracts versioned under `/v1`. Do not break existing routes silently.
 
 ## Coding standards
 
@@ -58,7 +57,6 @@ dart run bin/db_seed.dart
 - Prefer `const`, `final`, and explicit types.
 - Use `package:` imports (no relative imports across packages).
 - Avoid `print`; use `AppLogger`.
-- Keep code generation out of domain/application flow.
 - Keep JSON and response envelopes consistent with `lib/core/response/**`.
 
 ## Validation and errors
@@ -79,8 +77,7 @@ dart run bin/db_seed.dart
 Run before pushing:
 
 ```bash
-dart analyze
-dart test
+make check
 ```
 
 Guidelines:
@@ -88,7 +85,7 @@ Guidelines:
 - Add or update tests for behavior changes.
 - Prefer unit tests for service logic.
 - Use `test/helpers/test_composition_root.dart` and `test/mocks/mocks.dart`.
-- Do not require real DB/Redis/NATS for unit tests.
+- Do not require real DB, Redis, or NATS for unit tests.
 
 ## Pull request checklist
 
@@ -96,7 +93,7 @@ Guidelines:
 - [ ] Tests pass (`dart test`).
 - [ ] New behavior is covered by tests.
 - [ ] No unrelated refactors mixed in.
-- [ ] API/documentation updated (`README.md`, route list, examples).
+- [ ] API and documentation updated (`README.md`, route list, examples).
 - [ ] Migration included for schema changes.
 - [ ] Backward compatibility considered for `/v1` endpoints.
 
@@ -104,5 +101,5 @@ Guidelines:
 
 - Never commit real secrets.
 - Never commit `keys/private.pem`.
-- Use `.env.example` as source of expected env vars.
+- Use `.env.example` as the source of expected env vars.
 - Report security issues privately (do not open public exploit details in issues).
