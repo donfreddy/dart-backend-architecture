@@ -1,9 +1,11 @@
 <p align="center">
+  <img alt="Dart Backend Architecture" src="addons/github_assets/cover.svg">
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Dart-3.3%2B-0175C2?logo=dart" alt="Dart 3.3+">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT">
 </p>
-
-<h1 align="center">Dart Backend Architecture</h1>
 
 <p align="center">
   Learn to build a backend server for a production ready blogging platform like Medium and FreeCodeCamp.<br>
@@ -25,7 +27,7 @@ What makes it different:
 * **SQL-first with PostgreSQL**: explicit queries, real transactions, no query builder abstraction leak
 * **CPU-bound work in isolates**: BCrypt hashing and RSA JWT verification run on dedicated workers, never blocking the HTTP event loop
 * **Observable by default**: OpenTelemetry tracing + structured logging, every request is measurable
-* **Zero code generation**: what you see is what runs. No build_runner, no annotations, no surprises
+
 
 ## Tech stack
 
@@ -239,7 +241,7 @@ This project runs two dedicated workers:
 
 ## Core principles
 
-* **Zero code generation**: no build_runner, no annotations in domain/application code
+
 * **Explicit dependency wiring**: single `CompositionRoot` as the composition boundary
 * **No service locator**: dependencies are passed through constructors, never fetched
 * **Sealed error model**: every `ApiError` subtype maps to a predictable HTTP status
@@ -383,26 +385,6 @@ bin/server.dart
 
 Access token errors include the header `instruction: refresh_token`.
 
-## Environment variables
-
-| Variable | Default | Description |
-|---|---|---|
-| `PORT` | `8080` | API port |
-| `MAX_REQUEST_BODY_BYTES` | `1048576` | Max payload size |
-| `WORKER_COUNT` | `0` | Isolates per process (`0` = CPU count) |
-| `DATABASE_URL` | - | PostgreSQL connection string |
-| `DB_POOL_SIZE` | `20` | Max connections per process |
-| `REDIS_URL` | - | Redis connection string |
-| `NATS_URL` | `""` | NATS (empty = events disabled) |
-| `JWT_PRIVATE_KEY_PATH` | `keys/private.pem` | RSA private key |
-| `JWT_PUBLIC_KEY_PATH` | `keys/public.pem` | RSA public key |
-| `JWT_PRIVATE_KEY_PEM` | `""` | Inline PEM (overrides path) |
-| `JWT_PUBLIC_KEY_PEM` | `""` | Inline PEM (overrides path) |
-| `JWT_ACCESS_TOKEN_EXPIRY` | `3600` | Access token TTL (seconds) |
-| `JWT_REFRESH_TOKEN_EXPIRY` | `2592000` | Refresh token TTL (seconds) |
-| `OTEL_ENDPOINT` | `""` | OTLP collector (empty = telemetry disabled) |
-| `ENVIRONMENT` | `development` | `development`, `test`, or `production` |
-
 ## Quality gates
 
 ```bash
@@ -413,9 +395,18 @@ dart test
 
 CI runs on every push and PR (see `.github/workflows/ci.yml`).
 
+## Learn more
+
+* [Design Node.js Backend Architecture like a Pro](https://afteracademy.com/article/design-node-js-backend-architecture-like-a-pro) - the original article that inspired this project
+* [Implement JWT Authentication with Access and Refresh Tokens](https://afteracademy.com/article/implement-json-web-token-jwt-authentication-using-access-token-and-refresh-token)
+
 ## Project status
 
 This is a living reference architecture. The code is used in production-scale applications and is actively maintained.
+
+---
+
+If you find this project useful, **star the repo** on GitHub - it helps others discover it.
 
 ## License
 
