@@ -14,7 +14,7 @@ dependencies:
   dart_nats: ^0.6.5
   dart_jsonwebtoken: ^3.3.2
   bcrypt: ^1.1.3
-  zema: ^0.5.1
+  zema: ^0.6.0
   axon_shelf: ^0.1.0
   logging: ^1.3.0
   dartastic_opentelemetry: ^0.9.3

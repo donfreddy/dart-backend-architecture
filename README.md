@@ -1,188 +1,140 @@
-# Dart Backend Architecture
+<p align="center">
+  <img src="https://img.shields.io/badge/Dart-3.3%2B-0175C2?logo=dart" alt="Dart 3.3+">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT">
+</p>
 
-Production-ready backend architecture in Dart with explicit boundaries, SQL-first repositories, and zero code generation.
+<h1 align="center">Dart Backend Architecture</h1>
 
-## Why this project
+<p align="center">
+  A production-grade Dart backend blueprint: clean architecture, SQL-first persistence,<br>
+  zero code generation, and CPU-bound work offloaded to isolates.
+</p>
 
-This repository is a practical blueprint for building scalable APIs in Dart without framework magic.
-It is inspired by the AfterAcademy Node.js architecture and adapted to Dart idioms:
+<p align="center">
+  <i>Inspired by the AfterAcademy Node.js architecture, reimagined in pure Dart<br>
+  with everything that makes Dart exceptional for backend development.</i>
+</p>
 
-- clear separation between transport, application, and infrastructure
-- explicit dependency wiring through one composition root
-- typed domain errors and consistent API envelopes
-- SQL-first persistence with PostgreSQL
+## Why this exists
 
-## Core principles
+Most Dart backend examples stop at "hello world" with a framework. This repository is the opposite, a **battle-tested architecture** for building scalable, observable APIs in Dart, used by applications with 10M+ users in its original TypeScript form.
 
-- Zero code generation for domain/application code
-- Clean architecture with constructor injection
-- No service locator outside composition root
-- Sealed error model and predictable error mapping
-- Observable by default (structured logs + tracing)
+What makes it different:
+
+* **Dart idioms, not framework magic**: constructor injection, sealed types, pattern matching, no code generation
+* **SQL-first with PostgreSQL**: explicit queries, real transactions, no query builder abstraction leak
+* **CPU-bound work in isolates**: BCrypt hashing and RSA JWT verification run on dedicated workers, never blocking the HTTP event loop
+* **Observable by default**: OpenTelemetry tracing + structured logging, every request is measurable
+* **Zero code generation**: what you see is what runs. No build_runner, no annotations, no surprises
 
 ## Tech stack
 
-- Dart 3.3+
-- `shelf` + `shelf_router`
-- PostgreSQL (`package:postgres` v3)
-- Redis (cache-aside)
-- NATS (async events)
-- Zema (validation) by [@meragix](https://github.com/meragix/zema)
-- Axon (Http logging middleware) by [@meragix](https://github.com/meragix/axon)
-- JWT RS256 (access + refresh)
-- OpenTelemetry
-- dbmate migrations
-- `test` + `mocktail`
+| Category | Choice | Why |
+|---|---|---|
+| Runtime | **Dart 3.3+** | Sound null safety, pattern matching, sealed classes |
+| HTTP | **shelf + shelf_router** | Official Dart middleware framework, no magic |
+| Database | **PostgreSQL + postgres v3** | SQL-first, transactions, explicit queries |
+| Cache | **Redis** | Cache-aside with read-through decorator |
+| Events | **NATS** | Async pub/sub, optional (NoOp fallback) |
+| Validation | **Zema** | Type-safe schema validation |
+| Auth | **JWT RS256** | Access + refresh token rotation, keystore lifecycle |
+| Observability | **OpenTelemetry** | Distributed tracing + metrics + structured logs |
+| Migrations | **dbmate** | SQL migration files, no ORM |
+| Tests | **test + mocktail** | Official Dart test runner + mock library |
 
-## Project layout
+## Architecture at a glance
 
-```text
-dart-backend-architecture/
-├── bin/
-│   ├── db_seed.dart
-│   ├── server.dart
-│   └── setup.dart
-├── db/
-│   ├── migrations/
-│   │   ├── 20260101000001_create_roles.sql
-│   │   ├── 20260101000002_create_users.sql
-│   │   ├── 20260101000003_create_api_keys.sql
-│   │   ├── 20260101000004_create_keystores.sql
-│   │   └── 20260101000005_create_blogs.sql
-│   └── schema.sql
-├── keys/
-│   ├── instruction.md
-│   ├── private.pem.example
-│   └── public.pem.example
-├── lib/
-│   ├── app.dart                        # Shelf pipeline builder
-│   ├── config.dart                     # Typed config from env / .env
-│   ├── cache/
-│   │   ├── cache_service.dart          # Redis client wrapper
-│   │   ├── keys.dart                   # Cache key constants
-│   │   └── repository/
-│   │       ├── blog_cache.dart
-│   │       └── user_cache.dart         # User profile + keystore caching
-│   ├── core/
-│   │   ├── app_info.dart               # Service name, version, namespace constants
-│   │   ├── logger.dart
-│   │   ├── request_context_keys.dart   # Shelf request context key constants
-│   │   ├── errors/
-│   │   │   └── api_error.dart          # Sealed error hierarchy + HTTP status mapping
-│   │   ├── jwt/
-│   │   │   └── jwt_service.dart        # RSA JWT encode/validate/decode (async via worker)
-│   │   ├── middleware/
-│   │   │   ├── api_key_middleware.dart
-│   │   │   ├── auth_middleware.dart    # JWT validation + user/keystore resolution
-│   │   │   ├── authorization_middleware.dart
-│   │   │   ├── body_limit_middleware.dart
-│   │   │   ├── cors_middleware.dart
-│   │   │   ├── error_handler_middleware.dart  # Catches ApiError + emits OTel error counter
-│   │   │   ├── rate_limit_middleware.dart     # Redis sliding window + OTel bypass counter
-│   │   │   ├── schema.dart             # Shared middleware validation schemas
-│   │   │   ├── security_headers_middleware.dart
-│   │   │   └── tracing_middleware.dart # OTel HTTP span per request
-│   │   ├── response/
-│   │   │   ├── api_response.dart
-│   │   │   └── shelf_response_x.dart
-│   │   └── telemetry/
-│   │       └── otel_setup.dart         # OTel SDK init/shutdown
-│   ├── database/
-│   │   ├── db_pool.dart
-│   │   ├── model/
-│   │   │   ├── api_key.dart
-│   │   │   ├── blog.dart
-│   │   │   ├── keystore.dart
-│   │   │   ├── role.dart
-│   │   │   └── user.dart
-│   │   └── repository/
-│   │       ├── caching_blog_repo.dart  # Decorator: read-through cache + write invalidation
-│   │       ├── impl/
-│   │       │   ├── postgres_api_key_repo.dart
-│   │       │   ├── postgres_blog_repo.dart
-│   │       │   ├── postgres_keystore_repo.dart
-│   │       │   ├── postgres_role_repo.dart
-│   │       │   └── postgres_user_repo.dart
-│   │       └── interfaces/
-│   │           ├── api_key_repo.dart
-│   │           ├── blog_query_repo.dart  # ISP: read-only blog operations
-│   │           ├── blog_repo.dart        # Combines BlogQueryRepo + BlogWriteRepo
-│   │           ├── blog_write_repo.dart  # ISP: write-only blog operations
-│   │           ├── keystore_repo.dart
-│   │           ├── role_repo.dart
-│   │           └── user_repo.dart
-│   ├── di/
-│   │   └── composition_root.dart       # Single wiring point for all dependencies
-│   ├── helpers/
-│   │   ├── permission.dart
-│   │   ├── security.dart
-│   │   └── validator.dart
-│   ├── messaging/
-│   │   ├── event_bus.dart              # Abstract interface: publish/ping/close
-│   │   ├── nats_event_bus.dart         # EventBus backed by NATS
-│   │   ├── nats_service.dart           # Raw NATS client wrapper
-│   │   └── no_op_event_bus.dart        # No-op EventBus (NATS disabled)
-│   ├── routes/
-│   │   ├── health_handler.dart         # /healthz + /readyz probes
-│   │   ├── router.dart
-│   │   └── v1/
-│   │       ├── router.dart
-│   │       ├── access/
-│   │       │   ├── login_handler.dart
-│   │       │   ├── logout_handler.dart
-│   │       │   ├── schema.dart
-│   │       │   ├── signup_handler.dart
-│   │       │   └── token_handler.dart
-│   │       ├── blog/
-│   │       │   ├── blog_detail_handler.dart
-│   │       │   ├── editor_handler.dart
-│   │       │   ├── schema.dart
-│   │       │   └── writer_handler.dart
-│   │       ├── blogs/
-│   │       │   └── list_handler.dart
-│   │       └── profile/
-│   │           ├── profile_handler.dart
-│   │           └── schema.dart
-│   ├── services/
-│   │   ├── auth_service.dart           # Signup, login, logout, refresh — credential concerns only
-│   │   ├── blog_service.dart
-│   │   └── token_service.dart          # JWT issuance, rotation, revocation + keystore lifecycle
-│   └── workers/
-│       ├── crypto_worker.dart          # BCrypt hashing in a dedicated isolate
-│       └── jwt_worker.dart             # RSA JWT verification in a dedicated isolate
-├── test/
-│   ├── helpers/
-│   │   └── test_composition_root.dart
-│   ├── integration/
-│   │   └── access_routes_test.dart
-│   ├── mocks/
-│   │   └── mocks.dart
-│   └── unit/
-│       ├── middleware/
-│       │   ├── body_limit_middleware_test.dart
-│       │   └── rate_limit_middleware_test.dart
-│       ├── routes/
-│       │   └── health_handler_test.dart
-│       └── services/
-│           ├── auth_service_test.dart
-│           └── blog_service_test.dart
-├── .env.example
-├── .gitignore
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-├── analysis_options.yaml
-├── Dockerfile
-├── docker-compose.yml
-├── pubspec.yaml
-└── README.md
+```mermaid
+graph TD
+    subgraph MW["Middleware Pipeline"]
+        direction LR
+        A[errorHandler] --> B[tracing] --> C[logging] --> D[bodyLimit] --> E[headers] --> F[rateLimit] --> G[cors] --> H[apiKey] --> I[router]
+    end
+
+    subgraph Routes["Routes"]
+        R1[signup / login / logout / token]
+        R2[blog / writer / editor / profile]
+    end
+
+    subgraph Services["Services"]
+        S1[AuthService]
+        S2[TokenService]
+        S3[BlogService]
+    end
+
+    subgraph Repos["Repositories"]
+        PG[(PostgreSQL · raw SQL)]
+        subgraph CACHE["CachingBlogRepo (decorator)"]
+            BR[BlogRepo · Postgres]
+            BC[BlogCache · Redis]
+        end
+    end
+
+    subgraph Workers["Isolate Workers"]
+        W1[CryptoWorker · BCrypt]
+        W2[JwtWorker · RSA verify]
+    end
+
+    NATS([Messaging · NATS · optional])
+
+    MW --> Routes
+    Routes --> Services
+    S1 <--> S2
+    S2 <--> S3
+    Services --> Repos
+    CACHE --> PG
+    Repos --> Workers
+    Workers -.-> NATS
+```
+
+## Project structure
+
+```
+lib/
+├── app.dart                    # Shelf pipeline (middleware stack)
+├── config.dart                 # Typed config from env vars
+├── cache/                      # Redis client + cache repos
+│   ├── cache_service.dart
+│   └── repository/
+├── core/                       # Shared primitives
+│   ├── errors/                 # Sealed ApiError hierarchy
+│   ├── jwt/                    # JwtService (encode/validate)
+│   ├── middleware/             # 8 middleware: auth, rate-limit, CORS, etc.
+│   ├── response/               # Consistent API envelope
+│   └── telemetry/              # OTel SDK init/shutdown
+├── database/
+│   ├── db_pool.dart            # PostgreSQL connection pool
+│   ├── model/                  # Data models
+│   └── repository/             # Interfaces + impls + caching decorator
+├── di/
+│   └── composition_root.dart   # Single wiring point (no service locator)
+├── messaging/                  # EventBus interface + NATS + NoOp
+├── routes/
+│   ├── health_handler.dart     # /healthz + /readyz
+│   └── v1/
+│       ├── access/             # signup, login, logout, token
+│       ├── blog/               # writer + editor handlers
+│       ├── blogs/              # public endpoints
+│       └── profile/            # user profile
+├── services/                   # Application business logic
+└── workers/                    # Isolate-based workers
+    ├── crypto_worker.dart      # BCrypt in dedicated isolate
+    └── jwt_worker.dart         # RSA JWT verification in dedicated isolate
+
+db/
+└── migrations/                 # 5 SQL migration files
+test/
+├── unit/                       # AuthService, BlogService, middleware tests
+└── integration/                # End-to-end route tests
 ```
 
 ## Quick start
 
-### 1) Bootstrap project (recommended)
+### Prerequisites
 
-Requirements: Dart SDK 3.3+
+* Dart SDK 3.3+ : or Docker + Docker Compose
+
+### 1) Clone & bootstrap
 
 ```bash
 git clone https://github.com/donfreddy/dart-backend-architecture
@@ -190,52 +142,46 @@ cd dart-backend-architecture
 dart run bin/setup.dart
 ```
 
-`bin/setup.dart` will:
+`setup.dart` will:
+* Prompt for your project name
+* Rename template package in all source files
+* Generate RSA key pair (`keys/private.pem` + `keys/public.pem`)
+* Create `.env` from `.env.example`
+* Run `dart pub get`
 
-- ask for project name/description
-- replace template package name in source files
-- generate `keys/private.pem` and `keys/public.pem` (if missing)
-- create `.env` from `.env.example` (if missing)
-- run `dart pub get`
-
-If you want to keep the original package name unchanged, skip this script and run setup manually.
-
-### 2A) Run with Docker (development)
-
-Requirements: Docker + Docker Compose
+### 2A) Run with Docker (recommended)
 
 ```bash
 docker compose up --build
 ```
 
-Services:
+| Service | URL |
+|---|---|
+| API | `http://localhost:8080` |
+| Grafana / OTel | `http://localhost:3000` |
+| NATS monitor | `http://localhost:8222` |
 
-- API: `http://localhost:8080`
-- Grafana/OTel UI: `http://localhost:3000`
-- NATS monitor: `http://localhost:8222`
-
-### 2B) Run tests with Docker
-
-Runs the full test suite against an isolated in-memory PostgreSQL database.
-No dev data is touched, the test DB is destroyed when the stack stops.
+### 2B) Run tests (Docker : isolated, no dev data touched)
 
 ```bash
 docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
 docker compose -f docker-compose.test.yml down -v
 ```
 
+PostgreSQL runs on `tmpfs` (in-memory). Separate credentials. Destroyed on teardown.
+
 ### 2C) Run locally
 
 Requirements: PostgreSQL 16, Redis 7, NATS 2, dbmate
 
 ```bash
-# Dev database
+# Dev
 cp .env.example .env
 dbmate --migrations-dir db/migrations up
 dart run bin/db_seed.dart
 dart run bin/server.dart
 
-# Test database (separate DB, never touches dev data)
+# Tests (separate DB)
 cp .env.test.example .env.test
 DATABASE_URL=postgres://dba_test:dba_test@localhost:5432/dba_test?sslmode=disable \
   dbmate --migrations-dir db/migrations up
@@ -244,116 +190,142 @@ DATABASE_URL=postgres://dba_test:dba_test@localhost:5432/dba_test?sslmode=disabl
 dart test
 ```
 
-## Environment variables
+## How Dart improves on the original Node.js architecture
 
-Copy `.env.example` to `.env`.
+| Concern | Node.js (original) | Dart (this project) |
+|---|---|---|
+| **CPU-bound work** | Blocks event loop (bcrypt, JWT verify) | **Dedicated Isolate workers** : HTTP handled uncontested |
+| **Error model** | `class extends Error` | **Sealed class hierarchy** with exhaustive pattern matching |
+| **DB persistence** | MongoDB (Mongoose ODM) | **PostgreSQL + raw SQL** : ACID transactions, schema enforcement |
+| **Repository pattern** | Single repo per entity | **Interface Segregation** : `BlogQueryRepo` / `BlogWriteRepo` separated |
+| **Caching** | Embedded in service layer | **Decorator pattern** : `CachingBlogRepo` wraps Postgres repo transparently |
+| **Dependency wiring** | Import-based coupling | **Composition Root** : single file wires everything |
+| **Observability** | Console.log | **OpenTelemetry** : distributed tracing, metrics, structured logging |
+| **Async messaging** | Not included | **NATS** with `NoOpEventBus` fallback (zero overhead when disabled) |
+| **Type safety** | TypeScript (transpiled) | **Native Dart** : sound null safety at runtime, no build step |
 
-| Variable                   | Description                                               |
-|----------------------------|-----------------------------------------------------------|
-| `PORT`                     | API port                                                  |
-| `MAX_REQUEST_BODY_BYTES`   | Max allowed request payload size in bytes                 |
-| `WORKER_COUNT`             | Isolates per process (0 = auto by CPU count)              |
-| `DATABASE_URL`             | PostgreSQL connection string                              |
-| `DB_PORT`                  | Postgres published port (docker convenience)              |
-| `DB_POOL_SIZE`             | Max Postgres connections per process                      |
-| `REDIS_URL`                | Redis connection string                                   |
-| `REDIS_PORT`               | Redis published port (docker convenience)                 |
-| `NATS_URL`                 | NATS connection string (empty = events disabled)          |
-| `NATS_PORT`                | NATS published port (docker convenience)                  |
-| `JWT_PRIVATE_KEY_PATH`     | RSA private key file path                                 |
-| `JWT_PUBLIC_KEY_PATH`      | RSA public key file path                                  |
-| `JWT_PRIVATE_KEY_PEM`      | RSA private key PEM content (alternative to path)         |
-| `JWT_PUBLIC_KEY_PEM`       | RSA public key PEM content (alternative to path)          |
-| `JWT_ACCESS_TOKEN_EXPIRY`  | Access token TTL in seconds                               |
-| `JWT_REFRESH_TOKEN_EXPIRY` | Refresh token TTL in seconds                              |
-| `OTEL_ENDPOINT`            | OTLP collector endpoint (empty = telemetry disabled)      |
-| `ENVIRONMENT`              | `development` or `production`                             |
+## The Isolate advantage
 
-## API base path
+JavaScript/Node.js runs on a single thread. Any CPU-bound operation blocks **everything** : including handling other HTTP requests. Dart's isolate model solves this natively.
 
-All endpoints are mounted under:
+This project runs two dedicated workers:
 
-- `/v1`
+```
+┌─ Main Isolate (HTTP) ─────────────────────┐
+│  shelf router → services → repos          │
+│  Non-blocking I/O only                    │
+└───────────────────────────────────────────┘
+         │                        ▲
+         │  hash/verify            │  validate/decode
+         ▼                        │
+┌─ CryptoWorker ───────┐  ┌─ JwtWorker ───────────┐
+│  BCrypt hashing       │  │  RSA RS256 verify     │
+│  Constant-time dummy  │  │  Decode (no expiry)   │
+│  hash for timing      │  │                       │
+│  attack mitigation    │  │                       │
+└───────────────────────┘  └───────────────────────┘
+```
 
-## Routes
+## Core principles
+
+* **Zero code generation**: no build_runner, no annotations in domain/application code
+* **Explicit dependency wiring**: single `CompositionRoot` as the composition boundary
+* **No service locator**: dependencies are passed through constructors, never fetched
+* **Sealed error model**: every `ApiError` subtype maps to a predictable HTTP status
+* **Observable by default**: structured logs + OTel spans on every request
+* **SQL-first**: no ORM, no query builder; raw SQL gives you full control
+
+## API reference
+
+All endpoints are mounted under `/v1`.
 
 ### Auth
 
-- `POST /v1/signup/basic`
-- `POST /v1/login/basic`
-- `DELETE /v1/logout`
-- `POST /v1/token/refresh`
+| Method | Path | Role |
+|---|---|---|
+| `POST` | `/v1/signup/basic` | Public |
+| `POST` | `/v1/login/basic` | Public |
+| `DELETE` | `/v1/logout` | Authenticated |
+| `POST` | `/v1/token/refresh` | Public |
 
-### Blogs (public)
+### Blogs : Public
 
-- `GET /v1/blogs/url?endpoint=<slug>`
-- `GET /v1/blogs/id/<id>`
-- `GET /v1/blogs/tag/<tag>?pageNumber=1&pageItemCount=10`
-- `GET /v1/blogs/author/id/<id>`
-- `GET /v1/blogs/latest?pageNumber=1&pageItemCount=10`
-- `GET /v1/blogs/similar/id/<id>`
+| Method | Path |
+|---|---|
+| `GET` | `/v1/blogs/url?endpoint=<slug>` |
+| `GET` | `/v1/blogs/id/<id>` |
+| `GET` | `/v1/blogs/tag/<tag>?pageNumber=1&pageItemCount=10` |
+| `GET` | `/v1/blogs/author/id/<id>` |
+| `GET` | `/v1/blogs/latest?pageNumber=1&pageItemCount=10` |
+| `GET` | `/v1/blogs/similar/id/<id>` |
 
-### Blogs (WRITER role)
+### Blogs : WRITER
 
-- `POST /v1/blogs/writer`
-- `PUT /v1/blogs/writer/id/<id>`
-- `PUT /v1/blogs/writer/submit/<id>`
-- `PUT /v1/blogs/writer/withdraw/<id>`
-- `DELETE /v1/blogs/writer/id/<id>`
-- `GET /v1/blogs/writer/submitted/all`
-- `GET /v1/blogs/writer/published/all`
-- `GET /v1/blogs/writer/drafts/all`
-- `GET /v1/blogs/writer/id/<id>`
+| Method | Path |
+|---|---|
+| `POST` | `/v1/blogs/writer` |
+| `PUT` | `/v1/blogs/writer/id/<id>` |
+| `PUT` | `/v1/blogs/writer/submit/<id>` |
+| `PUT` | `/v1/blogs/writer/withdraw/<id>` |
+| `DELETE` | `/v1/blogs/writer/id/<id>` |
+| `GET` | `/v1/blogs/writer/submitted/all` |
+| `GET` | `/v1/blogs/writer/published/all` |
+| `GET` | `/v1/blogs/writer/drafts/all` |
+| `GET` | `/v1/blogs/writer/id/<id>` |
 
-### Blogs (EDITOR role)
+### Blogs : EDITOR
 
-- `PUT /v1/blogs/editor/publish/<id>`
-- `PUT /v1/blogs/editor/unpublish/<id>`
-- `DELETE /v1/blogs/editor/id/<id>`
-- `GET /v1/blogs/editor/published/all`
-- `GET /v1/blogs/editor/submitted/all`
-- `GET /v1/blogs/editor/drafts/all`
-- `GET /v1/blogs/editor/id/<id>`
+| Method | Path |
+|---|---|
+| `PUT` | `/v1/blogs/editor/publish/<id>` |
+| `PUT` | `/v1/blogs/editor/unpublish/<id>` |
+| `DELETE` | `/v1/blogs/editor/id/<id>` |
+| `GET` | `/v1/blogs/editor/published/all` |
+| `GET` | `/v1/blogs/editor/submitted/all` |
+| `GET` | `/v1/blogs/editor/drafts/all` |
+| `GET` | `/v1/blogs/editor/id/<id>` |
 
 ### Profile
 
-- `GET /v1/profile/public/id/<id>`
-- `GET /v1/profile/my`
-- `PUT /v1/profile`
+| Method | Path | Role |
+|---|---|---|
+| `GET` | `/v1/profile/public/id/<id>` | Public |
+| `GET` | `/v1/profile/my` | Authenticated |
+| `PUT` | `/v1/profile` | Authenticated |
 
-## Request path — Signup API
+## Request lifecycle
 
-Trace of a `POST /v1/signup/basic` call through the system:
+Trace of `POST /v1/signup/basic` through the system:
 
 ```text
 bin/server.dart
-  → lib/app.dart                           # Shelf pipeline
-      → errorHandlerMiddleware             # catches ApiError, emits OTel error counter
-      → tracingMiddleware                  # starts OTel HTTP span
-      → logRequests                        # structured log line
-      → bodyLimitMiddleware                # rejects oversized payloads
-      → securityHeadersMiddleware          # injects CSP, HSTS, etc.
-      → rateLimitMiddleware                # Redis sliding window check
+  → lib/app.dart                           # Pipeline assembly
+      → errorHandlerMiddleware             # Catches ApiError, records OTel metric
+      → tracingMiddleware                  # Starts OTel HTTP span
+      → logRequests                        # Structured log line
+      → bodyLimitMiddleware                # Rejects oversized payloads
+      → securityHeadersMiddleware          # CSP, HSTS, X-Content-Type-Options
+      → rateLimitMiddleware                # Redis sliding window
       → corsMiddleware
-      → apiKeyMiddleware                   # validates x-api-key header
+      → apiKeyMiddleware                   # Validates x-api-key header
   → lib/routes/router.dart
   → lib/routes/v1/router.dart
   → lib/routes/v1/access/signup_handler.dart
       → validateSchema(signupSchema)       # Zema body validation
       → AuthService.signup
-          → UserRepo.findByEmail           # duplicate check
-          → TokenService.generateKey × 2  # pre-generate access + refresh keys
+          → UserRepo.findByEmail           # Duplicate check
+          → TokenService.generateKey × 2  # Pre-generate access + refresh keys
           → CryptoWorker.hashPassword      # BCrypt in dedicated isolate
-          → UserRepo.create                # user + keystore in one transaction
+          → UserRepo.create                # User + keystore in one transaction
           → TokenService.buildForExistingKeys
-              → JwtService.encode × 2     # RSA RS256 sign access + refresh tokens
+              → JwtService.encode × 2     # RSA RS256 sign
   → lib/core/response/api_response.dart   # Success envelope
   → lib/core/response/shelf_response_x.dart
 ```
 
 ## Response format
 
-Success envelope:
+### Success (200)
 
 ```json
 {
@@ -374,7 +346,7 @@ Success envelope:
 }
 ```
 
-Error envelope:
+### Error (4xx/5xx)
 
 ```json
 {
@@ -383,7 +355,7 @@ Error envelope:
 }
 ```
 
-Validation error envelope:
+### Validation error (400)
 
 ```json
 {
@@ -398,21 +370,42 @@ Validation error envelope:
 }
 ```
 
-Access token error responses include header:
+Access token errors include the header `instruction: refresh_token`.
 
-- `instruction: refresh_token`
+## Environment variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | `8080` | API port |
+| `MAX_REQUEST_BODY_BYTES` | `1048576` | Max payload size |
+| `WORKER_COUNT` | `0` | Isolates per process (`0` = CPU count) |
+| `DATABASE_URL` | - | PostgreSQL connection string |
+| `DB_POOL_SIZE` | `20` | Max connections per process |
+| `REDIS_URL` | - | Redis connection string |
+| `NATS_URL` | `""` | NATS (empty = events disabled) |
+| `JWT_PRIVATE_KEY_PATH` | `keys/private.pem` | RSA private key |
+| `JWT_PUBLIC_KEY_PATH` | `keys/public.pem` | RSA public key |
+| `JWT_PRIVATE_KEY_PEM` | `""` | Inline PEM (overrides path) |
+| `JWT_PUBLIC_KEY_PEM` | `""` | Inline PEM (overrides path) |
+| `JWT_ACCESS_TOKEN_EXPIRY` | `3600` | Access token TTL (seconds) |
+| `JWT_REFRESH_TOKEN_EXPIRY` | `2592000` | Refresh token TTL (seconds) |
+| `OTEL_ENDPOINT` | `""` | OTLP collector (empty = telemetry disabled) |
+| `ENVIRONMENT` | `development` | `development`, `test`, or `production` |
 
 ## Quality gates
 
 ```bash
+dart format --set-exit-if-changed .
 dart analyze
 dart test
 ```
 
-## Contributing
+CI runs on every push and PR (see `.github/workflows/ci.yml`).
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+## Project status
+
+This is a living reference architecture. The code is used in production-scale applications and is actively maintained.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).
