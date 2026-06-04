@@ -168,16 +168,18 @@ Future<void> main() async {
   // Spawn all isolates in parallel — Isolate.spawn is cheap.
   // DB init concurrency is throttled inside each worker via the semaphore.
   for (var i = 1; i < workerCount; i++) {
-    unawaited(Isolate.spawn(
-      _workerEntryPoint,
-      WorkerConfig(
-        id: i,
-        mainPort: mainPort.sendPort,
-        semaphorePort: semaphore.acquirePort,
+    unawaited(
+      Isolate.spawn(
+        _workerEntryPoint,
+        WorkerConfig(
+          id: i,
+          mainPort: mainPort.sendPort,
+          semaphorePort: semaphore.acquirePort,
+        ),
+        debugName: 'worker-$i',
+        onError: _isolateErrorPort(i, log).sendPort,
       ),
-      debugName: 'worker-$i',
-      onError: _isolateErrorPort(i, log).sendPort,
-    ));
+    );
   }
 
   // Wait for all workers to be ready before serving traffic.
@@ -210,9 +212,11 @@ Future<void> main() async {
 
   shelf_io.serveRequests(
     mainServer,
-    buildApp(mainRoot.router,
-        maxRequestBodyBytes: config.maxRequestBodyBytes,
-        apiKeyRepo: mainRoot.apiKeyRepo),
+    buildApp(
+      mainRoot.router,
+      maxRequestBodyBytes: config.maxRequestBodyBytes,
+      apiKeyRepo: mainRoot.apiKeyRepo,
+    ),
   );
 
   log.info('[worker-0] Listening on :${mainServer.port}');
@@ -275,9 +279,11 @@ Future<void> _workerEntryPoint(WorkerConfig config) async {
 
     shelf_io.serveRequests(
       server,
-      buildApp(root.router,
-          maxRequestBodyBytes: appConfig.maxRequestBodyBytes,
-          apiKeyRepo: root.apiKeyRepo),
+      buildApp(
+        root.router,
+        maxRequestBodyBytes: appConfig.maxRequestBodyBytes,
+        apiKeyRepo: root.apiKeyRepo,
+      ),
     );
 
     config.mainPort.send(WorkerReady(config.id, controlPort.sendPort));

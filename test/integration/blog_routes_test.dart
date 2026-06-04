@@ -35,11 +35,13 @@ void main() {
   String? accessToken;
 
   setUp(() async {
-    final signupRes = await app(_post('/v1/signup/basic', {
-      'name': 'Blog Test Writer',
-      'email': 'writer${DateTime.now().millisecondsSinceEpoch}$_emailSuffix',
-      'password': _password,
-    }));
+    final signupRes = await app(
+      _post('/v1/signup/basic', {
+        'name': 'Blog Test Writer',
+        'email': 'writer${DateTime.now().millisecondsSinceEpoch}$_emailSuffix',
+        'password': _password,
+      }),
+    );
     final signupBody = _json(await signupRes.readAsString());
     accessToken = signupBody['data']['tokens']['accessToken'] as String?;
   });
@@ -103,8 +105,11 @@ void main() {
 
     test('returns blog for valid endpoint', () async {
       final res = await app(
-        Request('GET', Uri.parse('http://localhost$endpoint')
-            .replace(queryParameters: {'endpoint': 'integration-test-url'})),
+        Request(
+          'GET',
+          Uri.parse('http://localhost$endpoint')
+              .replace(queryParameters: {'endpoint': 'integration-test-url'}),
+        ),
       );
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
@@ -113,8 +118,11 @@ void main() {
 
     test('returns 400 for non-existent endpoint', () async {
       final res = await app(
-        Request('GET', Uri.parse('http://localhost$endpoint')
-            .replace(queryParameters: {'endpoint': 'does-not-exist'})),
+        Request(
+          'GET',
+          Uri.parse('http://localhost$endpoint')
+              .replace(queryParameters: {'endpoint': 'does-not-exist'}),
+        ),
       );
       expect(res.statusCode, 400);
     });
@@ -126,8 +134,7 @@ Map<String, dynamic> _validBlogPayload() => {
       'description': 'A test blog description',
       'text': 'This is the blog text content',
       'tags': ['dart', 'testing'],
-      'blog_url':
-          'test-blog-${DateTime.now().millisecondsSinceEpoch}',
+      'blog_url': 'test-blog-${DateTime.now().millisecondsSinceEpoch}',
       'score': 0,
     };
 

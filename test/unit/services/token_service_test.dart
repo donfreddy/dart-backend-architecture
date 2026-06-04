@@ -70,13 +70,14 @@ void main() {
     });
 
     test('creates keystore and returns token pair', () async {
-      when(() => keystoreRepo.create(any(), any(), any()))
-          .thenAnswer((_) async => Keystore(
-                id: 'k-1',
-                client: user,
-                primaryKey: 'pk',
-                secondaryKey: 'sk',
-              ));
+      when(() => keystoreRepo.create(any(), any(), any())).thenAnswer(
+        (_) async => Keystore(
+          id: 'k-1',
+          client: user,
+          primaryKey: 'pk',
+          secondaryKey: 'sk',
+        ),
+      );
 
       final result = await sut.issue(user);
 
@@ -171,13 +172,14 @@ void main() {
         ),
       );
       when(() => keystoreRepo.remove('k-1')).thenAnswer((_) async => null);
-      when(() => keystoreRepo.create(any(), any(), any()))
-          .thenAnswer((_) async => Keystore(
-                id: 'k-2',
-                client: user,
-                primaryKey: 'pk',
-                secondaryKey: 'sk',
-              ));
+      when(() => keystoreRepo.create(any(), any(), any())).thenAnswer(
+        (_) async => Keystore(
+          id: 'k-2',
+          client: user,
+          primaryKey: 'pk',
+          secondaryKey: 'sk',
+        ),
+      );
 
       final result = await sut.rotate(
         user: user,
