@@ -6,8 +6,8 @@
 <h1 align="center">Dart Backend Architecture</h1>
 
 <p align="center">
-  A production-grade Dart backend blueprint: clean architecture, SQL-first persistence,<br>
-  zero code generation, and CPU-bound work offloaded to isolates.
+  Learn to build a backend server for a production ready blogging platform like Medium and FreeCodeCamp.<br>
+  Built with Shelf, PostgreSQL, Redis and NATS.
 </p>
 
 <p align="center">
