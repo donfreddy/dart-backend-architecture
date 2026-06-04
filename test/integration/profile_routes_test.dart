@@ -58,7 +58,9 @@ void main() {
     test('returns public profile for valid user', () async {
       final res = await app(
         Request(
-            'GET', Uri.parse('http://localhost/v1/profile/public/id/$userId'),),
+          'GET',
+          Uri.parse('http://localhost/v1/profile/public/id/$userId'),
+        ),
       );
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
@@ -67,8 +69,10 @@ void main() {
 
     test('returns 400 for non-existent user', () async {
       final res = await app(
-        Request('GET',
-            Uri.parse('http://localhost/v1/profile/public/id/non-existent'),),
+        Request(
+          'GET',
+          Uri.parse('http://localhost/v1/profile/public/id/non-existent'),
+        ),
       );
       expect(res.statusCode, 400);
     });
@@ -97,7 +101,10 @@ void main() {
     test('updates profile name with valid token', () async {
       final res = await app(
         _authenticatedPut(
-            '/v1/profile', {'name': 'Updated Name'}, accessToken!,),
+          '/v1/profile',
+          {'name': 'Updated Name'},
+          accessToken!,
+        ),
       );
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
