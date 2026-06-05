@@ -7,6 +7,13 @@ import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 import '../../mocks/mocks.dart';
 
+void registerFallbackAuthValues() {
+  registerFallbackValue(
+    const SignupDto(name: 'f', email: 'f@f.com', password: 'f'),
+  );
+  registerFallbackValue(const LoginDto(email: 'f@f.com', password: 'f'));
+}
+
 void main() {
   const accessPayload = JwtPayload(
     aud: 'aud',
@@ -281,6 +288,117 @@ void main() {
       await expectLater(
         sut.refreshToken(accessToken: 'access', refreshToken: 'refresh'),
         throwsA(isA<AuthFailureError>()),
+      );
+    });
+  });
+
+  // ── Event publication ───────────────────────────────────────────────────────
+
+  group('AuthService - event publication', () {
+    late MockUserRepo mockUserRepo;
+    late MockJwtService mockJwt;
+    late MockCryptoWorker mockCrypto;
+    late MockTokenService mockTokenService;
+    late MockEventBus mockEventBus;
+    late AuthService sut;
+
+    setUp(() {
+      mockUserRepo = MockUserRepo();
+      mockJwt = MockJwtService();
+      mockCrypto = MockCryptoWorker();
+      mockTokenService = MockTokenService();
+      mockEventBus = MockEventBus();
+      sut = AuthService(
+        userRepo: mockUserRepo,
+        jwt: mockJwt,
+        crypto: mockCrypto,
+        tokenService: mockTokenService,
+        eventBus: mockEventBus,
+      );
+      registerFallbackValue(
+        User(
+          id: 'fallback',
+          email: 'fallback@example.com',
+          name: 'fallback',
+          createdAt: DateTime.utc(2024, 1, 1),
+        ),
+      );
+    });
+
+    test('signup publishes user.signed_up event', () async {
+      when(() => mockUserRepo.findByEmail(any())).thenAnswer((_) async => null);
+      when(() => mockCrypto.hashPassword(any()))
+          .thenAnswer((_) async => 'hash');
+      when(() => mockUserRepo.create(any(), any(), any(), any())).thenAnswer(
+        (_) async => (
+          user: user,
+          keystore: Keystore(
+            id: 'k1',
+            client: user,
+            primaryKey: 'pk',
+            secondaryKey: 'sk',
+          ),
+        ),
+      );
+      when(() => mockTokenService.buildForExistingKeys(any(), any(), any()))
+          .thenReturn(tokenPair);
+      when(() => mockEventBus.publish(any(), any())).thenAnswer((_) async {});
+
+      await sut.signup(const SignupDto(name: 'X', email: 'x@y.com', password: 'p'));
+
+      verify(() => mockEventBus.publish('user.signed_up', any())).called(1);
+    });
+
+    test('login publishes user.logged_in event', () async {
+      when(() => mockUserRepo.findByEmail('x@y.com'))
+          .thenAnswer((_) async => user);
+      when(() => mockCrypto.verifyPassword('pass', user.passwordHash!))
+          .thenAnswer((_) async => true);
+      when(() => mockTokenService.issue(user))
+          .thenAnswer((_) async => tokenPair);
+      when(() => mockEventBus.publish(any(), any())).thenAnswer((_) async {});
+
+      await sut.login(const LoginDto(email: 'x@y.com', password: 'pass'));
+
+      verify(() => mockEventBus.publish('user.logged_in', any())).called(1);
+    });
+
+    test('logout publishes user.logged_out event', () async {
+      when(() => mockJwt.validate('access'))
+          .thenAnswer((_) async => accessPayload);
+      when(() => mockUserRepo.findById('u-1')).thenAnswer((_) async => user);
+      when(() => mockTokenService.revoke(user: user, primaryKey: 'access-key'))
+          .thenAnswer((_) async {});
+      when(() => mockEventBus.publish(any(), any())).thenAnswer((_) async {});
+
+      await sut.logout('access');
+
+      verify(() => mockEventBus.publish('user.logged_out', any())).called(1);
+    });
+
+    test('events are best-effort and never crash', () async {
+      when(() => mockUserRepo.findByEmail(any())).thenAnswer((_) async => null);
+      when(() => mockCrypto.hashPassword(any()))
+          .thenAnswer((_) async => 'hash');
+      when(() => mockUserRepo.create(any(), any(), any(), any())).thenAnswer(
+        (_) async => (
+          user: user,
+          keystore: Keystore(
+            id: 'k1',
+            client: user,
+            primaryKey: 'pk',
+            secondaryKey: 'sk',
+          ),
+        ),
+      );
+      when(() => mockTokenService.buildForExistingKeys(any(), any(), any()))
+          .thenReturn(tokenPair);
+      when(() => mockEventBus.publish(any(), any()))
+          .thenThrow(Exception('event bus down'));
+
+      await expectLater(
+        sut.signup(const SignupDto(name: 'X', email: 'x@y.com', password: 'p')),
+        completes,
       );
     });
   });

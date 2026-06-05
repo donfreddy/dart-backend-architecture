@@ -129,15 +129,35 @@ class BlogService {
   }
 
   Future<void> update(Blog blog) async {
+    final old = blog.id != null
+        ? await _blogRepo.findBlogAllDataById(blog.id!)
+        : null;
     await _blogRepo.update(blog);
     await _publishBestEffort(
-      subject: 'blog.updated',
+      subject: _detectEvent(old, blog),
       payload: {
         if (blog.id != null) 'id': blog.id,
         'author_id': blog.author.id,
         'blog_url': blog.blogUrl,
       },
     );
+  }
+
+  static String _detectEvent(Blog? old, Blog updated) {
+    if (updated.status == false && old?.status != false) return 'blog.deleted';
+    if (updated.isPublished == true && old?.isPublished != true) {
+      return 'blog.published';
+    }
+    if (updated.isPublished == false && old?.isPublished == true) {
+      return 'blog.unpublished';
+    }
+    if (updated.isSubmitted == true && old?.isSubmitted != true) {
+      return 'blog.submitted';
+    }
+    if (updated.isSubmitted == false && old?.isSubmitted == true) {
+      return 'blog.withdrawn';
+    }
+    return 'blog.updated';
   }
 
   static void _requireId(String id) {

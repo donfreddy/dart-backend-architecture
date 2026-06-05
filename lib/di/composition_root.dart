@@ -97,11 +97,16 @@ final class CompositionRoot {
 
   static Future<EventBus> _initEventBus(String natsUrl) async {
     if (natsUrl.isEmpty) {
-      _log.info('NATS_URL not set — using NoOpEventBus (events disabled)');
+      _log.info('NATS_URL not set - using NoOpEventBus (events disabled)');
       return const NoOpEventBus();
     }
-    final nats = await NatsService.connect(natsUrl);
-    return NatsEventBus(nats);
+    try {
+      final nats = await NatsService.connect(natsUrl);
+      return NatsEventBus(nats);
+    } catch (e) {
+      _log.warning('NATS connection failed - falling back to NoOpEventBus: $e');
+      return const NoOpEventBus();
+    }
   }
 
   // ── Repositories ───────────────────────────────────────────────────────────
@@ -129,6 +134,7 @@ final class CompositionRoot {
         jwt: _jwtService,
         crypto: _crypto,
         tokenService: _tokenService,
+        eventBus: _eventBus,
       );
 
   BlogService get _blogService => BlogService(

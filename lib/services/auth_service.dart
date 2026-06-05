@@ -4,6 +4,8 @@ import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_backend_architecture/database/model/role.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/user_repo.dart';
+import 'package:dart_backend_architecture/messaging/event_bus.dart';
+import 'package:dart_backend_architecture/messaging/no_op_event_bus.dart';
 import 'package:dart_backend_architecture/services/token_service.dart';
 import 'package:dart_backend_architecture/workers/crypto_worker.dart';
 import 'package:uuid/uuid.dart';
@@ -72,6 +74,7 @@ class AuthService {
   final JwtService _jwt;
   final CryptoWorker _crypto;
   final TokenService _tokenService;
+  final EventBus _eventBus;
   final Uuid _uuid;
 
   static final _log = AppLogger.get('AuthService');
@@ -81,11 +84,13 @@ class AuthService {
     required JwtService jwt,
     required CryptoWorker crypto,
     required TokenService tokenService,
+    EventBus eventBus = const NoOpEventBus(),
     Uuid? uuid,
   })  : _userRepo = userRepo,
         _jwt = jwt,
         _crypto = crypto,
         _tokenService = tokenService,
+        _eventBus = eventBus,
         _uuid = uuid ?? const Uuid();
 
   Future<AuthResult> signup(SignupDto dto) async {
@@ -124,6 +129,13 @@ class AuthService {
     );
 
     _log.info('Signup successful: ${created.user.id}');
+    await _publishBestEffort(
+      subject: 'user.signed_up',
+      payload: {
+        'id': created.user.id,
+        'email': created.user.email,
+      },
+    );
     return AuthResult(user: created.user, tokens: tokens);
   }
 
@@ -146,6 +158,13 @@ class AuthService {
     final tokens = await _tokenService.issue(user);
 
     _log.info('Login successful: ${user.id}');
+    await _publishBestEffort(
+      subject: 'user.logged_in',
+      payload: {
+        'id': user.id,
+        'email': user.email,
+      },
+    );
     return AuthResult(user: user, tokens: tokens);
   }
 
@@ -158,6 +177,13 @@ class AuthService {
     }
 
     await _tokenService.revoke(user: user, primaryKey: payload.prm);
+    await _publishBestEffort(
+      subject: 'user.logged_out',
+      payload: {
+        'id': user.id,
+        'email': user.email,
+      },
+    );
   }
 
   Future<TokenPair> refreshToken({
@@ -171,10 +197,29 @@ class AuthService {
       throw const AuthFailureError('User not registered');
     }
 
-    return _tokenService.rotate(
+    final tokens = await _tokenService.rotate(
       user: user,
       accessToken: accessToken,
       refreshToken: refreshToken,
     );
+
+    await _publishBestEffort(
+      subject: 'token.refreshed',
+      payload: {
+        'id': user.id,
+        'email': user.email,
+      },
+    );
+
+    return tokens;
+  }
+
+  Future<void> _publishBestEffort({
+    required String subject,
+    required Map<String, dynamic> payload,
+  }) async {
+    try {
+      await _eventBus.publish(subject, payload);
+    } catch (_) {}
   }
 }
