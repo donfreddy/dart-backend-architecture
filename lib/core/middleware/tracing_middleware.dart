@@ -16,19 +16,19 @@ Middleware tracingMiddleware() {
       try {
         tracer = OTel.tracerProvider().getTracer('http.server');
         _requestCounter ??= OTel.meterProvider()
-                .getMeter(name: AppInfo.name)
-                .createCounter<int>(
-                  name: 'http.requests.total',
-                  description: 'Total HTTP requests',
-                  unit: '{request}',
-                ) as Counter<int>?;
+            .getMeter(name: AppInfo.name)
+            .createCounter<int>(
+              name: 'http.requests.total',
+              description: 'Total HTTP requests',
+              unit: '{request}',
+            ) as Counter<int>?;
         _durationHistogram ??= OTel.meterProvider()
-                .getMeter(name: AppInfo.name)
-                .createHistogram<double>(
-                  name: 'http.server.duration_ms',
-                  description: 'HTTP request duration in milliseconds',
-                  unit: 'ms',
-                ) as Histogram?;
+            .getMeter(name: AppInfo.name)
+            .createHistogram<double>(
+              name: 'http.server.duration_ms',
+              description: 'HTTP request duration in milliseconds',
+              unit: 'ms',
+            ) as Histogram?;
       } on StateError {
         return inner(request);
       } catch (e, st) {
@@ -54,10 +54,12 @@ Middleware tracingMiddleware() {
 
       try {
         final response = await inner(
-          request.change(context: {
-            ...request.context,
-            RequestContextKeys.otelSpan: span,
-          },),
+          request.change(
+            context: {
+              ...request.context,
+              RequestContextKeys.otelSpan: span,
+            },
+          ),
         );
 
         final durationMs =

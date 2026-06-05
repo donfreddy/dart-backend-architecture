@@ -12,9 +12,8 @@ Counter<int>? _errorCounter;
 
 void _recordError(ApiError error) {
   try {
-    _errorCounter ??= OTel.meterProvider()
-            .getMeter(name: AppInfo.name)
-            .createCounter<int>(
+    _errorCounter ??=
+        OTel.meterProvider().getMeter(name: AppInfo.name).createCounter<int>(
               name: 'api.errors.total',
               description: 'Total API errors by type and HTTP status',
               unit: '{error}',

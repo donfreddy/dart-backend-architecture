@@ -344,7 +344,8 @@ void main() {
           .thenReturn(tokenPair);
       when(() => mockEventBus.publish(any(), any())).thenAnswer((_) async {});
 
-      await sut.signup(const SignupDto(name: 'X', email: 'x@y.com', password: 'p'));
+      await sut
+          .signup(const SignupDto(name: 'X', email: 'x@y.com', password: 'p'));
 
       verify(() => mockEventBus.publish('user.signed_up', any())).called(1);
     });

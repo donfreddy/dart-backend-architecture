@@ -129,9 +129,8 @@ class BlogService {
   }
 
   Future<void> update(Blog blog) async {
-    final old = blog.id != null
-        ? await _blogRepo.findBlogAllDataById(blog.id!)
-        : null;
+    final old =
+        blog.id != null ? await _blogRepo.findBlogAllDataById(blog.id!) : null;
     await _blogRepo.update(blog);
     await _publishBestEffort(
       subject: _detectEvent(old, blog),
