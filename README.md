@@ -166,6 +166,9 @@ dart run bin/setup.dart
 
 ```bash
 docker compose up --build
+
+# Seed API key + roles (first time only)
+docker compose exec api dart run bin/db_seed.dart
 ```
 
 | Service | URL |
@@ -173,6 +176,9 @@ docker compose up --build
 | API | `http://localhost:8080` |
 | Grafana / OTel | `http://localhost:3000` |
 | NATS monitor | `http://localhost:8222` |
+
+> **API key** (seeded by default) : `GCMUDiuY5a7WvyUNt9n3QztToSHzK7Uj`  
+> Send it via the `x-api-key` header on every request.
 
 ### 2B) Run tests (Docker : isolated, no dev data touched)
 

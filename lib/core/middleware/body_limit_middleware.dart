@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:shelf/shelf.dart';
 
@@ -20,8 +21,8 @@ Middleware bodyLimitMiddleware({int maxBytes = 1024 * 1024}) {
 
       var total = 0;
       final limitedStream = request.read().transform(
-        StreamTransformer<List<int>, List<int>>.fromHandlers(
-          handleData: (List<int> chunk, EventSink<List<int>> sink) {
+        StreamTransformer<Uint8List, Uint8List>.fromHandlers(
+          handleData: (Uint8List chunk, EventSink<Uint8List> sink) {
             total += chunk.length;
             if (total > maxBytes) {
               sink.addError(_BodyTooLarge());
@@ -45,7 +46,7 @@ Middleware bodyLimitMiddleware({int maxBytes = 1024 * 1024}) {
 Response _tooLarge() => Response(
       413,
       body: jsonEncode({
-        'status': '10001', // keep envelope code consistent with failure
+        'status': 10001,
         'message': 'Payload too large',
       }),
       headers: {'content-type': 'application/json'},

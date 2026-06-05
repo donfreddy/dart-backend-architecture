@@ -30,8 +30,6 @@ services:
       JWT_REFRESH_TOKEN_EXPIRY: "2592000"
       OTEL_ENDPOINT: ""
       ENVIRONMENT: test
-    volumes:
-      - .:/app
     depends_on:
       seed-test:
         condition: service_completed_successfully
@@ -46,8 +44,6 @@ services:
     command: dart run bin/db_seed.dart
     environment:
       DATABASE_URL: postgres://dba_test:dba_test@postgres-test:5432/dba_test?sslmode=disable
-    volumes:
-      - .:/app
     depends_on:
       migrations-test:
         condition: service_completed_successfully
