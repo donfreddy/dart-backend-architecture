@@ -3,6 +3,7 @@ import 'package:dart_backend_architecture/core/middleware/schema.dart';
 import 'package:dart_backend_architecture/core/request_context_keys.dart';
 import 'package:dart_backend_architecture/helpers/validator.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/api_key_repo.dart';
+import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
 import 'package:shelf/shelf.dart';
 
 const _apiKeyHeader = 'x-api-key';
@@ -27,8 +28,11 @@ Middleware apiKeyMiddleware(ApiKeyRepo apiKeyRepo) {
       final keyEntity = await apiKeyRepo.findByKey(apiKey);
 
       if (keyEntity == null) {
+        _enrichSpan(request, apiKey, false);
         throw const ForbiddenError();
       }
+
+      _enrichSpan(request, apiKey, true);
 
       final enrichedRequest = request.change(
         context: {
@@ -40,4 +44,16 @@ Middleware apiKeyMiddleware(ApiKeyRepo apiKeyRepo) {
       return inner(enrichedRequest);
     };
   };
+}
+
+void _enrichSpan(Request request, String apiKey, bool valid) {
+  try {
+    final span = request.context[RequestContextKeys.otelSpan];
+    if (span == null) return;
+    (span as dynamic).addAttributes(
+      OTel.attributesFromMap({
+        'api.key_valid': valid,
+      }),
+    );
+  } catch (_) {}
 }

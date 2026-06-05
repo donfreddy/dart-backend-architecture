@@ -16,4 +16,7 @@ abstract final class RequestContextKeys {
 
   // ── API key middleware ─────────────────────────────────────────────────────
   static const apiKey = 'api_key';
+
+  // ── Tracing middleware ─────────────────────────────────────────────────────
+  static const otelSpan = 'otel_span';
 }

@@ -8,17 +8,18 @@ import 'package:shelf/shelf.dart';
 
 final _log = AppLogger.get('ErrorHandler');
 
-// OTel SDK caches instruments by name, calling createCounter each time is idempotent.
-final Counter<int> _errorCounter =
-    OTel.meterProvider().getMeter(name: AppInfo.name).createCounter<int>(
-          name: 'api.errors.total',
-          description: 'Total API errors by type and HTTP status',
-          unit: '{error}',
-        ) as Counter<int>;
+Counter<int>? _errorCounter;
 
 void _recordError(ApiError error) {
   try {
-    _errorCounter.add(
+    _errorCounter ??= OTel.meterProvider()
+            .getMeter(name: AppInfo.name)
+            .createCounter<int>(
+              name: 'api.errors.total',
+              description: 'Total API errors by type and HTTP status',
+              unit: '{error}',
+            ) as Counter<int>?;
+    _errorCounter?.add(
       1,
       OTel.attributesFromMap({
         'error.type': error.code,

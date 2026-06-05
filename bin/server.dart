@@ -6,7 +6,8 @@ import 'dart:isolate';
 import 'package:dart_backend_architecture/app.dart';
 import 'package:dart_backend_architecture/config.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
-import 'package:dart_backend_architecture/core/telemetry/otel_setup.dart';
+import 'package:dart_backend_architecture/core/telemetry/otel_setup.dart'
+    show initTelemetry, shutdownTelemetry;
 import 'package:dart_backend_architecture/di/composition_root.dart';
 import 'package:logging/logging.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
@@ -348,6 +349,7 @@ Future<void> _gracefulStop({
   );
 
   await root.dispose();
+  await shutdownTelemetry();
   log.info('[worker-$workerId] Stopped.');
 }
 

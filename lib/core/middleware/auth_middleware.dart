@@ -7,6 +7,7 @@ import 'package:dart_backend_architecture/database/model/keystore.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/keystore_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/user_repo.dart';
+import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
 import 'package:shelf/shelf.dart';
 
 Middleware authMiddleware({
@@ -41,6 +42,8 @@ Middleware authMiddleware({
           userCache: userCache,
         );
 
+        _enrichSpan(request, payload.sub, user.roles);
+
         return inner(
           request.change(
             context: {
@@ -57,6 +60,19 @@ Middleware authMiddleware({
       }
     };
   };
+}
+
+void _enrichSpan(Request request, String userId, List<String> roles) {
+  try {
+    final span = request.context[RequestContextKeys.otelSpan];
+    if (span == null) return;
+    (span as dynamic).addAttributes(
+      OTel.attributesFromMap({
+        'auth.user_id': userId,
+        'auth.roles': roles.join(','),
+      }),
+    );
+  } catch (_) {}
 }
 
 Future<User> _resolveUser({
