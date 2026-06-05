@@ -342,7 +342,7 @@ bin/server.dart
 
 ```json
 {
-  "status": "10000",
+  "status": 10000,
   "message": "Signup Successful",
   "data": {
     "user": {
@@ -363,7 +363,7 @@ bin/server.dart
 
 ```json
 {
-  "status": "10001",
+  "status": 10001,
   "message": "Authentication failure"
 }
 ```
@@ -372,7 +372,7 @@ bin/server.dart
 
 ```json
 {
-  "status": "10001",
+  "status": 10001,
   "message": "Validation failed",
   "data": {
     "errors": {

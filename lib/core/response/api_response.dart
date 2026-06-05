@@ -1,12 +1,12 @@
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 
 enum StatusCode {
-  success('10000'),
-  failure('10001'),
-  retry('10002'),
-  invalidAccessToken('10003');
+  success(10000),
+  failure(10001),
+  retry(10002),
+  invalidAccessToken(10003);
 
-  final String value;
+  final int value;
   const StatusCode(this.value);
 }
 
@@ -21,9 +21,9 @@ sealed class ApiResponse<T> {
     this.data,
   });
 
-  String get status => statusCode.value;
+  int get status => statusCode.value;
 
-  ({String status, String message, Object? data}) envelopeRecord() {
+  ({int status, String message, Object? data}) envelopeRecord() {
     return (
       status: status,
       message: message,
@@ -118,7 +118,7 @@ final class Failure extends ApiResponse<Object?> {
         );
 
   @override
-  ({String status, String message, Object? data}) envelopeRecord() {
+  ({int status, String message, Object? data}) envelopeRecord() {
     final base = super.envelopeRecord();
     return (
       status: base.status,
