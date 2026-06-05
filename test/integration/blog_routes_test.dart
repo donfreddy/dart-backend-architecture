@@ -43,7 +43,29 @@ void main() {
       }),
     );
     final signupBody = _json(await signupRes.readAsString());
-    accessToken = signupBody['data']['tokens']['accessToken'] as String?;
+    accessToken = signupBody['data']['tokens']['access_token'] as String?;
+
+    // Grant WRITER role for blog writer endpoint access
+    final userId = signupBody['data']['user']['id'] as String;
+    final roleResult = await pool.execute(
+      Sql.named('SELECT id FROM roles WHERE code = @code LIMIT 1'),
+      parameters: {'code': 'WRITER'},
+    );
+    if (roleResult.isNotEmpty) {
+      final writerRoleId = roleResult.first[0] as String;
+      await pool.execute(
+        Sql.named('''
+          INSERT INTO user_roles (user_id, role_id, created_at)
+          VALUES (@userId, @roleId, @now)
+          ON CONFLICT (user_id, role_id) DO NOTHING
+        '''),
+        parameters: {
+          'userId': userId,
+          'roleId': writerRoleId,
+          'now': DateTime.now().toUtc(),
+        },
+      );
+    }
   });
 
   tearDown(() async {
@@ -66,17 +88,18 @@ void main() {
       );
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
-      expect(body['status'], '10000');
+      expect(body['status'], 10000);
       expect(body['data']['title'], 'Test Blog');
     });
 
     test('returns 400 when blog URL already exists', () async {
+      final payload = _validBlogPayload();
       await app(
-        _authenticatedPost(endpoint, _validBlogPayload(), accessToken!),
+        _authenticatedPost(endpoint, payload, accessToken!),
       );
 
       final res = await app(
-        _authenticatedPost(endpoint, _validBlogPayload(), accessToken!),
+        _authenticatedPost(endpoint, payload, accessToken!),
       );
       expect(res.statusCode, 400);
     });

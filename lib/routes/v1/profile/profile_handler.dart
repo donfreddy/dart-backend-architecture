@@ -67,6 +67,12 @@ Future<Response> updateProfileHandler(
     body,
   );
 
+  if (validated.values.every((v) => v == null)) {
+    throw const BadRequestError(
+      'At least one field (name or profile_pic_url) must be provided',
+    );
+  }
+
   final updatedUser = user.copyWith(
     name: validated['name'] as String? ?? user.name,
     profilePicUrl:

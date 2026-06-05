@@ -183,7 +183,7 @@ docker compose exec api dart run bin/db_seed.dart
 ### 2B) Run tests (Docker : isolated, no dev data touched)
 
 ```bash
-docker compose -f docker-compose.test.yml up --build --abort-on-container-exit
+docker compose -f docker-compose.test.yml up --build --exit-code-from=tester
 docker compose -f docker-compose.test.yml down -v
 ```
 
@@ -209,20 +209,6 @@ DATABASE_URL=postgres://dba_test:dba_test@localhost:5432/dba_test?sslmode=disabl
 dart test
 ```
 
-## How Dart improves on the original Node.js architecture
-
-| Concern | Node.js (original) | Dart (this project) |
-|---|---|---|
-| **CPU-bound work** | Blocks event loop (bcrypt, JWT verify) | **Dedicated Isolate workers** : HTTP handled uncontested |
-| **Error model** | `class extends Error` | **Sealed class hierarchy** with exhaustive pattern matching |
-| **DB persistence** | MongoDB (Mongoose ODM) | **PostgreSQL + raw SQL** : ACID transactions, schema enforcement |
-| **Repository pattern** | Single repo per entity | **Interface Segregation** : `BlogQueryRepo` / `BlogWriteRepo` separated |
-| **Caching** | Embedded in service layer | **Decorator pattern** : `CachingBlogRepo` wraps Postgres repo transparently |
-| **Dependency wiring** | Import-based coupling | **Composition Root** : single file wires everything |
-| **Observability** | Console.log | **OpenTelemetry** : distributed tracing, metrics, structured logging |
-| **Async messaging** | Not included | **NATS** with `NoOpEventBus` fallback (zero overhead when disabled) |
-| **Type safety** | TypeScript (transpiled) | **Native Dart** : sound null safety at runtime, no build step |
-
 ## The Isolate advantage
 
 JavaScript/Node.js runs on a single thread. Any CPU-bound operation blocks **everything** : including handling other HTTP requests. Dart's isolate model solves this natively.
@@ -235,9 +221,9 @@ This project runs two dedicated workers:
 │  Non-blocking I/O only                    │
 └───────────────────────────────────────────┘
          │                        ▲
-         │  hash/verify            │  validate/decode
+         │  hash/verify           │  validate/decode
          ▼                        │
-┌─ CryptoWorker ───────┐  ┌─ JwtWorker ───────────┐
+┌─ CryptoWorker  ───────┐  ┌─ JwtWorker ───────────┐
 │  BCrypt hashing       │  │  RSA RS256 verify     │
 │  Constant-time dummy  │  │  Decode (no expiry)   │
 │  hash for timing      │  │                       │
@@ -358,8 +344,8 @@ bin/server.dart
       "roles": ["LEARNER"]
     },
     "tokens": {
-      "accessToken": "<jwt>",
-      "refreshToken": "<jwt>"
+      "access_token": "<jwt>",
+      "refresh_token": "<jwt>"
     }
   }
 }
@@ -371,21 +357,6 @@ bin/server.dart
 {
   "status": 10001,
   "message": "Authentication failure"
-}
-```
-
-### Validation error (400)
-
-```json
-{
-  "status": 10001,
-  "message": "Validation failed",
-  "data": {
-    "errors": {
-      "email": ["Invalid email format"],
-      "password": ["Must be at least 8 characters"]
-    }
-  }
 }
 ```
 

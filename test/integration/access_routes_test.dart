@@ -49,7 +49,7 @@ void main() {
       final res = await app(_post(endpoint, {}));
       expect(res.statusCode, 400);
       final body = _json(await res.readAsString());
-      expect(body['status'], '10001');
+      expect(body['status'], 10001);
     });
 
     test('returns 400 when name is missing', () async {
@@ -64,7 +64,7 @@ void main() {
       );
       expect(res.statusCode, 400);
       final body = _json(await res.readAsString());
-      expect(body['data']['errors'].toString(), contains('name'));
+      expect(body['message'].toString().toLowerCase(), contains('name'));
     });
 
     test('returns 400 when email is missing', () async {
@@ -79,7 +79,7 @@ void main() {
       );
       expect(res.statusCode, 400);
       final body = _json(await res.readAsString());
-      expect(body['data']['errors'].toString(), contains('email'));
+      expect(body['message'].toString().toLowerCase(), contains('email'));
     });
 
     test('returns 400 when password is missing', () async {
@@ -94,7 +94,7 @@ void main() {
       );
       expect(res.statusCode, 400);
       final body = _json(await res.readAsString());
-      expect(body['data']['errors'].toString(), contains('password'));
+      expect(body['message'].toString().toLowerCase(), contains('password'));
     });
 
     test('returns 400 when email format is invalid', () async {
@@ -153,18 +153,18 @@ void main() {
 
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
-      expect(body['status'], '10000');
+      expect(body['status'], 10000);
 
       final user = body['data']['user'] as Map<String, dynamic>;
       expect(user['id'], isA<String>());
       expect(user['email'], 'signup$_emailSuffix');
       expect(user['name'], 'Test User');
-      expect(user['roles'], contains('learner'));
+      expect(user['roles'], contains('LEARNER'));
       expect(user.containsKey('passwordHash'), isFalse);
 
       final tokens = body['data']['tokens'] as Map<String, dynamic>;
-      expect(tokens['accessToken'], isA<String>());
-      expect(tokens['refreshToken'], isA<String>());
+      expect(tokens['access_token'], isA<String>());
+      expect(tokens['refresh_token'], isA<String>());
     });
 
     test('returns 400 when user is already registered', () async {
@@ -224,14 +224,14 @@ void main() {
       final res = await app(_post(endpoint, {'password': _password}));
       expect(res.statusCode, 400);
       final body = _json(await res.readAsString());
-      expect(body['data']['errors'].toString(), contains('email'));
+      expect(body['message'].toString().toLowerCase(), contains('email'));
     });
 
     test('returns 400 when password is missing', () async {
       final res = await app(_post(endpoint, {'email': loginEmail}));
       expect(res.statusCode, 400);
       final body = _json(await res.readAsString());
-      expect(body['data']['errors'].toString(), contains('password'));
+      expect(body['message'].toString().toLowerCase(), contains('password'));
     });
 
     test('returns 400 when email format is invalid', () async {
@@ -309,7 +309,7 @@ void main() {
 
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
-      expect(body['status'], '10000');
+      expect(body['status'], 10000);
 
       final user = body['data']['user'] as Map<String, dynamic>;
       expect(user['email'], loginEmail);
@@ -317,11 +317,11 @@ void main() {
       expect(user.containsKey('passwordHash'), isFalse);
 
       final tokens = body['data']['tokens'] as Map<String, dynamic>;
-      expect(tokens['accessToken'], isA<String>());
-      expect(tokens['refreshToken'], isA<String>());
+      expect(tokens['access_token'], isA<String>());
+      expect(tokens['refresh_token'], isA<String>());
 
       // Tokens must be distinct (access ≠ refresh)
-      expect(tokens['accessToken'], isNot(equals(tokens['refreshToken'])));
+      expect(tokens['access_token'], isNot(equals(tokens['refresh_token'])));
     });
 
     test('returns 200 on repeated logins (new keystore each time)', () async {
@@ -351,7 +351,7 @@ void main() {
       final tokens2 = _json(await res2.readAsString())['data']['tokens'];
 
       // Each login issues fresh tokens
-      expect(tokens1['accessToken'], isNot(equals(tokens2['accessToken'])));
+      expect(tokens1['access_token'], isNot(equals(tokens2['access_token'])));
     });
   });
 }

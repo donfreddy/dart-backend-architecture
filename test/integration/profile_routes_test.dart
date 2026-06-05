@@ -44,7 +44,7 @@ void main() {
       }),
     );
     final signupBody = _json(await signupRes.readAsString());
-    accessToken = signupBody['data']['tokens']['accessToken'] as String?;
+    accessToken = signupBody['data']['tokens']['access_token'] as String?;
     userId = signupBody['data']['user']['id'] as String?;
   });
 
