@@ -123,11 +123,13 @@ jobs:
       - name: Run migrations
         env:
           DATABASE_URL: postgres://dba_test:dba_test@localhost:5432/dba_test?sslmode=disable
+          REDIS_URL: redis://localhost:6379
         run: dbmate up
 
       - name: Seed database
         env:
           DATABASE_URL: postgres://dba_test:dba_test@localhost:5432/dba_test?sslmode=disable
+          REDIS_URL: redis://localhost:6379
         run: dart run bin/db_seed.dart
 
       - name: Generate RSA keys
