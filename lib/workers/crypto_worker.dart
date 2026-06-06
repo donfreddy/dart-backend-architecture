@@ -5,11 +5,8 @@ import 'package:dart_backend_architecture/core/password_hasher.dart';
 
 final class CryptoSync implements PasswordHasher {
   @override
-  Future<String> hashPassword(String plaintext) async =>
-      Isolate.run(() => BCrypt.hashpw(
-            plaintext,
-            BCrypt.gensalt(logRounds: 12),
-          ));
+  Future<String> hashPassword(String plaintext) async => Isolate.run(
+      () => BCrypt.hashpw(plaintext, BCrypt.gensalt(logRounds: 12)));
 
   @override
   Future<bool> verifyPassword(String plaintext, String hash) async =>

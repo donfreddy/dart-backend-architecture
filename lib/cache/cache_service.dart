@@ -178,13 +178,17 @@ class CacheService implements RateLimitStore {
   // ── Connection management ──────────────────────────────────────────────────
 
   static const _redisCommandTimeout = Duration(seconds: 5);
-  static const _retryDelays = [Duration.zero, Duration(milliseconds: 100), Duration(milliseconds: 500)];
+  static const _retryDelays = [
+    Duration.zero,
+    Duration(milliseconds: 100),
+    Duration(milliseconds: 500)
+  ];
 
   Future<T> _execute<T>(Future<T> Function(Command cmd) action) async {
     for (var attempt = 0; attempt < _retryDelays.length; attempt++) {
       try {
         if (_retryDelays[attempt] != Duration.zero) {
-          await Future.delayed(_retryDelays[attempt]);
+          await Future<void>.delayed(_retryDelays[attempt]);
         }
         return await action(_cmd).timeout(_redisCommandTimeout);
       } catch (e) {
