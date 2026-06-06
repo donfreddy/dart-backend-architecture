@@ -164,11 +164,13 @@ class CacheService {
 
   // ── Connection management ──────────────────────────────────────────────────
 
+  static const _redisCommandTimeout = Duration(seconds: 5);
+
   Future<T> _execute<T>(Future<T> Function(Command cmd) action) async {
     return _breaker.execute(() async {
       for (var attempt = 0; attempt < 2; attempt++) {
         try {
-          return await action(_cmd);
+          return await action(_cmd).timeout(_redisCommandTimeout);
         } catch (e) {
           _log.warning(
             'Redis command failed (attempt ${attempt + 1}) — reconnecting: $e',
@@ -177,7 +179,7 @@ class CacheService {
         }
       }
       // Last attempt — let the error surface
-      return action(_cmd);
+      return action(_cmd).timeout(_redisCommandTimeout);
     });
   }
 
