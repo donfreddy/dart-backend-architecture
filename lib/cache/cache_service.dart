@@ -85,6 +85,7 @@ class CacheService implements RateLimitStore {
   }
 
   // Atomic increment with TTL — used by rate limiter
+  @override
   Future<int> increment(String key, {required Duration window}) async {
     try {
       final result = await _execute((cmd) => cmd.send_object(['INCR', key]));
@@ -181,7 +182,7 @@ class CacheService implements RateLimitStore {
   static const _retryDelays = [
     Duration.zero,
     Duration(milliseconds: 100),
-    Duration(milliseconds: 500)
+    Duration(milliseconds: 500),
   ];
 
   Future<T> _execute<T>(Future<T> Function(Command cmd) action) async {
