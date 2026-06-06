@@ -7,7 +7,6 @@ import 'package:dart_backend_architecture/database/repository/interfaces/keystor
 import 'package:dart_backend_architecture/database/repository/interfaces/role_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/user_repo.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
-import 'package:dart_backend_architecture/services/blog_service.dart';
 import 'package:dart_backend_architecture/services/token_service.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -31,4 +30,3 @@ class MockTokenService extends Mock implements TokenService {}
 
 class MockAuthService extends Mock implements AuthService {}
 
-class MockBlogService extends Mock implements BlogService {}

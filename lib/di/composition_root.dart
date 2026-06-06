@@ -17,7 +17,6 @@ import 'package:dart_backend_architecture/database/repository/impl/postgres_role
 import 'package:dart_backend_architecture/database/repository/impl/postgres_user_repo.dart';
 import 'package:dart_backend_architecture/routes/router.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
-import 'package:dart_backend_architecture/services/blog_service.dart';
 import 'package:dart_backend_architecture/services/token_service.dart';
 import 'package:dart_backend_architecture/workers/crypto_worker.dart' show CryptoSync;
 import 'package:shelf/shelf.dart';
@@ -131,15 +130,11 @@ final class CompositionRoot {
     tokenService: _tokenService,
   );
 
-  late final BlogService _blogService = BlogService(
-    blogRepo: _cachingBlogRepo,
-  );
-
   // ── HTTP handler ───────────────────────────────────────────────────────────
 
   late final Handler router = buildRouter(
     authService: _authService,
-    blogService: _blogService,
+    blogRepo: _cachingBlogRepo,
     jwtService: _jwtService,
     userRepo: _userRepo,
     keystoreRepo: _keystoreRepo,

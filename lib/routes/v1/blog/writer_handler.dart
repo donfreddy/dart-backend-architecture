@@ -4,7 +4,7 @@ import 'package:dart_backend_architecture/core/response/shelf_response_x.dart';
 import 'package:dart_backend_architecture/database/model/blog.dart';
 import 'package:dart_backend_architecture/helpers/validator.dart';
 import 'package:dart_backend_architecture/routes/v1/blog/schema.dart';
-import 'package:dart_backend_architecture/services/blog_service.dart';
+import 'package:dart_backend_architecture/database/repository/interfaces/blog_repo.dart';
 import 'package:shelf/shelf.dart';
 
 String _formatEndpoint(String endpoint) =>
@@ -12,7 +12,7 @@ String _formatEndpoint(String endpoint) =>
 
 Future<Response> writerCreateBlogHandler(
   Request request,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final body = await readJsonBody(request);
   final validated = validateSchema(blogCreateSchema, body);
@@ -21,12 +21,12 @@ Future<Response> writerCreateBlogHandler(
   final endpoint =
       _formatEndpoint(validateUrlEndpoint(validated['blog_url'] as String));
 
-  final existingByUrl = await blogService.findUrlIfExists(endpoint);
+  final existingByUrl = await blogRepo.findUrlIfExists(endpoint);
   if (existingByUrl != null) {
     throw const BadRequestError('Blog with this url already exists');
   }
 
-  final created = await blogService.create(
+  final created = await blogRepo.create(
     Blog(
       title: validated['title'] as String,
       description: validated['description'] as String,
@@ -55,7 +55,7 @@ Future<Response> writerCreateBlogHandler(
 Future<Response> writerUpdateBlogHandler(
   Request request,
   String id,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final validatedParams = validateSchema(
     blogIdParamSchema,
@@ -67,7 +67,7 @@ Future<Response> writerUpdateBlogHandler(
 
   final authUser = request.authUser;
   final blog =
-      await blogService.findById(validatedParams['id'] as String);
+      await blogRepo.findById(validatedParams['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (blog.author.id != authUser.id) {
     throw const ForbiddenError("You don't have necessary permissions");
@@ -78,7 +78,7 @@ Future<Response> writerUpdateBlogHandler(
   final blogUrl = validatedBody['blog_url'] as String?;
   if (blogUrl != null) {
     final endpoint = _formatEndpoint(validateUrlEndpoint(blogUrl));
-    final existingByUrl = await blogService.findUrlIfExists(endpoint);
+    final existingByUrl = await blogRepo.findUrlIfExists(endpoint);
     if (existingByUrl != null && existingByUrl.id != blog.id) {
       throw const BadRequestError('Blog URL already used');
     }
@@ -96,7 +96,7 @@ Future<Response> writerUpdateBlogHandler(
     updatedBy: authUser,
   );
 
-  await blogService.update(updated);
+  await blogRepo.update(updated);
   return ok(
     message: 'Blog updated successfully',
     data: updated.toJson(),
@@ -106,7 +106,7 @@ Future<Response> writerUpdateBlogHandler(
 Future<Response> writerSubmitBlogHandler(
   Request request,
   String id,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final validated = validateSchema(
     blogIdParamSchema,
@@ -115,13 +115,13 @@ Future<Response> writerSubmitBlogHandler(
   );
 
   final authUser = request.authUser;
-  final blog = await blogService.findById(validated['id'] as String);
+  final blog = await blogRepo.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (blog.author.id != authUser.id) {
     throw const ForbiddenError("You don't have necessary permissions");
   }
 
-  await blogService.update(
+  await blogRepo.update(
     blog.copyWith(
       isSubmitted: true,
       isDraft: false,
@@ -135,7 +135,7 @@ Future<Response> writerSubmitBlogHandler(
 Future<Response> writerWithdrawBlogHandler(
   Request request,
   String id,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final validated = validateSchema(
     blogIdParamSchema,
@@ -144,13 +144,13 @@ Future<Response> writerWithdrawBlogHandler(
   );
 
   final authUser = request.authUser;
-  final blog = await blogService.findById(validated['id'] as String);
+  final blog = await blogRepo.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (blog.author.id != authUser.id) {
     throw const ForbiddenError("You don't have necessary permissions");
   }
 
-  await blogService.update(
+  await blogRepo.update(
     blog.copyWith(
       isSubmitted: false,
       isDraft: true,
@@ -164,7 +164,7 @@ Future<Response> writerWithdrawBlogHandler(
 Future<Response> writerDeleteBlogHandler(
   Request request,
   String id,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final validated = validateSchema(
     blogIdParamSchema,
@@ -173,7 +173,7 @@ Future<Response> writerDeleteBlogHandler(
   );
 
   final authUser = request.authUser;
-  final blog = await blogService.findById(validated['id'] as String);
+  final blog = await blogRepo.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (blog.author.id != authUser.id) {
     throw const ForbiddenError("You don't have necessary permissions");
@@ -190,13 +190,13 @@ Future<Response> writerDeleteBlogHandler(
           updatedBy: authUser,
         );
 
-  await blogService.update(updated);
+  await blogRepo.update(updated);
   return ok<Object?>(message: 'Blog deleted successfully');
 }
 
 Future<Response> writerSubmittedBlogsHandler(
   Request request,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
@@ -208,7 +208,7 @@ Future<Response> writerSubmittedBlogsHandler(
       ? query.value['pageItemCount'] as int
       : 10;
 
-  final result = await blogService.findAllSubmissionsForWriter(
+  final result = await blogRepo.findAllSubmissionsForWriter(
     request.authUser,
     pageNumber: pageNumber,
     limit: limit,
@@ -224,7 +224,7 @@ Future<Response> writerSubmittedBlogsHandler(
 
 Future<Response> writerPublishedBlogsHandler(
   Request request,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
@@ -236,7 +236,7 @@ Future<Response> writerPublishedBlogsHandler(
       ? query.value['pageItemCount'] as int
       : 10;
 
-  final result = await blogService.findAllPublishedForWriter(
+  final result = await blogRepo.findAllPublishedForWriter(
     request.authUser,
     pageNumber: pageNumber,
     limit: limit,
@@ -252,7 +252,7 @@ Future<Response> writerPublishedBlogsHandler(
 
 Future<Response> writerDraftBlogsHandler(
   Request request,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
@@ -264,7 +264,7 @@ Future<Response> writerDraftBlogsHandler(
       ? query.value['pageItemCount'] as int
       : 10;
 
-  final result = await blogService.findAllDraftsForWriter(
+  final result = await blogRepo.findAllDraftsForWriter(
     request.authUser,
     pageNumber: pageNumber,
     limit: limit,
@@ -281,7 +281,7 @@ Future<Response> writerDraftBlogsHandler(
 Future<Response> writerBlogByIdHandler(
   Request request,
   String id,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final validated = validateSchema(
     blogIdParamSchema,
@@ -290,7 +290,7 @@ Future<Response> writerBlogByIdHandler(
   );
 
   final authUser = request.authUser;
-  final blog = await blogService.findById(validated['id'] as String);
+  final blog = await blogRepo.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (blog.author.id != authUser.id) {
     throw const ForbiddenError("You don't have necessary permissions");

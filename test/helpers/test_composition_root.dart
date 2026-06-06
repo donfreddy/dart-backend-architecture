@@ -29,11 +29,9 @@ final class TestCompositionRoot {
         tokenService: tokenService,
       );
 
-  late final MockBlogService blogService = MockBlogService();
-
   Handler get router => buildRouter(
         authService: authService,
-        blogService: blogService,
+        blogRepo: blogRepo,
         jwtService: jwtService,
         userRepo: userRepo,
         keystoreRepo: keystoreRepo,

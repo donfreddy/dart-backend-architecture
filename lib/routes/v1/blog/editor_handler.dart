@@ -3,12 +3,12 @@ import 'package:dart_backend_architecture/core/response/shelf_response_x.dart';
 import 'package:dart_backend_architecture/database/model/blog.dart';
 import 'package:dart_backend_architecture/helpers/validator.dart';
 import 'package:dart_backend_architecture/routes/v1/blog/schema.dart';
-import 'package:dart_backend_architecture/services/blog_service.dart';
+import 'package:dart_backend_architecture/database/repository/interfaces/blog_repo.dart';
 import 'package:shelf/shelf.dart';
 
 Future<Response> editorPublishBlogHandler(
   String id,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final validated = validateSchema(
     blogIdParamSchema,
@@ -16,7 +16,7 @@ Future<Response> editorPublishBlogHandler(
     source: ValidationSource.param,
   );
 
-  final blog = await blogService.findById(validated['id'] as String);
+  final blog = await blogRepo.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
 
   final published = blog.copyWith(
@@ -27,13 +27,13 @@ Future<Response> editorPublishBlogHandler(
     publishedAt: blog.publishedAt ?? DateTime.now().toUtc(),
   );
 
-  await blogService.update(published);
+  await blogRepo.update(published);
   return ok<Object?>(message: 'Blog published successfully');
 }
 
 Future<Response> editorUnpublishBlogHandler(
   String id,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final validated = validateSchema(
     blogIdParamSchema,
@@ -41,7 +41,7 @@ Future<Response> editorUnpublishBlogHandler(
     source: ValidationSource.param,
   );
 
-  final blog = await blogService.findById(validated['id'] as String);
+  final blog = await blogRepo.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
 
   final unpublished = blog.copyWith(
@@ -50,13 +50,13 @@ Future<Response> editorUnpublishBlogHandler(
     isPublished: false,
   );
 
-  await blogService.update(unpublished);
+  await blogRepo.update(unpublished);
   return ok<Object?>(message: 'Blog unpublished successfully');
 }
 
 Future<Response> editorDeleteBlogHandler(
   String id,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final validated = validateSchema(
     blogIdParamSchema,
@@ -64,16 +64,16 @@ Future<Response> editorDeleteBlogHandler(
     source: ValidationSource.param,
   );
 
-  final blog = await blogService.findById(validated['id'] as String);
+  final blog = await blogRepo.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
 
-  await blogService.update(blog.copyWith(status: false));
+  await blogRepo.update(blog.copyWith(status: false));
   return ok<Object?>(message: 'Blog deleted successfully');
 }
 
 Future<Response> editorPublishedBlogsHandler(
   Request request,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
@@ -85,7 +85,7 @@ Future<Response> editorPublishedBlogsHandler(
       ? query.value['pageItemCount'] as int
       : 10;
 
-  final result = await blogService.findAllPublished(
+  final result = await blogRepo.findAllPublished(
     pageNumber: pageNumber,
     limit: limit,
   );
@@ -100,7 +100,7 @@ Future<Response> editorPublishedBlogsHandler(
 
 Future<Response> editorSubmittedBlogsHandler(
   Request request,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
@@ -112,7 +112,7 @@ Future<Response> editorSubmittedBlogsHandler(
       ? query.value['pageItemCount'] as int
       : 10;
 
-  final result = await blogService.findAllSubmissions(
+  final result = await blogRepo.findAllSubmissions(
     pageNumber: pageNumber,
     limit: limit,
   );
@@ -127,7 +127,7 @@ Future<Response> editorSubmittedBlogsHandler(
 
 Future<Response> editorDraftBlogsHandler(
   Request request,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
@@ -139,7 +139,7 @@ Future<Response> editorDraftBlogsHandler(
       ? query.value['pageItemCount'] as int
       : 10;
 
-  final result = await blogService.findAllDrafts(
+  final result = await blogRepo.findAllDrafts(
     pageNumber: pageNumber,
     limit: limit,
   );
@@ -154,7 +154,7 @@ Future<Response> editorDraftBlogsHandler(
 
 Future<Response> editorBlogByIdHandler(
   String id,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final validated = validateSchema(
     blogIdParamSchema,
@@ -162,7 +162,7 @@ Future<Response> editorBlogByIdHandler(
     source: ValidationSource.param,
   );
 
-  final blog = await blogService.findById(validated['id'] as String);
+  final blog = await blogRepo.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (!blog.isSubmitted && !blog.isPublished) {
     throw const ForbiddenError('This blog is private');

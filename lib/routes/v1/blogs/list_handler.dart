@@ -4,13 +4,13 @@ import 'package:dart_backend_architecture/database/model/blog.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/user_repo.dart';
 import 'package:dart_backend_architecture/helpers/validator.dart';
 import 'package:dart_backend_architecture/routes/v1/blog/schema.dart';
-import 'package:dart_backend_architecture/services/blog_service.dart';
+import 'package:dart_backend_architecture/database/repository/interfaces/blog_repo.dart';
 import 'package:shelf/shelf.dart';
 
 Future<Response> blogsByTagHandler(
   Request request,
   String tag,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final tagValidated = validateSchema(
     blogTagParamSchema,
@@ -26,7 +26,7 @@ Future<Response> blogsByTagHandler(
   final pageNumber = queryValidated['pageNumber'] as int;
   final limit = queryValidated['pageItemCount'] as int;
 
-  final result = await blogService.findByTagAndPaginated(
+  final result = await blogRepo.findByTagAndPaginated(
     tagValidated['tag'] as String,
     pageNumber,
     limit,
@@ -44,7 +44,7 @@ Future<Response> blogsByTagHandler(
 Future<Response> blogsByAuthorIdHandler(
   Request request,
   String id,
-  BlogService blogService,
+  BlogRepo blogRepo,
   UserRepo userRepo,
 ) async {
   final validated = validateSchema(
@@ -67,7 +67,7 @@ Future<Response> blogsByAuthorIdHandler(
       await userRepo.findPublicProfileById(validated['id'] as String);
   if (author == null) throw const BadRequestError('User not registered');
 
-  final result = await blogService.findAllPublishedForAuthor(
+  final result = await blogRepo.findAllPublishedForAuthor(
     author,
     pageNumber: pageNumber,
     limit: limit,
@@ -84,7 +84,7 @@ Future<Response> blogsByAuthorIdHandler(
 
 Future<Response> latestBlogsHandler(
   Request request,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final queryValidated = validateSchema(
     blogPaginationQuerySchema,
@@ -95,7 +95,7 @@ Future<Response> latestBlogsHandler(
   final pageNumber = queryValidated['pageNumber'] as int;
   final limit = queryValidated['pageItemCount'] as int;
 
-  final result = await blogService.findLatestBlogs(pageNumber, limit);
+  final result = await blogRepo.findLatestBlogs(pageNumber, limit);
 
   return okPaginated<Map<String, Object?>>(
     message: 'success',
@@ -109,7 +109,7 @@ Future<Response> latestBlogsHandler(
 Future<Response> similarBlogsByIdHandler(
   Request request,
   String id,
-  BlogService blogService,
+  BlogRepo blogRepo,
 ) async {
   final validated = validateSchema(
     blogIdParamSchema,
@@ -117,12 +117,12 @@ Future<Response> similarBlogsByIdHandler(
     source: ValidationSource.param,
   );
 
-  final blog = await blogService.findById(validated['id'] as String);
+  final blog = await blogRepo.findById(validated['id'] as String);
   if (blog == null || !blog.isPublished) {
     throw const BadRequestError('Blog is not available');
   }
 
-  final blogs = await blogService.searchSimilarBlogs(blog, 6);
+  final blogs = await blogRepo.searchSimilarBlogs(blog, 6);
   if (blogs.isEmpty) throw const NoDataError();
 
   return ok(
