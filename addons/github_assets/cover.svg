@@ -52,8 +52,8 @@
   <rect x="120" y="495" width="480" height="1.5" fill="#1E3A5F"/>
 
   <!-- Subtitles -->
-  <text x="120" y="528" font-family="'Courier New', monospace" font-size="16" fill="#4A9ECC" letter-spacing="2">PostgreSQL • Redis • NATS • OpenTelemetry</text>
-  <text x="120" y="560" font-family="'Courier New', monospace" font-size="13" fill="#2A5A7A" letter-spacing="1">Clean architecture • Isolate workers • SQL-first</text>
+  <text x="120" y="528" font-family="'Courier New', monospace" font-size="16" fill="#4A9ECC" letter-spacing="2">PostgreSQL • Redis • OpenTelemetry</text>
+  <text x="120" y="560" font-family="'Courier New', monospace" font-size="13" fill="#2A5A7A" letter-spacing="1">Clean architecture • Single isolate • SQL-first</text>
 
   <!-- Network graph decoration -->
   <g opacity="0.5">
