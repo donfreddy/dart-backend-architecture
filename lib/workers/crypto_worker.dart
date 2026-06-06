@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:bcrypt/bcrypt.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
+import 'package:dart_backend_architecture/core/password_hasher.dart';
 
 final _log = AppLogger.get('CryptoWorker');
 
@@ -35,7 +36,7 @@ final class _ShutdownRequest extends _CryptoMessage {
 }
 
 // ── Worker ───────────────────────────────────────────────────────────────────
-class CryptoWorker {
+class CryptoWorker implements PasswordHasher {
   final SendPort _sendPort;
   final Isolate _isolate;
 
@@ -60,6 +61,7 @@ class CryptoWorker {
 
   // ── Public API ─────────────────────────────────────────────────────────────
 
+  @override
   Future<String> hashPassword(String plaintext) async {
     final reply = ReceivePort();
     _sendPort.send(_HashRequest(plaintext, reply.sendPort));
@@ -73,6 +75,7 @@ class CryptoWorker {
     }
   }
 
+  @override
   Future<bool> verifyPassword(String plaintext, String hash) async {
     final reply = ReceivePort();
     _sendPort.send(_VerifyRequest(plaintext, hash, reply.sendPort));
@@ -87,6 +90,7 @@ class CryptoWorker {
   }
 
   // Constant-time dummy hash:  prevents user enumeration via timing attacks
+  @override
   Future<void> fakeHash() async {
     final reply = ReceivePort();
     _sendPort.send(_FakeHashRequest(reply.sendPort));

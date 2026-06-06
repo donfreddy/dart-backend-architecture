@@ -1,13 +1,13 @@
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
+import 'package:dart_backend_architecture/core/password_hasher.dart';
 import 'package:dart_backend_architecture/database/model/role.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/user_repo.dart';
 import 'package:dart_backend_architecture/messaging/event_bus.dart';
 import 'package:dart_backend_architecture/messaging/no_op_event_bus.dart';
 import 'package:dart_backend_architecture/services/token_service.dart';
-import 'package:dart_backend_architecture/workers/crypto_worker.dart';
 import 'package:uuid/uuid.dart';
 
 /// Authentication/authorization use-cases: signup, login, logout, token refresh.
@@ -72,7 +72,7 @@ final class AuthResult {
 class AuthService {
   final UserRepo _userRepo;
   final JwtService _jwt;
-  final CryptoWorker _crypto;
+  final PasswordHasher _crypto;
   final TokenService _tokenService;
   final EventBus _eventBus;
   final Uuid _uuid;
@@ -82,7 +82,7 @@ class AuthService {
   AuthService({
     required UserRepo userRepo,
     required JwtService jwt,
-    required CryptoWorker crypto,
+    required PasswordHasher crypto,
     required TokenService tokenService,
     EventBus eventBus = const NoOpEventBus(),
     Uuid? uuid,
