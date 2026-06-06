@@ -13,8 +13,8 @@ import 'package:dart_backend_architecture/database/repository/interfaces/keystor
 /// place and [AuthService] can focus solely on credential verification and
 /// user management.
 ///
-/// All methods are async because [JwtService.validate] and [decode] delegate
-/// to the [JwtWorker] isolate.
+/// All methods are async because [JwtService.validate] and [decode] wrap
+/// synchronous RS256 operations.
 class TokenService {
   final KeystoreRepo _keystoreRepo;
   final JwtService _jwt;
