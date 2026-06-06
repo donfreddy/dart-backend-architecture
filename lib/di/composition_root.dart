@@ -18,7 +18,8 @@ import 'package:dart_backend_architecture/database/repository/impl/postgres_user
 import 'package:dart_backend_architecture/routes/router.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
 import 'package:dart_backend_architecture/services/token_service.dart';
-import 'package:dart_backend_architecture/workers/crypto_worker.dart' show CryptoSync;
+import 'package:dart_backend_architecture/workers/crypto_worker.dart'
+    show CryptoSync;
 import 'package:shelf/shelf.dart';
 
 final _log = AppLogger.get('CompositionRoot');

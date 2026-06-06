@@ -220,7 +220,8 @@ final class PostgresUserRepo implements UserRepo {
       throw const NotFoundError('User not found');
     }
 
-    final updatedUser = await findById(result.first.toColumnMap()['id'] as String);
+    final updatedUser =
+        await findById(result.first.toColumnMap()['id'] as String);
     if (updatedUser == null) {
       throw const NotFoundError('User not found');
     }

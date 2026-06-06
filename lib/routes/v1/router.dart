@@ -68,8 +68,7 @@ Handler buildV1Router({
   );
   router.get(
     '/blogs/author/id/<id>',
-    (Request r, String id) =>
-        blogsByAuthorIdHandler(r, id, blogRepo, userRepo),
+    (Request r, String id) => blogsByAuthorIdHandler(r, id, blogRepo, userRepo),
   );
   router.get(
     '/blogs/latest',

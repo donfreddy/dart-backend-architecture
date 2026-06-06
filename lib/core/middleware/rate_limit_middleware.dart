@@ -63,8 +63,7 @@ Middleware rateLimitMiddleware(
       final override = _matchOverride(path, endpointOverrides);
       final effectiveMax =
           override != null ? override.maxRequests : maxRequests;
-      final effectiveWindow =
-          override != null ? _sensitiveWindow : window;
+      final effectiveWindow = override != null ? _sensitiveWindow : window;
       final prefix = override != null ? 'sensitive_rate_limit' : 'rate_limit';
       final key = '$prefix:$path:$ip';
 

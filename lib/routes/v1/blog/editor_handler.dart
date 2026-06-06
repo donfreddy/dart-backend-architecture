@@ -78,18 +78,15 @@ Future<Response> editorPublishedBlogsHandler(
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
   );
-  final pageNumber = query.isSuccess
-      ? query.value['pageNumber'] as int
-      : 1;
-  final limit = query.isSuccess
-      ? query.value['pageItemCount'] as int
-      : 10;
+  final pageNumber = query.isSuccess ? query.value['pageNumber'] as int : 1;
+  final limit = query.isSuccess ? query.value['pageItemCount'] as int : 10;
 
   final result = await blogRepo.findAllPublished(
     pageNumber: pageNumber,
     limit: limit,
   );
-  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
@@ -103,18 +100,15 @@ Future<Response> editorSubmittedBlogsHandler(
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
   );
-  final pageNumber = query.isSuccess
-      ? query.value['pageNumber'] as int
-      : 1;
-  final limit = query.isSuccess
-      ? query.value['pageItemCount'] as int
-      : 10;
+  final pageNumber = query.isSuccess ? query.value['pageNumber'] as int : 1;
+  final limit = query.isSuccess ? query.value['pageItemCount'] as int : 10;
 
   final result = await blogRepo.findAllSubmissions(
     pageNumber: pageNumber,
     limit: limit,
   );
-  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
@@ -128,18 +122,15 @@ Future<Response> editorDraftBlogsHandler(
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
   );
-  final pageNumber = query.isSuccess
-      ? query.value['pageNumber'] as int
-      : 1;
-  final limit = query.isSuccess
-      ? query.value['pageItemCount'] as int
-      : 10;
+  final pageNumber = query.isSuccess ? query.value['pageNumber'] as int : 1;
+  final limit = query.isSuccess ? query.value['pageItemCount'] as int : 10;
 
   final result = await blogRepo.findAllDrafts(
     pageNumber: pageNumber,
     limit: limit,
   );
-  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,

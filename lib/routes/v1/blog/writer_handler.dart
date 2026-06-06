@@ -66,8 +66,7 @@ Future<Response> writerUpdateBlogHandler(
   final validatedBody = validateSchema(blogUpdateSchema, body);
 
   final authUser = request.authUser;
-  final blog =
-      await blogRepo.findById(validatedParams['id'] as String);
+  final blog = await blogRepo.findById(validatedParams['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (blog.author.id != authUser.id) {
     throw const ForbiddenError("You don't have necessary permissions");
@@ -201,19 +200,16 @@ Future<Response> writerSubmittedBlogsHandler(
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
   );
-  final pageNumber = query.isSuccess
-      ? query.value['pageNumber'] as int
-      : 1;
-  final limit = query.isSuccess
-      ? query.value['pageItemCount'] as int
-      : 10;
+  final pageNumber = query.isSuccess ? query.value['pageNumber'] as int : 1;
+  final limit = query.isSuccess ? query.value['pageItemCount'] as int : 10;
 
   final result = await blogRepo.findAllSubmissionsForWriter(
     request.authUser,
     pageNumber: pageNumber,
     limit: limit,
   );
-  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
@@ -227,19 +223,16 @@ Future<Response> writerPublishedBlogsHandler(
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
   );
-  final pageNumber = query.isSuccess
-      ? query.value['pageNumber'] as int
-      : 1;
-  final limit = query.isSuccess
-      ? query.value['pageItemCount'] as int
-      : 10;
+  final pageNumber = query.isSuccess ? query.value['pageNumber'] as int : 1;
+  final limit = query.isSuccess ? query.value['pageItemCount'] as int : 10;
 
   final result = await blogRepo.findAllPublishedForWriter(
     request.authUser,
     pageNumber: pageNumber,
     limit: limit,
   );
-  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
@@ -253,19 +246,16 @@ Future<Response> writerDraftBlogsHandler(
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
   );
-  final pageNumber = query.isSuccess
-      ? query.value['pageNumber'] as int
-      : 1;
-  final limit = query.isSuccess
-      ? query.value['pageItemCount'] as int
-      : 10;
+  final pageNumber = query.isSuccess ? query.value['pageNumber'] as int : 1;
+  final limit = query.isSuccess ? query.value['pageItemCount'] as int : 10;
 
   final result = await blogRepo.findAllDraftsForWriter(
     request.authUser,
     pageNumber: pageNumber,
     limit: limit,
   );
-  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,

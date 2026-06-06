@@ -29,4 +29,3 @@ class MockCacheService extends Mock implements CacheService {}
 class MockTokenService extends Mock implements TokenService {}
 
 class MockAuthService extends Mock implements AuthService {}
-

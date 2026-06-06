@@ -32,7 +32,8 @@ Future<Response> blogsByTagHandler(
     limit,
   );
 
-  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
@@ -54,12 +55,8 @@ Future<Response> blogsByAuthorIdHandler(
   final query = blogPaginationQuerySchema.safeParse(
     request.requestedUri.queryParameters,
   );
-  final pageNumber = query.isSuccess
-      ? query.value['pageNumber'] as int
-      : 1;
-  final limit = query.isSuccess
-      ? query.value['pageItemCount'] as int
-      : 10;
+  final pageNumber = query.isSuccess ? query.value['pageNumber'] as int : 1;
+  final limit = query.isSuccess ? query.value['pageItemCount'] as int : 10;
 
   final author =
       await userRepo.findPublicProfileById(validated['id'] as String);
@@ -71,7 +68,8 @@ Future<Response> blogsByAuthorIdHandler(
     limit: limit,
   );
 
-  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
@@ -93,7 +91,8 @@ Future<Response> latestBlogsHandler(
 
   final result = await blogRepo.findLatestBlogs(pageNumber, limit);
 
-  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,

@@ -37,8 +37,7 @@ Future<Response> blogByIdHandler(
     source: ValidationSource.param,
   );
 
-  final blog =
-      await blogRepo.findById(validated['id'] as String);
+  final blog = await blogRepo.findById(validated['id'] as String);
   if (blog == null) {
     throw const BadRequestError('Blog do not exists');
   }
