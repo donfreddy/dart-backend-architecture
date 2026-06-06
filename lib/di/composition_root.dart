@@ -1,17 +1,14 @@
 import 'dart:async';
 
 import 'package:dart_backend_architecture/cache/cache_service.dart';
-import 'package:dart_backend_architecture/cache/repository/blog_cache.dart';
 import 'package:dart_backend_architecture/cache/repository/user_cache.dart';
 import 'package:dart_backend_architecture/config.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_backend_architecture/database/db_pool.dart';
-import 'package:dart_backend_architecture/database/repository/caching_blog_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_api_key_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_blog_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/api_key_repo.dart';
-import 'package:dart_backend_architecture/database/repository/interfaces/blog_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_keystore_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_role_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_user_repo.dart';
@@ -117,10 +114,7 @@ final class CompositionRoot {
 
   late final UserCache _userCache = UserCache(_cache);
 
-  late final BlogRepo _cachingBlogRepo = CachingBlogRepo(
-    inner: PostgresBlogRepo(_db),
-    cache: BlogCache(_cache),
-  );
+  late final PostgresBlogRepo _blogRepo = PostgresBlogRepo(_db);
 
   // ── Application services ───────────────────────────────────────────────────
 
@@ -135,7 +129,7 @@ final class CompositionRoot {
 
   late final Handler router = buildRouter(
     authService: _authService,
-    blogRepo: _cachingBlogRepo,
+    blogRepo: _blogRepo,
     jwtService: _jwtService,
     userRepo: _userRepo,
     keystoreRepo: _keystoreRepo,

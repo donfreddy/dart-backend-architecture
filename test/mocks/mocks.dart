@@ -1,5 +1,4 @@
 import 'package:dart_backend_architecture/cache/cache_service.dart';
-import 'package:dart_backend_architecture/cache/repository/blog_cache.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/core/password_hasher.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/blog_repo.dart';
@@ -21,8 +20,6 @@ class MockRoleRepo extends Mock implements RoleRepo {}
 class MockJwtService extends Mock implements JwtService {}
 
 class MockPasswordHasher extends Mock implements PasswordHasher {}
-
-class MockBlogCache extends Mock implements BlogCache {}
 
 class MockCacheService extends Mock implements CacheService {}
 
