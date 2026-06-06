@@ -27,6 +27,11 @@ Handler buildApp(
   RateLimitStore? rateLimitStore,
   int rateLimitMaxRequests = 100,
   Duration rateLimitWindow = const Duration(minutes: 1),
+  Map<String, ({int maxRequests})> rateLimitEndpointOverrides = const {
+    '/v1/signup': (maxRequests: 10),
+    '/v1/login': (maxRequests: 10),
+    '/v1/token/refresh': (maxRequests: 20),
+  },
   int maxRequestBodyBytes = 1024 * 1024,
 }) {
   var pipeline = const Pipeline()
@@ -58,6 +63,7 @@ Handler buildApp(
         rateLimitStore,
         maxRequests: rateLimitMaxRequests,
         window: rateLimitWindow,
+        endpointOverrides: rateLimitEndpointOverrides,
       ),
     );
   }
