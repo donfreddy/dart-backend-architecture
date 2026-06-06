@@ -326,11 +326,12 @@ bin/server.dart
 
 ## Response format
 
+All responses return plain JSON with standard HTTP status codes.
+
 ### Success (200)
 
 ```json
 {
-  "status": 10000,
   "message": "Signup Successful",
   "data": {
     "user": {
@@ -351,17 +352,13 @@ bin/server.dart
 
 ```json
 {
-  "status": 10000,
-  "message": "success",
+  "message": "ok",
   "data": {
     "items": [ ... ],
     "meta": {
       "total_items": 42,
       "current_page": 1,
-      "total_pages": 5,
-      "items_per_page": 10,
-      "has_next": true,
-      "has_previous": false
+      "items_per_page": 10
     }
   }
 }
@@ -371,7 +368,6 @@ bin/server.dart
 
 ```json
 {
-  "status": 10001,
   "message": "Authentication failure"
 }
 ```

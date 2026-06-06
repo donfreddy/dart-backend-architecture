@@ -16,5 +16,5 @@ Future<Response> logoutHandler(
   final accessToken =
       validateAuthBearer(headerValidated['authorization'] as String);
   await authService.logout(accessToken);
-  return ok<Object?>(message: 'Logout success');
+  return ok(message: 'Logout success');
 }

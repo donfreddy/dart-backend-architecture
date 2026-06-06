@@ -32,9 +32,7 @@ Future<Response> blogsByTagHandler(
     limit,
   );
 
-  return okPaginated<Map<String, Object?>>(
-    message: 'success',
-    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
@@ -73,9 +71,7 @@ Future<Response> blogsByAuthorIdHandler(
     limit: limit,
   );
 
-  return okPaginated<Map<String, Object?>>(
-    message: 'success',
-    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
@@ -97,9 +93,7 @@ Future<Response> latestBlogsHandler(
 
   final result = await blogRepo.findLatestBlogs(pageNumber, limit);
 
-  return okPaginated<Map<String, Object?>>(
-    message: 'success',
-    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,

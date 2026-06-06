@@ -1,6 +1,5 @@
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
-import 'package:dart_backend_architecture/core/response/api_response.dart';
 import 'package:dart_backend_architecture/core/response/shelf_response_x.dart';
 import 'package:dart_backend_architecture/core/app_info.dart';
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
@@ -67,5 +66,5 @@ Response _handleApiError(Request request, ApiError error) {
     );
   }
 
-  return Failure(error: error).toShelfResponse();
+  return fail(error: error);
 }

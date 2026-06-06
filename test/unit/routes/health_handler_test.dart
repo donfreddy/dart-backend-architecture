@@ -8,7 +8,7 @@ void main() {
       Request('GET', Uri.parse('http://localhost/healthz')),
     );
     expect(res.statusCode, 200);
-    expect(await res.readAsString(), contains('"status":10000'));
+    expect(await res.readAsString(), contains('"status":"live"'));
   });
 
   test('readyz returns 200 when all probes ok', () async {

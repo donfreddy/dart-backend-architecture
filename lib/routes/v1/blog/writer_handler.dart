@@ -129,7 +129,7 @@ Future<Response> writerSubmitBlogHandler(
     ),
   );
 
-  return ok<Object?>(message: 'Blog submitted successfully');
+  return ok(message: 'Blog submitted successfully');
 }
 
 Future<Response> writerWithdrawBlogHandler(
@@ -158,7 +158,7 @@ Future<Response> writerWithdrawBlogHandler(
     ),
   );
 
-  return ok<Object?>(message: 'Blog withdrawn successfully');
+  return ok(message: 'Blog withdrawn successfully');
 }
 
 Future<Response> writerDeleteBlogHandler(
@@ -191,7 +191,7 @@ Future<Response> writerDeleteBlogHandler(
         );
 
   await blogRepo.update(updated);
-  return ok<Object?>(message: 'Blog deleted successfully');
+  return ok(message: 'Blog deleted successfully');
 }
 
 Future<Response> writerSubmittedBlogsHandler(
@@ -213,9 +213,7 @@ Future<Response> writerSubmittedBlogsHandler(
     pageNumber: pageNumber,
     limit: limit,
   );
-  return okPaginated<Map<String, Object?>>(
-    message: 'success',
-    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
@@ -241,9 +239,7 @@ Future<Response> writerPublishedBlogsHandler(
     pageNumber: pageNumber,
     limit: limit,
   );
-  return okPaginated<Map<String, Object?>>(
-    message: 'success',
-    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
@@ -269,9 +265,7 @@ Future<Response> writerDraftBlogsHandler(
     pageNumber: pageNumber,
     limit: limit,
   );
-  return okPaginated<Map<String, Object?>>(
-    message: 'success',
-    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,

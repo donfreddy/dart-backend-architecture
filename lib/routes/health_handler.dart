@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:dart_backend_architecture/core/response/api_response.dart';
 import 'package:dart_backend_architecture/core/response/shelf_response_x.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:shelf/shelf.dart';
@@ -33,7 +32,6 @@ Future<Response> readyzHandler({
 
   return ok(
     status: allHealthy ? 200 : 503,
-    statusCode: allHealthy ? StatusCode.success : StatusCode.failure,
     message: allHealthy ? 'ready' : 'degraded',
     data: {
       for (final r in results)

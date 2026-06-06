@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:dart_backend_architecture/core/response/api_response.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_backend_architecture/core/app_info.dart';
 import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
@@ -79,7 +78,6 @@ Middleware rateLimitMiddleware(
           return Response(
             429,
             body: jsonEncode({
-              'status': StatusCode.failure.value,
               'message': 'Too many requests — please try again later',
               'data': {'code': 'RATE_LIMIT_EXCEEDED'},
             }),

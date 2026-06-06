@@ -28,7 +28,7 @@ Future<Response> editorPublishBlogHandler(
   );
 
   await blogRepo.update(published);
-  return ok<Object?>(message: 'Blog published successfully');
+  return ok(message: 'Blog published successfully');
 }
 
 Future<Response> editorUnpublishBlogHandler(
@@ -51,7 +51,7 @@ Future<Response> editorUnpublishBlogHandler(
   );
 
   await blogRepo.update(unpublished);
-  return ok<Object?>(message: 'Blog unpublished successfully');
+  return ok(message: 'Blog unpublished successfully');
 }
 
 Future<Response> editorDeleteBlogHandler(
@@ -68,7 +68,7 @@ Future<Response> editorDeleteBlogHandler(
   if (blog == null) throw const BadRequestError('Blog does not exists');
 
   await blogRepo.update(blog.copyWith(status: false));
-  return ok<Object?>(message: 'Blog deleted successfully');
+  return ok(message: 'Blog deleted successfully');
 }
 
 Future<Response> editorPublishedBlogsHandler(
@@ -89,9 +89,7 @@ Future<Response> editorPublishedBlogsHandler(
     pageNumber: pageNumber,
     limit: limit,
   );
-  return okPaginated<Map<String, Object?>>(
-    message: 'success',
-    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
@@ -116,9 +114,7 @@ Future<Response> editorSubmittedBlogsHandler(
     pageNumber: pageNumber,
     limit: limit,
   );
-  return okPaginated<Map<String, Object?>>(
-    message: 'success',
-    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
@@ -143,9 +139,7 @@ Future<Response> editorDraftBlogsHandler(
     pageNumber: pageNumber,
     limit: limit,
   );
-  return okPaginated<Map<String, Object?>>(
-    message: 'success',
-    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+  return okPaginated(    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
     page: pageNumber,
     limit: limit,
     total: result.total,
