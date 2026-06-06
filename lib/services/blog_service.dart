@@ -36,7 +36,7 @@ class BlogService {
     return created;
   }
 
-  Future<List<Blog>> findAllDrafts({
+  Future<({List<Blog> items, int total})> findAllDrafts({
     int pageNumber = 1,
     int limit = 10,
   }) {
@@ -45,7 +45,7 @@ class BlogService {
     return _blogRepo.findAllDrafts(pageNumber: page, limit: size);
   }
 
-  Future<List<Blog>> findAllDraftsForWriter(
+  Future<({List<Blog> items, int total})> findAllDraftsForWriter(
     User user, {
     int pageNumber = 1,
     int limit = 10,
@@ -59,7 +59,7 @@ class BlogService {
     );
   }
 
-  Future<List<Blog>> findAllPublished({
+  Future<({List<Blog> items, int total})> findAllPublished({
     int pageNumber = 1,
     int limit = 10,
   }) {
@@ -68,7 +68,7 @@ class BlogService {
     return _blogRepo.findAllPublished(pageNumber: page, limit: size);
   }
 
-  Future<List<Blog>> findAllPublishedForAuthor(
+  Future<({List<Blog> items, int total})> findAllPublishedForAuthor(
     User user, {
     int pageNumber = 1,
     int limit = 10,
@@ -82,7 +82,7 @@ class BlogService {
     );
   }
 
-  Future<List<Blog>> findAllPublishedForWriter(
+  Future<({List<Blog> items, int total})> findAllPublishedForWriter(
     User user, {
     int pageNumber = 1,
     int limit = 10,
@@ -96,7 +96,7 @@ class BlogService {
     );
   }
 
-  Future<List<Blog>> findAllSubmissions({
+  Future<({List<Blog> items, int total})> findAllSubmissions({
     int pageNumber = 1,
     int limit = 10,
   }) {
@@ -105,7 +105,7 @@ class BlogService {
     return _blogRepo.findAllSubmissions(pageNumber: page, limit: size);
   }
 
-  Future<List<Blog>> findAllSubmissionsForWriter(
+  Future<({List<Blog> items, int total})> findAllSubmissionsForWriter(
     User user, {
     int pageNumber = 1,
     int limit = 10,
@@ -119,12 +119,7 @@ class BlogService {
     );
   }
 
-  Future<Blog?> findBlogAllDataById(String id) {
-    _requireId(id);
-    return _blogRepo.findBlogAllDataById(id);
-  }
-
-  Future<List<Blog>> findByTagAndPaginated(
+  Future<({List<Blog> items, int total})> findByTagAndPaginated(
     String tag,
     int pageNumber,
     int limit,
@@ -133,6 +128,11 @@ class BlogService {
     final page = pageNumber < 1 ? 1 : pageNumber;
     final size = limit < 1 ? 1 : limit;
     return _blogRepo.findByTagAndPaginated(tag, page, size);
+  }
+
+  Future<Blog?> findBlogAllDataById(String id) {
+    _requireId(id);
+    return _blogRepo.findBlogAllDataById(id);
   }
 
   Future<Blog?> findByUrl(String blogUrl) {
@@ -155,7 +155,10 @@ class BlogService {
     return _blogRepo.findInfoWithTextById(id);
   }
 
-  Future<List<Blog>> findLatestBlogs(int pageNumber, int limit) {
+  Future<({List<Blog> items, int total})> findLatestBlogs(
+    int pageNumber,
+    int limit,
+  ) {
     final page = pageNumber < 1 ? 1 : pageNumber;
     final size = limit < 1 ? 1 : limit;
     return _blogRepo.findLatestBlogs(page, size);

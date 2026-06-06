@@ -1,5 +1,6 @@
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/response/shelf_response_x.dart';
+import 'package:dart_backend_architecture/database/model/blog.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/user_repo.dart';
 import 'package:dart_backend_architecture/helpers/validator.dart';
 import 'package:dart_backend_architecture/routes/v1/blog/schema.dart';
@@ -22,17 +23,21 @@ Future<Response> blogsByTagHandler(
     source: ValidationSource.query,
   );
 
-  final blogs = await blogService.findByTagAndPaginated(
+  final pageNumber = queryValidated['pageNumber'] as int;
+  final limit = queryValidated['pageItemCount'] as int;
+
+  final result = await blogService.findByTagAndPaginated(
     tagValidated['tag'] as String,
-    queryValidated['pageNumber'] as int,
-    queryValidated['pageItemCount'] as int,
+    pageNumber,
+    limit,
   );
 
-  if (blogs.isEmpty) throw const NoDataError();
-
-  return ok(
+  return okPaginated<Map<String, Object?>>(
     message: 'success',
-    data: blogs.map((b) => b.toJson()).toList(growable: false),
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+    page: pageNumber,
+    limit: limit,
+    total: result.total,
   );
 }
 
@@ -62,16 +67,18 @@ Future<Response> blogsByAuthorIdHandler(
       await userRepo.findPublicProfileById(validated['id'] as String);
   if (author == null) throw const BadRequestError('User not registered');
 
-  final blogs = await blogService.findAllPublishedForAuthor(
+  final result = await blogService.findAllPublishedForAuthor(
     author,
     pageNumber: pageNumber,
     limit: limit,
   );
-  if (blogs.isEmpty) throw const NoDataError();
 
-  return ok(
+  return okPaginated<Map<String, Object?>>(
     message: 'success',
-    data: blogs.map((b) => b.toJson()).toList(growable: false),
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+    page: pageNumber,
+    limit: limit,
+    total: result.total,
   );
 }
 
@@ -85,15 +92,17 @@ Future<Response> latestBlogsHandler(
     source: ValidationSource.query,
   );
 
-  final blogs = await blogService.findLatestBlogs(
-    queryValidated['pageNumber'] as int,
-    queryValidated['pageItemCount'] as int,
-  );
-  if (blogs.isEmpty) throw const NoDataError();
+  final pageNumber = queryValidated['pageNumber'] as int;
+  final limit = queryValidated['pageItemCount'] as int;
 
-  return ok(
+  final result = await blogService.findLatestBlogs(pageNumber, limit);
+
+  return okPaginated<Map<String, Object?>>(
     message: 'success',
-    data: blogs.map((b) => b.toJson()).toList(growable: false),
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+    page: pageNumber,
+    limit: limit,
+    total: result.total,
   );
 }
 

@@ -208,14 +208,17 @@ Future<Response> writerSubmittedBlogsHandler(
       ? query.value['pageItemCount'] as int
       : 10;
 
-  final blogs = await blogService.findAllSubmissionsForWriter(
+  final result = await blogService.findAllSubmissionsForWriter(
     request.authUser,
     pageNumber: pageNumber,
     limit: limit,
   );
-  return ok(
+  return okPaginated<Map<String, Object?>>(
     message: 'success',
-    data: blogs.map((b) => b.toJson()).toList(growable: false),
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+    page: pageNumber,
+    limit: limit,
+    total: result.total,
   );
 }
 
@@ -233,14 +236,17 @@ Future<Response> writerPublishedBlogsHandler(
       ? query.value['pageItemCount'] as int
       : 10;
 
-  final blogs = await blogService.findAllPublishedForWriter(
+  final result = await blogService.findAllPublishedForWriter(
     request.authUser,
     pageNumber: pageNumber,
     limit: limit,
   );
-  return ok(
+  return okPaginated<Map<String, Object?>>(
     message: 'success',
-    data: blogs.map((b) => b.toJson()).toList(growable: false),
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+    page: pageNumber,
+    limit: limit,
+    total: result.total,
   );
 }
 
@@ -258,14 +264,17 @@ Future<Response> writerDraftBlogsHandler(
       ? query.value['pageItemCount'] as int
       : 10;
 
-  final blogs = await blogService.findAllDraftsForWriter(
+  final result = await blogService.findAllDraftsForWriter(
     request.authUser,
     pageNumber: pageNumber,
     limit: limit,
   );
-  return ok(
+  return okPaginated<Map<String, Object?>>(
     message: 'success',
-    data: blogs.map((b) => b.toJson()).toList(growable: false),
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+    page: pageNumber,
+    limit: limit,
+    total: result.total,
   );
 }
 

@@ -225,135 +225,129 @@ final class PostgresBlogRepo implements BlogRepo {
       );
 
   @override
-  Future<List<Blog>> findByTagAndPaginated(
+  Future<({List<Blog> items, int total})> findByTagAndPaginated(
     String tag,
     int pageNumber,
     int limit,
   ) async {
     final offset = _offset(pageNumber, limit);
-    return _findMany(
+    return _findManyWithTotal(
       whereClause:
           'b.status = TRUE AND b.is_published = TRUE AND @tag = ANY(b.tags)',
       params: {'tag': tag, 'limit': limit, 'offset': offset},
       orderBy: 'b.updated_at DESC',
-      limit: true,
     );
   }
 
   @override
-  Future<List<Blog>> findAllPublishedForAuthor(
+  Future<({List<Blog> items, int total})> findAllPublishedForAuthor(
     User user, {
     int pageNumber = 1,
     int limit = 10,
   }) {
     final offset = _offset(pageNumber, limit);
-    return _findMany(
+    return _findManyWithTotal(
       whereClause:
           'b.author_id = @authorId AND b.status = TRUE AND b.is_published = TRUE',
       params: {'authorId': user.id, 'limit': limit, 'offset': offset},
       orderBy: 'b.updated_at DESC',
-      limit: true,
     );
   }
 
   @override
-  Future<List<Blog>> findAllDrafts({
+  Future<({List<Blog> items, int total})> findAllDrafts({
     int pageNumber = 1,
     int limit = 10,
   }) {
     final offset = _offset(pageNumber, limit);
-    return _findMany(
+    return _findManyWithTotal(
       whereClause: 'b.is_draft = TRUE AND b.status = TRUE',
       params: {'limit': limit, 'offset': offset},
       orderBy: 'b.updated_at DESC',
-      limit: true,
     );
   }
 
   @override
-  Future<List<Blog>> findAllSubmissions({
+  Future<({List<Blog> items, int total})> findAllSubmissions({
     int pageNumber = 1,
     int limit = 10,
   }) {
     final offset = _offset(pageNumber, limit);
-    return _findMany(
+    return _findManyWithTotal(
       whereClause: 'b.is_submitted = TRUE AND b.status = TRUE',
       params: {'limit': limit, 'offset': offset},
       orderBy: 'b.updated_at DESC',
-      limit: true,
     );
   }
 
   @override
-  Future<List<Blog>> findAllPublished({
+  Future<({List<Blog> items, int total})> findAllPublished({
     int pageNumber = 1,
     int limit = 10,
   }) {
     final offset = _offset(pageNumber, limit);
-    return _findMany(
+    return _findManyWithTotal(
       whereClause: 'b.is_published = TRUE AND b.status = TRUE',
       params: {'limit': limit, 'offset': offset},
       orderBy: 'b.updated_at DESC',
-      limit: true,
     );
   }
 
   @override
-  Future<List<Blog>> findAllSubmissionsForWriter(
+  Future<({List<Blog> items, int total})> findAllSubmissionsForWriter(
     User user, {
     int pageNumber = 1,
     int limit = 10,
   }) {
     final offset = _offset(pageNumber, limit);
-    return _findMany(
+    return _findManyWithTotal(
       whereClause:
           'b.author_id = @authorId AND b.status = TRUE AND b.is_submitted = TRUE',
       params: {'authorId': user.id, 'limit': limit, 'offset': offset},
       orderBy: 'b.updated_at DESC',
-      limit: true,
     );
   }
 
   @override
-  Future<List<Blog>> findAllPublishedForWriter(
+  Future<({List<Blog> items, int total})> findAllPublishedForWriter(
     User user, {
     int pageNumber = 1,
     int limit = 10,
   }) {
     final offset = _offset(pageNumber, limit);
-    return _findMany(
+    return _findManyWithTotal(
       whereClause:
           'b.author_id = @authorId AND b.status = TRUE AND b.is_published = TRUE',
       params: {'authorId': user.id, 'limit': limit, 'offset': offset},
       orderBy: 'b.updated_at DESC',
-      limit: true,
     );
   }
 
   @override
-  Future<List<Blog>> findAllDraftsForWriter(
+  Future<({List<Blog> items, int total})> findAllDraftsForWriter(
     User user, {
     int pageNumber = 1,
     int limit = 10,
   }) {
     final offset = _offset(pageNumber, limit);
-    return _findMany(
+    return _findManyWithTotal(
       whereClause:
           'b.author_id = @authorId AND b.status = TRUE AND b.is_draft = TRUE',
       params: {'authorId': user.id, 'limit': limit, 'offset': offset},
       orderBy: 'b.updated_at DESC',
-      limit: true,
     );
   }
 
   @override
-  Future<List<Blog>> findLatestBlogs(int pageNumber, int limit) async {
+  Future<({List<Blog> items, int total})> findLatestBlogs(
+    int pageNumber,
+    int limit,
+  ) async {
     final offset = _offset(pageNumber, limit);
-    return _findMany(
+    return _findManyWithTotal(
       whereClause: 'b.status = TRUE AND b.is_published = TRUE',
       params: {'limit': limit, 'offset': offset},
       orderBy: 'b.published_at DESC NULLS LAST',
-      limit: true,
     );
   }
 
@@ -445,6 +439,39 @@ final class PostgresBlogRepo implements BlogRepo {
       withLimit: limit,
     );
     return rows.map(_mapBlog).toList(growable: false);
+  }
+
+  Future<({List<Blog> items, int total})> _findManyWithTotal({
+    required String whereClause,
+    required Map<String, Object?> params,
+    required String orderBy,
+  }) async {
+    try {
+      final result = await _pool.execute(
+        Sql.named('''
+          SELECT $_baseSelect, COUNT(*) OVER() AS _total
+          FROM blogs b
+          INNER JOIN users a ON a.id = b.author_id
+          LEFT JOIN users cb ON cb.id = b.created_by
+          LEFT JOIN users ub ON ub.id = b.updated_by
+          WHERE $whereClause
+            AND b.deleted_at IS NULL
+            AND a.deleted_at IS NULL
+          ORDER BY $orderBy
+          LIMIT @limit OFFSET @offset
+        '''),
+        parameters: params,
+      );
+
+      if (result.isEmpty) return (items: const <Blog>[], total: 0);
+
+      final total = result.first[32] as int;
+      final items = result.map(_mapBlog).toList(growable: false);
+      return (items: items, total: total);
+    } catch (e, st) {
+      _log.severe('blog query failed', e, st);
+      throw const InternalError();
+    }
   }
 
   Future<Result> _runSelect({

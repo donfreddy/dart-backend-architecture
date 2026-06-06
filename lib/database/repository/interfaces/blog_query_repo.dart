@@ -14,46 +14,49 @@ abstract interface class BlogQueryRepo {
   Future<Blog?> findByUrl(String blogUrl);
   Future<Blog?> findUrlIfExists(String blogUrl);
 
-  Future<List<Blog>> findByTagAndPaginated(
+  Future<({List<Blog> items, int total})> findByTagAndPaginated(
     String tag,
     int pageNumber,
     int limit,
   );
 
-  Future<List<Blog>> findAllPublishedForAuthor(
+  Future<({List<Blog> items, int total})> findAllPublishedForAuthor(
     User user, {
     int pageNumber = 1,
     int limit = 10,
   });
-  Future<List<Blog>> findAllDrafts({
+  Future<({List<Blog> items, int total})> findAllDrafts({
     int pageNumber = 1,
     int limit = 10,
   });
-  Future<List<Blog>> findAllSubmissions({
+  Future<({List<Blog> items, int total})> findAllSubmissions({
     int pageNumber = 1,
     int limit = 10,
   });
-  Future<List<Blog>> findAllPublished({
+  Future<({List<Blog> items, int total})> findAllPublished({
     int pageNumber = 1,
     int limit = 10,
   });
-  Future<List<Blog>> findAllSubmissionsForWriter(
+  Future<({List<Blog> items, int total})> findAllSubmissionsForWriter(
     User user, {
     int pageNumber = 1,
     int limit = 10,
   });
-  Future<List<Blog>> findAllPublishedForWriter(
+  Future<({List<Blog> items, int total})> findAllPublishedForWriter(
     User user, {
     int pageNumber = 1,
     int limit = 10,
   });
-  Future<List<Blog>> findAllDraftsForWriter(
+  Future<({List<Blog> items, int total})> findAllDraftsForWriter(
     User user, {
     int pageNumber = 1,
     int limit = 10,
   });
 
-  Future<List<Blog>> findLatestBlogs(int pageNumber, int limit);
+  Future<({List<Blog> items, int total})> findLatestBlogs(
+    int pageNumber,
+    int limit,
+  );
   Future<List<Blog>> searchSimilarBlogs(Blog blog, int limit);
   Future<List<Blog>> search(String query, int limit);
   Future<List<Blog>> searchLike(String query, int limit);

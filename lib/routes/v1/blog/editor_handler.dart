@@ -1,5 +1,6 @@
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/response/shelf_response_x.dart';
+import 'package:dart_backend_architecture/database/model/blog.dart';
 import 'package:dart_backend_architecture/helpers/validator.dart';
 import 'package:dart_backend_architecture/routes/v1/blog/schema.dart';
 import 'package:dart_backend_architecture/services/blog_service.dart';
@@ -84,13 +85,16 @@ Future<Response> editorPublishedBlogsHandler(
       ? query.value['pageItemCount'] as int
       : 10;
 
-  final blogs = await blogService.findAllPublished(
+  final result = await blogService.findAllPublished(
     pageNumber: pageNumber,
     limit: limit,
   );
-  return ok(
+  return okPaginated<Map<String, Object?>>(
     message: 'success',
-    data: blogs.map((b) => b.toJson()).toList(growable: false),
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+    page: pageNumber,
+    limit: limit,
+    total: result.total,
   );
 }
 
@@ -108,13 +112,16 @@ Future<Response> editorSubmittedBlogsHandler(
       ? query.value['pageItemCount'] as int
       : 10;
 
-  final blogs = await blogService.findAllSubmissions(
+  final result = await blogService.findAllSubmissions(
     pageNumber: pageNumber,
     limit: limit,
   );
-  return ok(
+  return okPaginated<Map<String, Object?>>(
     message: 'success',
-    data: blogs.map((b) => b.toJson()).toList(growable: false),
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+    page: pageNumber,
+    limit: limit,
+    total: result.total,
   );
 }
 
@@ -132,13 +139,16 @@ Future<Response> editorDraftBlogsHandler(
       ? query.value['pageItemCount'] as int
       : 10;
 
-  final blogs = await blogService.findAllDrafts(
+  final result = await blogService.findAllDrafts(
     pageNumber: pageNumber,
     limit: limit,
   );
-  return ok(
+  return okPaginated<Map<String, Object?>>(
     message: 'success',
-    data: blogs.map((b) => b.toJson()).toList(growable: false),
+    items: result.items.map((Blog b) => b.toJson()).toList(growable: false),
+    page: pageNumber,
+    limit: limit,
+    total: result.total,
   );
 }
 
