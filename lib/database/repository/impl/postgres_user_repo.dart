@@ -37,12 +37,12 @@ final class PostgresUserRepo implements UserRepo {
     }
 
     final now = DateTime.now().toUtc();
-    final role = await _roleRepo.findByCode(roleCode);
-    if (role == null) {
-      throw const InternalError('Role must be defined');
-    }
 
     final txResult = await _pool.runTx((session) async {
+      final role = await _roleRepo.findByCode(roleCode);
+      if (role == null) {
+        throw const InternalError('Role must be defined');
+      }
       final result = await session.execute(
         Sql.named('''
           INSERT INTO users (id, email, name, password_hash, profile_pic_url, created_at, updated_at)
