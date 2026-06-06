@@ -1,14 +1,59 @@
-import 'package:dart_backend_architecture/database/repository/interfaces/blog_query_repo.dart';
-import 'package:dart_backend_architecture/database/repository/interfaces/blog_write_repo.dart';
+import 'package:dart_backend_architecture/database/model/blog.dart';
+import 'package:dart_backend_architecture/database/model/user.dart';
 
-export 'blog_query_repo.dart';
-export 'blog_write_repo.dart';
+abstract interface class BlogRepo {
+  Future<Blog> create(Blog blog);
+  Future<void> update(Blog blog);
 
-/// Combined blog repository interface (read + write).
-///
-/// Use [BlogQueryRepo] or [BlogWriteRepo] directly when a consumer only needs
-/// one side of the contract, this keeps dependencies minimal (ISP).
-///
-/// [PostgresBlogRepo], [CachingBlogRepo], and [BlogService] all implement
-/// this interface so callers are not affected by the split.
-abstract interface class BlogRepo implements BlogQueryRepo, BlogWriteRepo {}
+  Future<Blog?> findById(String id);
+
+  Future<Blog?> findByUrl(String blogUrl);
+  Future<Blog?> findUrlIfExists(String blogUrl);
+
+  Future<({List<Blog> items, int total})> findByTagAndPaginated(
+    String tag,
+    int pageNumber,
+    int limit,
+  );
+
+  Future<({List<Blog> items, int total})> findAllPublishedForAuthor(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  });
+  Future<({List<Blog> items, int total})> findAllDrafts({
+    int pageNumber = 1,
+    int limit = 10,
+  });
+  Future<({List<Blog> items, int total})> findAllSubmissions({
+    int pageNumber = 1,
+    int limit = 10,
+  });
+  Future<({List<Blog> items, int total})> findAllPublished({
+    int pageNumber = 1,
+    int limit = 10,
+  });
+  Future<({List<Blog> items, int total})> findAllSubmissionsForWriter(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  });
+  Future<({List<Blog> items, int total})> findAllPublishedForWriter(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  });
+  Future<({List<Blog> items, int total})> findAllDraftsForWriter(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  });
+
+  Future<({List<Blog> items, int total})> findLatestBlogs(
+    int pageNumber,
+    int limit,
+  );
+  Future<List<Blog>> searchSimilarBlogs(Blog blog, int limit);
+  Future<List<Blog>> search(String query, int limit);
+  Future<List<Blog>> searchLike(String query, int limit);
+}
