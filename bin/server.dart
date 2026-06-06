@@ -28,6 +28,7 @@ Future<void> main() async {
       root.router,
       maxRequestBodyBytes: config.maxRequestBodyBytes,
       apiKeyRepo: root.apiKeyRepo,
+      rateLimitStore: root.rateLimitStore,
     ),
   );
 

@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:dart_backend_architecture/core/logger.dart';
+import 'package:dart_backend_architecture/core/middleware/rate_limit_middleware.dart'
+    show RateLimitStore;
 import 'package:redis/redis.dart';
 
 final _log = AppLogger.get('CacheService');
 
-class CacheService {
+class CacheService implements RateLimitStore {
   final _RedisConfig _config;
   late RedisConnection _conn;
   late Command _cmd;
@@ -176,12 +178,17 @@ class CacheService {
   // ── Connection management ──────────────────────────────────────────────────
 
   static const _redisCommandTimeout = Duration(seconds: 5);
+  static const _retryDelays = [Duration.zero, Duration(milliseconds: 100), Duration(milliseconds: 500)];
 
   Future<T> _execute<T>(Future<T> Function(Command cmd) action) async {
-    for (var attempt = 0; attempt < 2; attempt++) {
+    for (var attempt = 0; attempt < _retryDelays.length; attempt++) {
       try {
+        if (_retryDelays[attempt] != Duration.zero) {
+          await Future.delayed(_retryDelays[attempt]);
+        }
         return await action(_cmd).timeout(_redisCommandTimeout);
       } catch (e) {
+        if (attempt == _retryDelays.length - 1) rethrow;
         _log.warning(
           'Redis command failed (attempt ${attempt + 1}) — reconnecting: $e',
         );

@@ -5,6 +5,8 @@ import 'package:dart_backend_architecture/cache/repository/user_cache.dart';
 import 'package:dart_backend_architecture/config.dart';
 import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
+import 'package:dart_backend_architecture/core/middleware/rate_limit_middleware.dart'
+    show RateLimitStore;
 import 'package:dart_backend_architecture/database/db_pool.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_api_key_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_blog_repo.dart';
@@ -124,6 +126,8 @@ final class CompositionRoot {
     crypto: _crypto,
     tokenService: _tokenService,
   );
+
+  RateLimitStore get rateLimitStore => _cache;
 
   // ── HTTP handler ───────────────────────────────────────────────────────────
 
