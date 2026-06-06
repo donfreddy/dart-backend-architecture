@@ -1,4 +1,4 @@
-import 'package:dart_backend_architecture/workers/crypto_sync.dart';
+import 'package:dart_backend_architecture/crypto/crypto_sync.dart';
 import 'package:test/test.dart';
 
 void main() {

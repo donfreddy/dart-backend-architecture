@@ -25,7 +25,7 @@ What makes it different:
 
 * **Dart idioms, not framework magic**: constructor injection, sealed types, pattern matching, no code generation
 * **SQL-first with PostgreSQL**: explicit queries, real transactions, no query builder abstraction leak
-* **Synchronous crypto**: BCrypt hashing and RSA JWT verification run synchronously — fast enough (<250ms) to never need isolates
+* **BCrypt offloaded to isolates**: password hashing runs in a temporary isolate via `Isolate.run()` — never blocks the event loop
 * **Observable by default**: OpenTelemetry tracing + structured logging, every request is measurable
 
 
@@ -36,7 +36,7 @@ What makes it different:
 | Runtime | **Dart 3.3+** | Sound null safety, pattern matching, sealed classes |
 | HTTP | **shelf + shelf_router** | Official Dart middleware framework, no magic |
 | Database | **PostgreSQL + postgres v3** | SQL-first, transactions, explicit queries |
-| Cache | **Redis** | Cache-aside with read-through decorator |
+| Cache | **Redis** | Cache-aside with singleflight stampede protection |
 | Validation | **Zema** | Type-safe schema validation |
 | Auth | **JWT RS256** | Access + refresh token rotation, keystore lifecycle |
 | Observability | **OpenTelemetry** | Distributed tracing + metrics + structured logs |
@@ -65,10 +65,7 @@ graph TD
     end
 
     subgraph Repos["Repositories"]
-        subgraph CACHE["CachingBlogRepo (decorator)"]
-            BR[PostgresBlogRepo]
-            BC[BlogCache · Redis]
-        end
+        BR[(PostgresBlogRepo)]
         UR[UserRepo]
         KR[KeystoreRepo]
     end
@@ -80,14 +77,12 @@ graph TD
 
     MW --> Routes
     Routes --> Services
-    S1 --> W1
     S1 --> S2
-    S2 --> W2
     Services --> Repos
     UR --> PG
     KR --> PG
-    CACHE --> PG
-    CACHE --> RD
+    BR --> PG
+    BR -.-> RD
 ```
 
 ## Project structure
@@ -108,11 +103,11 @@ lib/
 ├── database/
 │   ├── db_pool.dart            # PostgreSQL connection pool
 │   ├── model/                  # Data models
-│   └── repository/             # Interfaces + impls + caching decorator
+│   └── repository/             # Interfaces + Postgres impls
 ├── di/
 │   └── composition_root.dart   # Single wiring point (no service locator)
-├── workers/
-│   └── crypto_sync.dart        # Sync BCrypt wrapper (no isolates needed)
+├── crypto/                     # CryptoSync — BCrypt via Isolate.run()
+│   └── crypto_sync.dart
 ├── routes/
 │   ├── health_handler.dart     # /healthz + /readyz
 │   └── v1/
@@ -197,7 +192,7 @@ dart test
 
 ## Single-isolate architecture
 
-Initial versions ran BCrypt and RSA JWT verification in dedicated isolate workers. After profiling, they were removed — BCrypt (~250ms) and RSA verify (<2ms) are fast enough to run synchronously without measurable impact on request throughput. Dart's `shelf` is I/O-bound, not CPU-bound, so a single isolate is sufficient.
+Dart's `shelf` is I/O-bound, not CPU-bound, so a single main isolate handles all requests. BCrypt password hashing (~250ms) is offloaded to a temporary isolate via `Isolate.run()` to keep the event loop responsive. RSA JWT verification (<2ms) runs inline since it's negligible.
 
 ## Core principles
 
@@ -288,7 +283,7 @@ bin/server.dart
       → AuthService.signup
           → UserRepo.findByEmail           # Duplicate check
           → TokenService.generateKey × 2  # Pre-generate access + refresh keys
-          → CryptoSync.hashPassword        # BCrypt (sync, no isolate)
+          → CryptoSync.hashPassword        # BCrypt (offloaded to Isolate.run)
           → UserRepo.create                # User + keystore in one transaction
           → TokenService.buildForExistingKeys
               → JwtService.encode × 2     # RSA RS256 sign
