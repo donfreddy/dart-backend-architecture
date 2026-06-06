@@ -4,13 +4,13 @@ import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:logging/logging.dart';
 
 const _oldName = 'dart_backend_architecture';
-const _oldDescription = 'A production-ready, clean architecture blueprint '
-    'for building scalable backend servers with Dart.';
 
 Future<void> main() async {
   AppLogger.configure();
   final log = AppLogger.get('setup');
   _printBanner(log);
+
+  final oldDescription = _readPubspecDescription();
 
   // ── 1. Project name ────────────────────────────────────────
   final projectName = _promptProjectName();
@@ -18,12 +18,12 @@ Future<void> main() async {
   // ── 2. Project description ─────────────────────────────────
   stdout.write('\nProject description (press Enter to keep default):\n> ');
   final inputDesc = stdin.readLineSync()?.trim() ?? '';
-  final projectDescription = inputDesc.isEmpty ? _oldDescription : inputDesc;
+  final projectDescription = inputDesc.isEmpty ? oldDescription : inputDesc;
 
   log.info('\n⚙️  Configuring project: $_oldName → $projectName\n');
 
   // ── 3. Replace package name in source files ─────────────────
-  await _replaceInFiles(projectName, projectDescription, log);
+  await _replaceInFiles(oldDescription, projectName, projectDescription, log);
 
   // ── 4. Generate RSA key pair ───────────────────────────────
   await _generateKeys(log);
@@ -70,6 +70,7 @@ String _promptProjectName() {
 // ── File replacement ───────────────────────────────────────────
 
 Future<void> _replaceInFiles(
+  String oldDescription,
   String newName,
   String newDescription,
   Logger log,
@@ -85,7 +86,7 @@ Future<void> _replaceInFiles(
       final original = await entity.readAsString();
       var updated = original
           .replaceAll(_oldName, newName)
-          .replaceAll(_oldDescription, newDescription);
+          .replaceAll(oldDescription, newDescription);
 
       if (updated != original) {
         await entity.writeAsString(updated);
@@ -127,7 +128,7 @@ Future<void> _generateKeys(Logger log) async {
   }
 
   // Check openssl is available
-  final which = await Process.run('which', ['openssl']);
+  final which = await Process.run('which', ['openssl'], runInShell: true,);
   if (which.exitCode != 0) {
     log.info('  ⚠️  openssl not found. Generate keys manually:\n'
         '      openssl genrsa -out keys/private.pem 2048\n'
@@ -140,7 +141,7 @@ Future<void> _generateKeys(Logger log) async {
     '-out',
     'keys/private.pem',
     '2048',
-  ]);
+  ], runInShell: true,);
 
   if (genKey.exitCode != 0) {
     _error('Failed to generate private key:\n${genKey.stderr}');
@@ -154,7 +155,7 @@ Future<void> _generateKeys(Logger log) async {
     '-pubout',
     '-out',
     'keys/public.pem',
-  ]);
+  ], runInShell: true,);
 
   if (extractPub.exitCode != 0) {
     _error('Failed to extract public key:\n${extractPub.stderr}');
@@ -211,6 +212,17 @@ Future<void> _pubGet(Logger log) async {
   }
 
   log.info('  ✓ Dependencies installed\n');
+}
+
+String _readPubspecDescription() {
+  final pubspec = File('pubspec.yaml');
+  if (!pubspec.existsSync()) return '';
+
+  for (final line in pubspec.readAsLinesSync()) {
+    final match = RegExp(r'^description:\s*(.+)$').firstMatch(line);
+    if (match != null) return match.group(1)!.trim();
+  }
+  return '';
 }
 
 // ── Helpers ────────────────────────────────────────────────────
