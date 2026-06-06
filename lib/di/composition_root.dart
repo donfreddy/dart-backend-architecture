@@ -111,55 +111,55 @@ final class CompositionRoot {
 
   // ── Repositories ───────────────────────────────────────────────────────────
 
-  PostgresUserRepo get _userRepo =>
+  late final PostgresKeystoreRepo _keystoreRepo = PostgresKeystoreRepo(_db.pool);
+
+  late final PostgresRoleRepo _roleRepo = PostgresRoleRepo(_db.pool);
+
+  late final PostgresUserRepo _userRepo =
       PostgresUserRepo(_db.pool, _keystoreRepo, _roleRepo);
 
-  PostgresKeystoreRepo get _keystoreRepo => PostgresKeystoreRepo(_db.pool);
+  late final UserCache _userCache = UserCache(_cache);
 
-  PostgresRoleRepo get _roleRepo => PostgresRoleRepo(_db.pool);
-
-  UserCache get _userCache => UserCache(_cache);
-
-  // CachingBlogRepo wraps the Postgres implementation with read-through caching
-  // and write invalidation, keeping BlogService free of cache concerns.
-  BlogRepo get _cachingBlogRepo => CachingBlogRepo(
-        inner: PostgresBlogRepo(_db.pool),
-        cache: BlogCache(_cache),
-      );
+  /// CachingBlogRepo wraps the Postgres implementation with read-through caching
+  /// and write invalidation, keeping BlogService free of cache concerns.
+  late final BlogRepo _cachingBlogRepo = CachingBlogRepo(
+    inner: PostgresBlogRepo(_db.pool),
+    cache: BlogCache(_cache),
+  );
 
   // ── Application services ───────────────────────────────────────────────────
 
-  AuthService get _authService => AuthService(
-        userRepo: _userRepo,
-        jwt: _jwtService,
-        crypto: _crypto,
-        tokenService: _tokenService,
-        eventBus: _eventBus,
-      );
+  late final AuthService _authService = AuthService(
+    userRepo: _userRepo,
+    jwt: _jwtService,
+    crypto: _crypto,
+    tokenService: _tokenService,
+    eventBus: _eventBus,
+  );
 
-  BlogService get _blogService => BlogService(
-        blogRepo: _cachingBlogRepo,
-        eventBus: _eventBus,
-      );
+  late final BlogService _blogService = BlogService(
+    blogRepo: _cachingBlogRepo,
+    eventBus: _eventBus,
+  );
 
   // ── HTTP handler ───────────────────────────────────────────────────────────
 
   /// Fully-wired HTTP handler including health/readiness endpoints.
-  Handler get router => buildRouter(
-        authService: _authService,
-        blogService: _blogService,
-        jwtService: _jwtService,
-        userRepo: _userRepo,
-        keystoreRepo: _keystoreRepo,
-        roleRepo: _roleRepo,
-        userCache: _userCache,
-        dbCheck: () async {
-          await _db.pool.execute('SELECT 1');
-          return true;
-        },
-        cacheCheck: () => _cache.ping(),
-        natsCheck: () => _eventBus.ping(),
-      );
+  late final Handler router = buildRouter(
+    authService: _authService,
+    blogService: _blogService,
+    jwtService: _jwtService,
+    userRepo: _userRepo,
+    keystoreRepo: _keystoreRepo,
+    roleRepo: _roleRepo,
+    userCache: _userCache,
+    dbCheck: () async {
+      await _db.pool.execute('SELECT 1');
+      return true;
+    },
+    cacheCheck: () => _cache.ping(),
+    natsCheck: () => _eventBus.ping(),
+  );
 
   /// Release resources in reverse dependency order. Call on graceful shutdown.
   Future<void> dispose() async {
