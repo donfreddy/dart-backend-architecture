@@ -9,7 +9,6 @@ name: dart-backend-architecture-test
 # Key differences from docker-compose.yml:
 #   - Postgres runs on tmpfs (in-memory): no persistent volume, fast I/O
 #   - Separate DB credentials so dev data is never touched
-#   - NATS disabled (NoOpEventBus): event tests use mocks
 #   - OTel disabled: no collector required
 #   - `tester` runs `dart test` and exits; compose aborts on its exit code
 
@@ -23,7 +22,6 @@ services:
     environment:
       DATABASE_URL: postgres://dba_test:dba_test@postgres-test:5432/dba_test?sslmode=disable
       REDIS_URL: redis://redis-test:6379
-      NATS_URL: ""
       JWT_PRIVATE_KEY_PATH: keys/private.pem
       JWT_PUBLIC_KEY_PATH: keys/public.pem
       JWT_ACCESS_TOKEN_EXPIRY: "3600"

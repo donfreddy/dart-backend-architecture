@@ -142,7 +142,6 @@ jobs:
         env:
           DATABASE_URL: postgres://dba_test:dba_test@localhost:5432/dba_test?sslmode=disable
           REDIS_URL: redis://localhost:6379
-          NATS_URL: ""
           JWT_PRIVATE_KEY_PATH: keys/private.pem
           JWT_PUBLIC_KEY_PATH: keys/public.pem
           JWT_ACCESS_TOKEN_EXPIRY: "3600"
