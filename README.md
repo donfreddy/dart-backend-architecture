@@ -8,42 +8,43 @@
 </p>
 
 <p align="center">
-  Learn to build a backend server for a production ready blogging platform like Medium and FreeCodeCamp.<br>
-  Built with Shelf, PostgreSQL and Redis.
+  Welcome to Dart Backend Architecture - a complete, production-ready blueprint for building a robust blogging platform (think Medium or FreeCodeCamp) entirely in Dart.<br>
+  Powered by Shelf, PostgreSQL, and Redis.
 </p>
 
 <p align="center">
-  <i>Inspired by the AfterAcademy Node.js architecture, reimagined in pure Dart<br>
-  with everything that makes Dart exceptional for backend development.</i>
+  <i>Inspired by the renowned AfterAcademy Node.js architecture, we've completely reimagined it from the ground up.<br>
+  This project showcases everything that makes Dart an exceptional choice for modern backend development.</i>
 </p>
 
-## Why this exists
+## Why This Exists
 
-Most Dart backend examples stop at "hello world" with a framework. This repository is the opposite, a **battle-tested architecture** for building scalable, observable APIs in Dart, used by applications with 10M+ users in its original TypeScript form.
+If you've ever felt that most Dart backend tutorials stop right after printing "Hello World", this repository is for you. We wanted to provide the exact opposite: a **battle-tested, scalable architecture** for building observable APIs in Dart. It takes the battle-proven patterns used by applications serving over 10 million users in TypeScript, and translates them into elegant, idiomatic Dart.
 
-What makes it different:
+Here’s what sets this project apart:
 
-* **Dart idioms, not framework magic**: constructor injection, sealed types, pattern matching, no code generation
-* **SQL-first with PostgreSQL**: explicit queries, real transactions, no query builder abstraction leak
-* **BCrypt offloaded to isolates**: password hashing runs in a temporary isolate via `Isolate.run()` — never blocks the event loop
-* **Observable by default**: OpenTelemetry tracing + structured logging, every request is measurable
+* **Pure Dart Idioms (No Framework Magic)**: We rely on constructor injection, sealed types, and pattern matching rather than heavy frameworks or code generation.
+* **SQL-First with PostgreSQL**: We believe in explicit queries and real transactions. You won't find any leaky ORM or query builder abstractions here.
+* **Non-Blocking Crypto**: Heavy tasks like BCrypt password hashing are seamlessly offloaded to background isolates, ensuring your event loop remains lightning fast.
+* **Observable by Default**: With built-in OpenTelemetry tracing and structured logging, you can measure and monitor every single request out of the box.
 
+## Our Tech Stack
 
-## Tech stack
-
-| Category | Choice | Why |
+| Category | Choice | Why We Chose It |
 |---|---|---|
-| Runtime | **Dart 3.3+** | Sound null safety, pattern matching, sealed classes |
-| HTTP | **shelf + shelf_router** | Official Dart middleware framework, no magic |
-| Database | **PostgreSQL + postgres v3** | SQL-first, transactions, explicit queries |
-| Cache | **Redis** | Cache-aside with singleflight stampede protection |
-| Validation | **Zema** | Type-safe schema validation |
-| Auth | **JWT RS256** | Access + refresh token rotation, keystore lifecycle |
-| Observability | **OpenTelemetry** | Distributed tracing + metrics + structured logs |
-| Migrations | **dbmate** | SQL migration files, no ORM |
-| Tests | **test + mocktail** | Official Dart test runner + mock library |
+| Runtime | **Dart 3.3+** | Sound null safety, pattern matching, and sealed classes make business logic rock-solid. |
+| HTTP | **shelf + shelf_router** | The official Dart middleware framework. It's clean, fast, and has zero magic. |
+| Database | **PostgreSQL + postgres v3** | A true SQL-first experience with robust transactions and explicit queries. |
+| Cache | **Redis** | Fast cache-aside strategies with built-in protection against cache stampedes. |
+| Validation | **Zema** | Ensures our request payloads are strictly validated and type-safe. |
+| Auth | **JWT RS256** | Secure authentication using access and refresh token rotation with proper keystore lifecycles. |
+| Observability | **OpenTelemetry** | Distributed tracing, metrics, and structured logs right from the start. |
+| Migrations | **dbmate** | Plain SQL migration files without the overhead of an ORM. |
+| Tests | **test + mocktail** | The official Dart test runner paired with an intuitive mocking library. |
 
 ## Architecture
+
+Our application is structured around a clear separation of concerns, ensuring data flows predictably from the network layer down to storage.
 
 ```mermaid
 graph TD
@@ -85,7 +86,9 @@ graph TD
     BR -.-> RD
 ```
 
-## Project structure
+## Project Structure
+
+We've organized the codebase logically by feature and responsibility to keep things easy to navigate:
 
 ```
 lib/
@@ -123,13 +126,15 @@ test/
 └── integration/                # End-to-end route tests
 ```
 
-## Quick start
+## Quick Start
+
+Ready to get your hands dirty? Here is the fastest way to get the server running locally.
 
 ### Prerequisites
 
-* Dart SDK 3.3+ : or Docker + Docker Compose
+* Dart SDK 3.3+ (or just Docker + Docker Compose, if you prefer containers)
 
-### 1) Clone & bootstrap
+### 1) Clone & Bootstrap
 
 ```bash
 git clone https://github.com/donfreddy/dart-backend-architecture
@@ -137,51 +142,56 @@ cd dart-backend-architecture
 dart run bin/setup.dart
 ```
 
-`setup.dart` will:
-* Prompt for your project name
-* Rename template package in all source files
-* Generate RSA key pair (`keys/private.pem` + `keys/public.pem`)
-* Create `.env` from `.env.example`
-* Run `dart pub get`
+The `setup.dart` script is your friendly helper. It will:
+* Prompt for your project name to personalize the template
+* Automatically rename the template package across all source files
+* Generate a fresh RSA key pair (`keys/private.pem` and `keys/public.pem`)
+* Create your `.env` file based on `.env.example`
+* Fetch all necessary dependencies via `dart pub get`
 
-### 2A) Run with Docker (recommended)
+### 2A) Run with Docker (Highly Recommended)
+
+Using Docker is the easiest way to ensure all services (Postgres, Redis, OTel) are perfectly configured.
 
 ```bash
 docker compose up --build
 
-# Seed API key + roles (first time only)
+# First time only: Seed the database with roles and a default API key
 docker compose exec api dart run bin/db_seed.dart
 ```
 
+Your services are now running at:
 | Service | URL |
 |---|---|
 | API | `http://localhost:8080` |
 | Grafana / OTel | `http://localhost:3000` |
 
-> **API key** (seeded by default) : `GCMUDiuY5a7WvyUNt9n3QztToSHzK7Uj`  
-> Send it via the `x-api-key` header on every request.
+> **API Key** (seeded by default): `GCMUDiuY5a7WvyUNt9n3QztToSHzK7Uj`  
+> Make sure to pass this via the `x-api-key` header on every request!
 
-### 2B) Run tests (Docker : isolated, no dev data touched)
+### 2B) Run Tests (Fully Isolated via Docker)
+
+Want to run the test suite without messing up your development data? We've got you covered.
 
 ```bash
 docker compose -f docker-compose.test.yml up --build --exit-code-from=tester
 docker compose -f docker-compose.test.yml down -v
 ```
 
-PostgreSQL runs on `tmpfs` (in-memory). Separate credentials. Destroyed on teardown.
+This spins up an isolated PostgreSQL instance running on `tmpfs` (in-memory) for blazing fast, ephemeral tests that are completely destroyed on teardown.
 
-### 2C) Run locally
+### 2C) Run Locally (No Docker)
 
-Requirements: PostgreSQL 16, Redis 7, dbmate
+If you prefer running things natively on your machine, you'll need PostgreSQL 16, Redis 7, and `dbmate` installed.
 
 ```bash
-# Dev
+# Development
 cp .env.example .env
 dbmate --migrations-dir db/migrations up
 dart run bin/db_seed.dart
 dart run bin/server.dart
 
-# Tests (separate DB)
+# Tests (using a separate test database)
 cp .env.test.example .env.test
 DATABASE_URL=postgres://dba_test:dba_test@localhost:5432/dba_test?sslmode=disable \
   dbmate --migrations-dir db/migrations up
@@ -190,22 +200,25 @@ DATABASE_URL=postgres://dba_test:dba_test@localhost:5432/dba_test?sslmode=disabl
 dart test
 ```
 
-## Single-isolate architecture
+## Concurrency & Performance
 
-Dart's `shelf` is I/O-bound, not CPU-bound, so a single main isolate handles all requests. BCrypt password hashing (~250ms) is offloaded to a temporary isolate via `Isolate.run()` to keep the event loop responsive. RSA JWT verification (<2ms) runs inline since it's negligible.
+Since our backend is primarily I/O-bound, we handle all incoming requests efficiently on a single main isolate. This keeps the architecture simple and highly performant.
 
-## Core principles
+To ensure the server never freezes during heavy computations—such as hashing passwords with BCrypt (~250ms)—we seamlessly offload these tasks to background isolates using `Isolate.run()`. This keeps the main event loop completely free and responsive for other users. On the other hand, lightning-fast operations like RSA JWT verification (<2ms) are executed directly on the main thread, as the cost of switching isolates would outweigh the benefits.
 
+## Core Principles
 
-* **Explicit dependency wiring**: single `CompositionRoot` as the composition boundary
-* **No service locator**: dependencies are passed through constructors, never fetched
-* **Sealed error model**: every `ApiError` subtype maps to a predictable HTTP status
-* **Observable by default**: structured logs + OTel spans on every request
-* **SQL-first**: no ORM, no query builder; raw SQL gives you full control
+We strictly adhere to a few foundational principles to keep the codebase clean, predictable, and highly maintainable:
 
-## API reference
+* **Explicit Dependency Wiring**: We use a single `CompositionRoot` to assemble the application, making it easy to see exactly how components connect.
+* **No Service Locators**: Dependencies are always explicitly passed through constructors. We never hide them behind global locators or singletons.
+* **Sealed Error Model**: Every API error is part of a sealed `ApiError` hierarchy, ensuring that all errors map predictably and safely to their corresponding HTTP status codes.
+* **Observable by Default**: Every request automatically generates structured logs and OpenTelemetry spans, giving you full visibility into your system's health.
+* **SQL-First Approach**: By avoiding ORMs and query builders, we retain full control and transparency over our database interactions using raw, optimized SQL.
 
-All endpoints are mounted under `/v1`.
+## API Reference
+
+All our endpoints are neatly mounted under `/v1`.
 
 ### Auth
 
@@ -261,9 +274,9 @@ All endpoints are mounted under `/v1`.
 | `GET` | `/v1/profile/my` | Authenticated |
 | `PUT` | `/v1/profile` | Authenticated |
 
-## Request lifecycle
+## Request Lifecycle
 
-Trace of `POST /v1/signup/basic` through the system:
+Ever wondered what exactly happens when a user signs up? Here is the complete journey of a `POST /v1/signup/basic` request traversing through our system:
 
 ```text
 bin/server.dart
@@ -283,16 +296,16 @@ bin/server.dart
       → AuthService.signup
           → UserRepo.findByEmail           # Duplicate check
           → TokenService.generateKey × 2  # Pre-generate access + refresh keys
-          → CryptoSync.hashPassword        # BCrypt (offloaded to Isolate.run)
+          → CryptoSync.hashPassword        # BCrypt (offloaded to background isolate)
           → UserRepo.create                # User + keystore in one transaction
           → TokenService.buildForExistingKeys
               → JwtService.encode × 2     # RSA RS256 sign
   → lib/core/response/shelf_response_x.dart   # JSON response helpers
 ```
 
-## Response format
+## Response Format
 
-All responses return plain JSON with standard HTTP status codes.
+To keep things predictable and easy to consume for clients, all endpoints return standard JSON envelopes paired with their appropriate HTTP status codes.
 
 ### Success (200)
 
@@ -338,9 +351,11 @@ All responses return plain JSON with standard HTTP status codes.
 }
 ```
 
-Access token errors include the header `instruction: refresh_token`.
+*Note: Access token errors will also include an `instruction: refresh_token` header to help your frontend automatically handle session renewals.*
 
-## Quality gates
+## Quality Gates
+
+We enforce strict quality control to keep our codebase pristine:
 
 ```bash
 dart format --set-exit-if-changed .
@@ -348,20 +363,22 @@ dart analyze
 dart test
 ```
 
-CI runs on every push and PR (see `.github/workflows/ci.yml`).
+Our continuous integration pipeline automatically runs these checks on every push and pull request (see `.github/workflows/ci.yml`).
 
-## Learn more
+## Learn More
 
-* [Design Node.js Backend Architecture like a Pro](https://afteracademy.com/article/design-node-js-backend-architecture-like-a-pro) - the original article that inspired this project
-* [Implement JWT Authentication with Access and Refresh Tokens](https://afteracademy.com/article/implement-json-web-token-jwt-authentication-using-access-token-and-refresh-token)
+If you want to dive deeper into the architectural concepts behind this project, check out these excellent resources:
 
-## Project status
+* [Design Node.js Backend Architecture like a Pro](https://afteracademy.com/article/design-node-js-backend-architecture-like-a-pro) - The original article that inspired this architecture.
+* [Implement JWT Authentication with Access and Refresh Tokens](https://afteracademy.com/article/implement-json-web-token-jwt-authentication-using-access-token-and-refresh-token) - A deep dive into the security model.
 
-This is a living reference architecture. The code is used in production-scale applications and is actively maintained.
+## Project Status
+
+This isn't just a toy project; it is a living reference architecture. The patterns you see here are actively maintained and currently powering production-scale applications.
 
 ---
 
-If you find this project useful, **star the repo** on GitHub - it helps others discover it.
+If you find this project useful, **star the repo** on GitHub - it helps others discover it!
 
 ## License
 
