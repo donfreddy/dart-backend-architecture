@@ -75,14 +75,14 @@ final class CompositionRoot {
     );
     await jwtService.initWorker();
 
-    final keystoreRepo = PostgresKeystoreRepo(db.pool);
+    final keystoreRepo = PostgresKeystoreRepo(db);
     final userCache = UserCache(cache);
     final tokenService = TokenService(
       keystoreRepo: keystoreRepo,
       jwt: jwtService,
       userCache: userCache,
     );
-    final apiKeyRepo = PostgresApiKeyRepo(db.pool);
+    final apiKeyRepo = PostgresApiKeyRepo(db);
 
     return CompositionRoot._(
       db: db,
@@ -111,19 +111,19 @@ final class CompositionRoot {
 
   // ── Repositories ───────────────────────────────────────────────────────────
 
-  late final PostgresKeystoreRepo _keystoreRepo = PostgresKeystoreRepo(_db.pool);
+  late final PostgresKeystoreRepo _keystoreRepo = PostgresKeystoreRepo(_db);
 
-  late final PostgresRoleRepo _roleRepo = PostgresRoleRepo(_db.pool);
+  late final PostgresRoleRepo _roleRepo = PostgresRoleRepo(_db);
 
   late final PostgresUserRepo _userRepo =
-      PostgresUserRepo(_db.pool, _keystoreRepo, _roleRepo);
+      PostgresUserRepo(_db, _keystoreRepo, _roleRepo);
 
   late final UserCache _userCache = UserCache(_cache);
 
   /// CachingBlogRepo wraps the Postgres implementation with read-through caching
   /// and write invalidation, keeping BlogService free of cache concerns.
   late final BlogRepo _cachingBlogRepo = CachingBlogRepo(
-    inner: PostgresBlogRepo(_db.pool),
+    inner: PostgresBlogRepo(_db),
     cache: BlogCache(_cache),
   );
 
@@ -154,7 +154,7 @@ final class CompositionRoot {
     roleRepo: _roleRepo,
     userCache: _userCache,
     dbCheck: () async {
-      await _db.pool.execute('SELECT 1');
+      await _db.execute('SELECT 1');
       return true;
     },
     cacheCheck: () => _cache.ping(),

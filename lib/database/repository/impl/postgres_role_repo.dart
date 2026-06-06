@@ -2,10 +2,11 @@ import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_backend_architecture/database/model/role.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/role_repo.dart';
+import 'package:dart_backend_architecture/database/db_pool.dart';
 import 'package:postgres/postgres.dart';
 
 final class PostgresRoleRepo implements RoleRepo {
-  final Pool<dynamic> _pool;
+  final DatabasePool _pool;
   final _log = AppLogger.get('PostgresRoleRepo');
 
   PostgresRoleRepo(this._pool);

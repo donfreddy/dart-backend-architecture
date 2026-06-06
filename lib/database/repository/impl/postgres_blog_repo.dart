@@ -1,12 +1,13 @@
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
+import 'package:dart_backend_architecture/database/db_pool.dart';
 import 'package:dart_backend_architecture/database/model/blog.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/blog_repo.dart';
 import 'package:postgres/postgres.dart';
 
 final class PostgresBlogRepo implements BlogRepo {
-  final Pool<dynamic> _pool;
+  final DatabasePool _pool;
   final _log = AppLogger.get('PostgresBlogRepo');
 
   PostgresBlogRepo(this._pool);

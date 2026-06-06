@@ -3,10 +3,11 @@ import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_backend_architecture/database/model/keystore.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/keystore_repo.dart';
+import 'package:dart_backend_architecture/database/db_pool.dart';
 import 'package:postgres/postgres.dart';
 
 final class PostgresKeystoreRepo implements KeystoreRepo {
-  final Pool<dynamic> _pool;
+  final DatabasePool _pool;
   final _log = AppLogger.get('PostgresKeystoreRepo');
 
   PostgresKeystoreRepo(this._pool);

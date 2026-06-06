@@ -5,10 +5,11 @@ import 'package:dart_backend_architecture/database/model/user.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/keystore_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/role_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/user_repo.dart';
+import 'package:dart_backend_architecture/database/db_pool.dart';
 import 'package:postgres/postgres.dart';
 
 final class PostgresUserRepo implements UserRepo {
-  final Pool<dynamic> _pool;
+  final DatabasePool _pool;
   final KeystoreRepo _keystoreRepo;
   final RoleRepo _roleRepo;
   final _log = AppLogger.get('PostgresUserRepo');
