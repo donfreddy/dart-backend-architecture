@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:io';
 import 'dart:isolate';
 
@@ -35,56 +34,6 @@ final class WorkerReady extends IsolateMessage {
   WorkerReady(this.workerId, this.controlPort);
 }
 
-// -- Semaphore ----------------------------------------------------------------
-
-/// Limits concurrent [CompositionRoot.initialize] calls across isolates.
-///
-/// Isolates share no heap, so this is a message-passing token pool hosted
-/// in the main isolate.
-///
-/// Protocol:
-/// - Worker sends its own [SendPort] to [acquirePort] to request a slot.
-/// - Semaphore sends a grant to that port when a slot is available.
-/// - Worker sends any value back to [acquirePort] to release the slot.
-final class InitSemaphore {
-  final ReceivePort _port;
-  final SendPort acquirePort;
-  int _available;
-  final Queue<SendPort> _waiting = Queue();
-
-  InitSemaphore._(this._port, int concurrency)
-      : acquirePort = _port.sendPort,
-        _available = concurrency {
-    _port.listen(_dispatch);
-  }
-
-  factory InitSemaphore(int concurrency) =>
-      InitSemaphore._(ReceivePort(), concurrency);
-
-  void _dispatch(dynamic msg) {
-    if (msg is SendPort) {
-      // Acquire request — grant immediately or enqueue.
-      if (_available > 0) {
-        _available--;
-        msg.send(_grant);
-      } else {
-        _waiting.add(msg);
-      }
-    } else {
-      // Release — forward to next waiter or return slot to pool.
-      if (_waiting.isNotEmpty) {
-        _waiting.removeFirst().send(_grant);
-      } else {
-        _available++;
-      }
-    }
-  }
-
-  static const _grant = true;
-
-  void close() => _port.close();
-}
-
 // -- Value objects ------------------------------------------------------------
 
 /// Spawn argument for [_workerEntryPoint].
@@ -97,14 +46,11 @@ final class WorkerConfig {
   /// Used by the worker to send [WorkerReady] and [ShutdownAck] to main.
   final SendPort mainPort;
 
-  /// Worker acquires a slot here before [CompositionRoot.initialize],
-  /// then sends any value back to release it.
-  final SendPort semaphorePort;
+
 
   const WorkerConfig({
     required this.id,
     required this.mainPort,
-    required this.semaphorePort,
   });
 }
 
@@ -134,9 +80,6 @@ Future<void> main() async {
     );
     exit(1);
   }
-
-  // Caps concurrent DB pool negotiations at boot.
-  final semaphore = InitSemaphore(config.initConcurrency);
 
   // Single inbound port for all worker messages; broadcast so multiple
   // subscribers (boot + runtime) coexist.
@@ -173,7 +116,6 @@ Future<void> main() async {
         WorkerConfig(
           id: id,
           mainPort: mainPort.sendPort,
-          semaphorePort: semaphore.acquirePort,
         ),
         debugName: 'worker-$id',
         onError: _createErrorHandler(
@@ -206,9 +148,7 @@ Future<void> main() async {
     ),
   );
 
-  semaphore.close();
-
-  // The main isolate acts as worker-0 and bypasses the semaphore.
+  // The main isolate acts as worker-0.
   final mainServer = await _bindServer(config);
   final mainRoot = await CompositionRoot.initialize(config);
 
@@ -254,8 +194,6 @@ Future<void> main() async {
 
 /// Entry point for each spawned isolate.
 ///
-/// Acquires a semaphore slot before [CompositionRoot.initialize] to cap
-/// concurrent DB pool negotiations during boot.
 /// Workers do not listen for OS signals — shutdown is coordinated
 /// exclusively by the main isolate via [ShutdownCommand].
 Future<void> _workerEntryPoint(WorkerConfig config) async {
@@ -268,16 +206,7 @@ Future<void> _workerEntryPoint(WorkerConfig config) async {
     final appConfig = AppConfig.fromEnv();
     final server = await _bindServer(appConfig);
 
-    // Acquire — blocks until the semaphore grants a slot.
-    final grantPort = ReceivePort();
-    config.semaphorePort.send(grantPort.sendPort);
-    await grantPort.first;
-    grantPort.close();
-
     final root = await CompositionRoot.initialize(appConfig);
-
-    // Release immediately — before serving traffic.
-    config.semaphorePort.send(true);
 
     shelf_io.serveRequests(
       server,
