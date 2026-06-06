@@ -1,5 +1,4 @@
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
-import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_backend_architecture/database/model/keystore.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/keystore_repo.dart';
@@ -12,7 +11,6 @@ final class PostgresUserRepo implements UserRepo {
   final DatabasePool _pool;
   final KeystoreRepo _keystoreRepo;
   final RoleRepo _roleRepo;
-  final _log = AppLogger.get('PostgresUserRepo');
 
   PostgresUserRepo(this._pool, this._keystoreRepo, this._roleRepo);
 
@@ -38,184 +36,157 @@ final class PostgresUserRepo implements UserRepo {
       throw const BadRequestError('Credential not set');
     }
 
-    try {
-      final now = DateTime.now().toUtc();
-      final role = await _roleRepo.findByCode(roleCode);
-      if (role == null) {
-        throw const InternalError('Role must be defined');
-      }
+    final now = DateTime.now().toUtc();
+    final role = await _roleRepo.findByCode(roleCode);
+    if (role == null) {
+      throw const InternalError('Role must be defined');
+    }
 
-      final txResult = await _pool.runTx((session) async {
-        final result = await session.execute(
-          Sql.named('''
-            INSERT INTO users (id, email, name, password_hash, profile_pic_url, created_at, updated_at)
-            VALUES (@id, @email, @name, @passwordHash, @profilePicUrl, @createdAt, @updatedAt)
-            RETURNING id
-          '''),
-          parameters: {
-            'id': user.id,
-            'email': user.email,
-            'name': user.name,
-            'passwordHash': passwordHash,
-            'profilePicUrl': user.profilePicUrl,
-            'createdAt': now,
-            'updatedAt': now,
-          },
-        );
-
-        final userId = result.first.toColumnMap()['id'] as String;
-
-        await session.execute(
-          Sql.named('''
-            INSERT INTO user_roles (user_id, role_id, created_at)
-            VALUES (@userId, @roleId, @createdAt)
-            ON CONFLICT (user_id, role_id) DO NOTHING
-          '''),
-          parameters: {
-            'userId': userId,
-            'roleId': role.id,
-            'createdAt': now,
-          },
-        );
-
-        final keystoreResult = await session.execute(
-          Sql.named('''
-            INSERT INTO keystores (client_id, primary_key, secondary_key, status, created_at, updated_at)
-            VALUES (@clientId, @primaryKey, @secondaryKey, @status, @createdAt, @updatedAt)
-            RETURNING id, client_id, primary_key, secondary_key, status, created_at, updated_at
-          '''),
-          parameters: {
-            'clientId': userId,
-            'primaryKey': accessTokenKey,
-            'secondaryKey': refreshTokenKey,
-            'status': true,
-            'createdAt': now,
-            'updatedAt': now,
-          },
-        );
-
-        return (userId: userId, keystoreRow: keystoreResult.first);
-      });
-
-      final createdUser = await findById(txResult.userId);
-      if (createdUser == null) {
-        throw const InternalError('User creation failed');
-      }
-
-      final row = txResult.keystoreRow.toColumnMap();
-      final keystore = Keystore(
-        id: row['id'] as String,
-        client: createdUser,
-        primaryKey: row['primary_key'] as String,
-        secondaryKey: row['secondary_key'] as String,
-        status: row['status'] as bool?,
-        createdAt: row['created_at'] as DateTime?,
-        updatedAt: row['updated_at'] as DateTime?,
+    final txResult = await _pool.runTx((session) async {
+      final result = await session.execute(
+        Sql.named('''
+          INSERT INTO users (id, email, name, password_hash, profile_pic_url, created_at, updated_at)
+          VALUES (@id, @email, @name, @passwordHash, @profilePicUrl, @createdAt, @updatedAt)
+          RETURNING id
+        '''),
+        parameters: {
+          'id': user.id,
+          'email': user.email,
+          'name': user.name,
+          'passwordHash': passwordHash,
+          'profilePicUrl': user.profilePicUrl,
+          'createdAt': now,
+          'updatedAt': now,
+        },
       );
 
-      return (user: createdUser, keystore: keystore);
-    } on ApiError {
-      rethrow;
-    } catch (e, st) {
-      _log.severe('create failed', e, st);
-      throw const InternalError();
+      final userId = result.first.toColumnMap()['id'] as String;
+
+      await session.execute(
+        Sql.named('''
+          INSERT INTO user_roles (user_id, role_id, created_at)
+          VALUES (@userId, @roleId, @createdAt)
+          ON CONFLICT (user_id, role_id) DO NOTHING
+        '''),
+        parameters: {
+          'userId': userId,
+          'roleId': role.id,
+          'createdAt': now,
+        },
+      );
+
+      final keystoreResult = await session.execute(
+        Sql.named('''
+          INSERT INTO keystores (client_id, primary_key, secondary_key, status, created_at, updated_at)
+          VALUES (@clientId, @primaryKey, @secondaryKey, @status, @createdAt, @updatedAt)
+          RETURNING id, client_id, primary_key, secondary_key, status, created_at, updated_at
+        '''),
+        parameters: {
+          'clientId': userId,
+          'primaryKey': accessTokenKey,
+          'secondaryKey': refreshTokenKey,
+          'status': true,
+          'createdAt': now,
+          'updatedAt': now,
+        },
+      );
+
+      return (userId: userId, keystoreRow: keystoreResult.first);
+    });
+
+    final createdUser = await findById(txResult.userId);
+    if (createdUser == null) {
+      throw const InternalError('User creation failed');
     }
+
+    final row = txResult.keystoreRow.toColumnMap();
+    final keystore = Keystore(
+      id: row['id'] as String,
+      client: createdUser,
+      primaryKey: row['primary_key'] as String,
+      secondaryKey: row['secondary_key'] as String,
+      status: row['status'] as bool?,
+      createdAt: row['created_at'] as DateTime?,
+      updatedAt: row['updated_at'] as DateTime?,
+    );
+
+    return (user: createdUser, keystore: keystore);
   }
 
   @override
   Future<User?> findByEmail(String email) async {
-    try {
-      final result = await _pool.execute(
-        Sql.named(
-          '''
-          SELECT $_selectFields
-          FROM users u
-          LEFT JOIN user_roles ur ON ur.user_id = u.id
-          LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
-          WHERE u.email = @email AND u.deleted_at IS NULL
-          GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
-          ''',
-        ),
-        parameters: {'email': email},
-      );
-      if (result.isEmpty) return null;
-      return _mapUser(result.first);
-    } catch (e, st) {
-      _log.severe('findByEmail failed', e, st);
-      throw const InternalError();
-    }
+    final result = await _pool.execute(
+      Sql.named(
+        '''
+        SELECT $_selectFields
+        FROM users u
+        LEFT JOIN user_roles ur ON ur.user_id = u.id
+        LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
+        WHERE u.email = @email AND u.deleted_at IS NULL
+        GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
+        ''',
+      ),
+      parameters: {'email': email},
+    );
+    if (result.isEmpty) return null;
+    return _mapUser(result.first);
   }
 
   @override
   Future<User?> findById(String id) async {
-    try {
-      final result = await _pool.execute(
-        Sql.named(
-          '''
-          SELECT $_selectFields
-          FROM users u
-          LEFT JOIN user_roles ur ON ur.user_id = u.id
-          LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
-          WHERE u.id = @id AND u.deleted_at IS NULL
-          GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
-          ''',
-        ),
-        parameters: {'id': id},
-      );
-      if (result.isEmpty) return null;
-      return _mapUser(result.first);
-    } catch (e, st) {
-      _log.severe('findById failed', e, st);
-      throw const InternalError();
-    }
+    final result = await _pool.execute(
+      Sql.named(
+        '''
+        SELECT $_selectFields
+        FROM users u
+        LEFT JOIN user_roles ur ON ur.user_id = u.id
+        LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
+        WHERE u.id = @id AND u.deleted_at IS NULL
+        GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
+        ''',
+      ),
+      parameters: {'id': id},
+    );
+    if (result.isEmpty) return null;
+    return _mapUser(result.first);
   }
 
   @override
   Future<User?> findProfileById(String id) async {
-    try {
-      final result = await _pool.execute(
-        Sql.named(
-          '''
-          SELECT $_selectFields
-          FROM users u
-          LEFT JOIN user_roles ur ON ur.user_id = u.id
-          LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
-          WHERE u.id = @id AND u.deleted_at IS NULL
-          GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
-          ''',
-        ),
-        parameters: {'id': id},
-      );
-      if (result.isEmpty) return null;
-      return _mapUser(result.first);
-    } catch (e, st) {
-      _log.severe('findProfileById failed', e, st);
-      throw const InternalError();
-    }
+    final result = await _pool.execute(
+      Sql.named(
+        '''
+        SELECT $_selectFields
+        FROM users u
+        LEFT JOIN user_roles ur ON ur.user_id = u.id
+        LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
+        WHERE u.id = @id AND u.deleted_at IS NULL
+        GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
+        ''',
+      ),
+      parameters: {'id': id},
+    );
+    if (result.isEmpty) return null;
+    return _mapUser(result.first);
   }
 
   @override
   Future<User?> findPublicProfileById(String id) async {
-    try {
-      final result = await _pool.execute(
-        Sql.named(
-          '''
-          SELECT $_selectFields
-          FROM users u
-          LEFT JOIN user_roles ur ON ur.user_id = u.id
-          LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
-          WHERE u.id = @id AND u.deleted_at IS NULL
-          GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
-          ''',
-        ),
-        parameters: {'id': id},
-      );
-      if (result.isEmpty) return null;
-      return _mapUser(result.first);
-    } catch (e, st) {
-      _log.severe('findPublicProfileById failed', e, st);
-      throw const InternalError();
-    }
+    final result = await _pool.execute(
+      Sql.named(
+        '''
+        SELECT $_selectFields
+        FROM users u
+        LEFT JOIN user_roles ur ON ur.user_id = u.id
+        LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
+        WHERE u.id = @id AND u.deleted_at IS NULL
+        GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
+        ''',
+      ),
+      parameters: {'id': id},
+    );
+    if (result.isEmpty) return null;
+    return _mapUser(result.first);
   }
 
   @override
@@ -224,75 +195,63 @@ final class PostgresUserRepo implements UserRepo {
     String accessTokenKey,
     String refreshTokenKey,
   ) async {
-    try {
-      final now = DateTime.now().toUtc();
-      final result = await _pool.execute(
-        Sql.named('''
-          UPDATE users
-          SET
-            email = @email,
-            name = @name,
-            profile_pic_url = @profilePicUrl,
-            updated_at = @updatedAt
-          WHERE id = @id AND deleted_at IS NULL
-          RETURNING id
-        '''),
-        parameters: {
-          'id': user.id,
-          'email': user.email,
-          'name': user.name,
-          'profilePicUrl': user.profilePicUrl,
-          'updatedAt': now,
-        },
-      );
+    final now = DateTime.now().toUtc();
+    final result = await _pool.execute(
+      Sql.named('''
+        UPDATE users
+        SET
+          email = @email,
+          name = @name,
+          profile_pic_url = @profilePicUrl,
+          updated_at = @updatedAt
+        WHERE id = @id AND deleted_at IS NULL
+        RETURNING id
+      '''),
+      parameters: {
+        'id': user.id,
+        'email': user.email,
+        'name': user.name,
+        'profilePicUrl': user.profilePicUrl,
+        'updatedAt': now,
+      },
+    );
 
-      if (result.isEmpty) {
-        throw const NotFoundError('User not found');
-      }
-
-      final updatedUser = await findById(result.first.toColumnMap()['id'] as String);
-      if (updatedUser == null) {
-        throw const NotFoundError('User not found');
-      }
-      final keystore = await _keystoreRepo.create(
-        updatedUser,
-        accessTokenKey,
-        refreshTokenKey,
-      );
-      return (user: updatedUser, keystore: keystore);
-    } on ApiError {
-      rethrow;
-    } catch (e, st) {
-      _log.severe('update failed', e, st);
-      throw const InternalError();
+    if (result.isEmpty) {
+      throw const NotFoundError('User not found');
     }
+
+    final updatedUser = await findById(result.first.toColumnMap()['id'] as String);
+    if (updatedUser == null) {
+      throw const NotFoundError('User not found');
+    }
+    final keystore = await _keystoreRepo.create(
+      updatedUser,
+      accessTokenKey,
+      refreshTokenKey,
+    );
+    return (user: updatedUser, keystore: keystore);
   }
 
   @override
   Future<void> updateInfo(User user) async {
-    try {
-      await _pool.execute(
-        Sql.named('''
-          UPDATE users
-          SET
-            email = @email,
-            name = @name,
-            profile_pic_url = @profilePicUrl,
-            updated_at = @updatedAt
-          WHERE id = @id AND deleted_at IS NULL
-        '''),
-        parameters: {
-          'id': user.id,
-          'email': user.email,
-          'name': user.name,
-          'profilePicUrl': user.profilePicUrl,
-          'updatedAt': DateTime.now().toUtc(),
-        },
-      );
-    } catch (e, st) {
-      _log.severe('updateInfo failed', e, st);
-      throw const InternalError();
-    }
+    await _pool.execute(
+      Sql.named('''
+        UPDATE users
+        SET
+          email = @email,
+          name = @name,
+          profile_pic_url = @profilePicUrl,
+          updated_at = @updatedAt
+        WHERE id = @id AND deleted_at IS NULL
+      '''),
+      parameters: {
+        'id': user.id,
+        'email': user.email,
+        'name': user.name,
+        'profilePicUrl': user.profilePicUrl,
+        'updatedAt': DateTime.now().toUtc(),
+      },
+    );
   }
 
   User _mapUser(ResultRow row) {

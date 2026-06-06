@@ -1,4 +1,3 @@
-import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_backend_architecture/database/model/keystore.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
@@ -33,38 +32,33 @@ final class PostgresKeystoreRepo implements KeystoreRepo {
     String primaryKey,
     String secondaryKey,
   ) async {
-    try {
-      final now = DateTime.now().toUtc();
-      final result = await _pool.execute(
-        Sql.named('''
-          INSERT INTO keystores (client_id, primary_key, secondary_key, status, created_at, updated_at)
-          VALUES (@clientId, @primaryKey, @secondaryKey, @status, @createdAt, @updatedAt)
-          RETURNING id, client_id, primary_key, secondary_key, status, created_at, updated_at
-        '''),
-        parameters: {
-          'clientId': client.id,
-          'primaryKey': primaryKey,
-          'secondaryKey': secondaryKey,
-          'status': true,
-          'createdAt': now,
-          'updatedAt': now,
-        },
-      );
+    final now = DateTime.now().toUtc();
+    final result = await _pool.execute(
+      Sql.named('''
+        INSERT INTO keystores (client_id, primary_key, secondary_key, status, created_at, updated_at)
+        VALUES (@clientId, @primaryKey, @secondaryKey, @status, @createdAt, @updatedAt)
+        RETURNING id, client_id, primary_key, secondary_key, status, created_at, updated_at
+      '''),
+      parameters: {
+        'clientId': client.id,
+        'primaryKey': primaryKey,
+        'secondaryKey': secondaryKey,
+        'status': true,
+        'createdAt': now,
+        'updatedAt': now,
+      },
+    );
 
-      final row = result.first.toColumnMap();
-      return Keystore(
-        id: row['id'] as String,
-        client: client,
-        primaryKey: row['primary_key'] as String,
-        secondaryKey: row['secondary_key'] as String,
-        status: row['status'] as bool?,
-        createdAt: row['created_at'] as DateTime?,
-        updatedAt: row['updated_at'] as DateTime?,
-      );
-    } catch (e, st) {
-      _log.severe('create failed', e, st);
-      throw const InternalError();
-    }
+    final row = result.first.toColumnMap();
+    return Keystore(
+      id: row['id'] as String,
+      client: client,
+      primaryKey: row['primary_key'] as String,
+      secondaryKey: row['secondary_key'] as String,
+      status: row['status'] as bool?,
+      createdAt: row['created_at'] as DateTime?,
+      updatedAt: row['updated_at'] as DateTime?,
+    );
   }
 
   @override
@@ -73,114 +67,94 @@ final class PostgresKeystoreRepo implements KeystoreRepo {
     String primaryKey,
     String secondaryKey,
   ) async {
-    try {
-      final result = await _pool.execute(
-        Sql.named('''
-          SELECT $_selectFields
-          FROM keystores k
-          INNER JOIN users u ON u.id = k.client_id
-          WHERE k.client_id = @clientId
-            AND k.primary_key = @primaryKey
-            AND k.secondary_key = @secondaryKey
-            AND k.status = TRUE
-            AND k.deleted_at IS NULL
-            AND u.deleted_at IS NULL
-          ORDER BY k.created_at DESC
-          LIMIT 1
-        '''),
-        parameters: {
-          'clientId': client.id,
-          'primaryKey': primaryKey,
-          'secondaryKey': secondaryKey,
-        },
-      );
+    final result = await _pool.execute(
+      Sql.named('''
+        SELECT $_selectFields
+        FROM keystores k
+        INNER JOIN users u ON u.id = k.client_id
+        WHERE k.client_id = @clientId
+          AND k.primary_key = @primaryKey
+          AND k.secondary_key = @secondaryKey
+          AND k.status = TRUE
+          AND k.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY k.created_at DESC
+        LIMIT 1
+      '''),
+      parameters: {
+        'clientId': client.id,
+        'primaryKey': primaryKey,
+        'secondaryKey': secondaryKey,
+      },
+    );
 
-      if (result.isEmpty) return null;
-      return _mapKeystore(result.first);
-    } catch (e, st) {
-      _log.severe('find failed', e, st);
-      throw const InternalError();
-    }
+    if (result.isEmpty) return null;
+    return _mapKeystore(result.first);
   }
 
   @override
   Future<Keystore?> findForKey(User client, String key) async {
-    try {
-      final result = await _pool.execute(
-        Sql.named('''
-          SELECT $_selectFields
-          FROM keystores k
-          INNER JOIN users u ON u.id = k.client_id
-          WHERE k.client_id = @clientId
-            AND k.primary_key = @key
-            AND k.status = TRUE
-            AND k.deleted_at IS NULL
-            AND u.deleted_at IS NULL
-          ORDER BY k.created_at DESC
-          LIMIT 1
-        '''),
-        parameters: {
-          'clientId': client.id,
-          'key': key,
-        },
-      );
+    final result = await _pool.execute(
+      Sql.named('''
+        SELECT $_selectFields
+        FROM keystores k
+        INNER JOIN users u ON u.id = k.client_id
+        WHERE k.client_id = @clientId
+          AND k.primary_key = @key
+          AND k.status = TRUE
+          AND k.deleted_at IS NULL
+          AND u.deleted_at IS NULL
+        ORDER BY k.created_at DESC
+        LIMIT 1
+      '''),
+      parameters: {
+        'clientId': client.id,
+        'key': key,
+      },
+    );
 
-      if (result.isEmpty) return null;
-      return _mapKeystore(result.first);
-    } catch (e, st) {
-      _log.severe('findForKey failed', e, st);
-      throw const InternalError();
-    }
+    if (result.isEmpty) return null;
+    return _mapKeystore(result.first);
   }
 
   @override
   Future<int> deleteExpired({required Duration olderThan}) async {
-    try {
-      final cutoff = DateTime.now().toUtc().subtract(olderThan);
-      final result = await _pool.execute(
-        Sql.named('''
-          DELETE FROM keystores
-          WHERE created_at < @cutoff
-        '''),
-        parameters: {'cutoff': cutoff},
-      );
-      final count = result.affectedRows;
-      if (count > 0) {
-        _log.info('GC: deleted $count expired keystore(s) older than ${olderThan.inDays} days');
-      }
-      return count;
-    } catch (e, st) {
-      _log.severe('deleteExpired failed', e, st);
-      throw const InternalError();
+    final cutoff = DateTime.now().toUtc().subtract(olderThan);
+    final result = await _pool.execute(
+      Sql.named('''
+        DELETE FROM keystores
+        WHERE created_at < @cutoff
+      '''),
+      parameters: {'cutoff': cutoff},
+    );
+    final count = result.affectedRows;
+    if (count > 0) {
+      _log.info('GC: deleted $count expired keystore(s) older than ${olderThan.inDays} days');
     }
+    return count;
   }
 
   @override
   Future<Keystore?> remove(String id) async {
-    try {
-      final existing = await _pool.execute(
-        Sql.named('''
-          SELECT $_selectFields
-          FROM keystores k
-          INNER JOIN users u ON u.id = k.client_id
-          WHERE k.id = @id AND u.deleted_at IS NULL
-          LIMIT 1
-        '''),
-        parameters: {'id': id},
-      );
+    final existing = await _pool.execute(
+      Sql.named('''
+        SELECT $_selectFields
+        FROM keystores k
+        INNER JOIN users u ON u.id = k.client_id
+        WHERE k.id = @id AND u.deleted_at IS NULL
+        LIMIT 1
+      '''),
+      parameters: {'id': id},
+    );
 
-      if (existing.isEmpty) return null;
+    if (existing.isEmpty) return null;
 
-      await _pool.execute(
-        Sql.named('DELETE FROM keystores WHERE id = @id'),
-        parameters: {'id': id},
-      );
+    await _pool.execute(
+      Sql.named('DELETE FROM keystores WHERE id = @id'),
+      parameters: {'id': id},
+    );
 
-      return _mapKeystore(existing.first);
-    } catch (e, st) {
-      _log.severe('remove failed', e, st);
-      throw const InternalError();
-    }
+    return _mapKeystore(existing.first);
   }
 
   Keystore _mapKeystore(ResultRow row) {

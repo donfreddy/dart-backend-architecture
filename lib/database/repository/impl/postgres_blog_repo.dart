@@ -1,5 +1,4 @@
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
-import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:dart_backend_architecture/database/db_pool.dart';
 import 'package:dart_backend_architecture/database/model/blog.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
@@ -8,7 +7,6 @@ import 'package:postgres/postgres.dart';
 
 final class PostgresBlogRepo implements BlogRepo {
   final DatabasePool _pool;
-  final _log = AppLogger.get('PostgresBlogRepo');
 
   PostgresBlogRepo(this._pool);
 
@@ -49,144 +47,132 @@ final class PostgresBlogRepo implements BlogRepo {
 
   @override
   Future<Blog> create(Blog blog) async {
-    try {
-      final now = DateTime.now().toUtc();
-      final result = await _pool.execute(
-        Sql.named('''
-          INSERT INTO blogs (
-            title,
-            description,
-            text,
-            draft_text,
-            tags,
-            author_id,
-            img_url,
-            blog_url,
-            likes,
-            score,
-            is_submitted,
-            is_draft,
-            is_published,
-            status,
-            published_at,
-            created_by,
-            updated_by,
-            created_at,
-            updated_at
-          ) VALUES (
-            @title,
-            @description,
-            @text,
-            @draftText,
-            @tags,
-            @authorId,
-            @imgUrl,
-            @blogUrl,
-            @likes,
-            @score,
-            @isSubmitted,
-            @isDraft,
-            @isPublished,
-            @status,
-            @publishedAt,
-            @createdBy,
-            @updatedBy,
-            @createdAt,
-            @updatedAt
-          )
-          RETURNING id
-        '''),
-        parameters: {
-          'title': blog.title,
-          'description': blog.description,
-          'text': blog.text,
-          'draftText': blog.draftText,
-          'tags': blog.tags,
-          'authorId': blog.author.id,
-          'imgUrl': blog.imgUrl,
-          'blogUrl': blog.blogUrl,
-          'likes': blog.likes ?? 0,
-          'score': blog.score,
-          'isSubmitted': blog.isSubmitted,
-          'isDraft': blog.isDraft,
-          'isPublished': blog.isPublished,
-          'status': blog.status ?? true,
-          'publishedAt': blog.publishedAt,
-          'createdBy': blog.createdBy?.id,
-          'updatedBy': blog.updatedBy?.id,
-          'createdAt': blog.createdAt ?? now,
-          'updatedAt': blog.updatedAt ?? now,
-        },
-      );
+    final now = DateTime.now().toUtc();
+    final result = await _pool.execute(
+      Sql.named('''
+        INSERT INTO blogs (
+          title,
+          description,
+          text,
+          draft_text,
+          tags,
+          author_id,
+          img_url,
+          blog_url,
+          likes,
+          score,
+          is_submitted,
+          is_draft,
+          is_published,
+          status,
+          published_at,
+          created_by,
+          updated_by,
+          created_at,
+          updated_at
+        ) VALUES (
+          @title,
+          @description,
+          @text,
+          @draftText,
+          @tags,
+          @authorId,
+          @imgUrl,
+          @blogUrl,
+          @likes,
+          @score,
+          @isSubmitted,
+          @isDraft,
+          @isPublished,
+          @status,
+          @publishedAt,
+          @createdBy,
+          @updatedBy,
+          @createdAt,
+          @updatedAt
+        )
+        RETURNING id
+      '''),
+      parameters: {
+        'title': blog.title,
+        'description': blog.description,
+        'text': blog.text,
+        'draftText': blog.draftText,
+        'tags': blog.tags,
+        'authorId': blog.author.id,
+        'imgUrl': blog.imgUrl,
+        'blogUrl': blog.blogUrl,
+        'likes': blog.likes ?? 0,
+        'score': blog.score,
+        'isSubmitted': blog.isSubmitted,
+        'isDraft': blog.isDraft,
+        'isPublished': blog.isPublished,
+        'status': blog.status ?? true,
+        'publishedAt': blog.publishedAt,
+        'createdBy': blog.createdBy?.id,
+        'updatedBy': blog.updatedBy?.id,
+        'createdAt': blog.createdAt ?? now,
+        'updatedAt': blog.updatedAt ?? now,
+      },
+    );
 
-      final id = result.first.toColumnMap()['id'] as String;
-      final created = await findById(id);
-      if (created == null) {
-        throw const InternalError('Failed to load created blog');
-      }
-      return created;
-    } catch (e, st) {
-      _log.severe('create failed', e, st);
-      throw const InternalError();
+    final id = result.first.toColumnMap()['id'] as String;
+    final created = await findById(id);
+    if (created == null) {
+      throw const InternalError('Failed to load created blog');
     }
+    return created;
   }
 
   @override
   Future<void> update(Blog blog) async {
-    try {
-      final blogId = blog.id;
-      if (blogId == null || blogId.isEmpty) {
-        throw const BadRequestError('Blog id is required for update');
-      }
-
-      await _pool.execute(
-        Sql.named('''
-          UPDATE blogs
-          SET
-            title = @title,
-            description = @description,
-            text = @text,
-            draft_text = @draftText,
-            tags = @tags,
-            img_url = @imgUrl,
-            likes = @likes,
-            score = @score,
-            is_submitted = @isSubmitted,
-            is_draft = @isDraft,
-            is_published = @isPublished,
-            status = @status,
-            published_at = @publishedAt,
-            created_by = @createdBy,
-            updated_by = @updatedBy,
-            updated_at = @updatedAt
-          WHERE id = @id AND deleted_at IS NULL
-        '''),
-        parameters: {
-          'id': blogId,
-          'title': blog.title,
-          'description': blog.description,
-          'text': blog.text,
-          'draftText': blog.draftText,
-          'tags': blog.tags,
-          'imgUrl': blog.imgUrl,
-          'likes': blog.likes ?? 0,
-          'score': blog.score,
-          'isSubmitted': blog.isSubmitted,
-          'isDraft': blog.isDraft,
-          'isPublished': blog.isPublished,
-          'status': blog.status ?? true,
-          'publishedAt': blog.publishedAt,
-          'createdBy': blog.createdBy?.id,
-          'updatedBy': blog.updatedBy?.id,
-          'updatedAt': DateTime.now().toUtc(),
-        },
-      );
-    } on ApiError {
-      rethrow;
-    } catch (e, st) {
-      _log.severe('update failed', e, st);
-      throw const InternalError();
+    final blogId = blog.id;
+    if (blogId == null || blogId.isEmpty) {
+      throw const BadRequestError('Blog id is required for update');
     }
+
+    await _pool.execute(
+      Sql.named('''
+        UPDATE blogs
+        SET
+          title = @title,
+          description = @description,
+          text = @text,
+          draft_text = @draftText,
+          tags = @tags,
+          img_url = @imgUrl,
+          likes = @likes,
+          score = @score,
+          is_submitted = @isSubmitted,
+          is_draft = @isDraft,
+          is_published = @isPublished,
+          status = @status,
+          published_at = @publishedAt,
+          created_by = @createdBy,
+          updated_by = @updatedBy,
+          updated_at = @updatedAt
+        WHERE id = @id AND deleted_at IS NULL
+      '''),
+      parameters: {
+        'id': blogId,
+        'title': blog.title,
+        'description': blog.description,
+        'text': blog.text,
+        'draftText': blog.draftText,
+        'tags': blog.tags,
+        'imgUrl': blog.imgUrl,
+        'likes': blog.likes ?? 0,
+        'score': blog.score,
+        'isSubmitted': blog.isSubmitted,
+        'isDraft': blog.isDraft,
+        'isPublished': blog.isPublished,
+        'status': blog.status ?? true,
+        'publishedAt': blog.publishedAt,
+        'createdBy': blog.createdBy?.id,
+        'updatedBy': blog.updatedBy?.id,
+        'updatedAt': DateTime.now().toUtc(),
+      },
+    );
   }
 
   @override
@@ -429,32 +415,27 @@ final class PostgresBlogRepo implements BlogRepo {
     required Map<String, Object?> params,
     required String orderBy,
   }) async {
-    try {
-      final result = await _pool.execute(
-        Sql.named('''
-          SELECT $_baseSelect, COUNT(*) OVER() AS _total
-          FROM blogs b
-          INNER JOIN users a ON a.id = b.author_id
-          LEFT JOIN users cb ON cb.id = b.created_by
-          LEFT JOIN users ub ON ub.id = b.updated_by
-          WHERE $whereClause
-            AND b.deleted_at IS NULL
-            AND a.deleted_at IS NULL
-          ORDER BY $orderBy
-          LIMIT @limit OFFSET @offset
-        '''),
-        parameters: params,
-      );
+    final result = await _pool.execute(
+      Sql.named('''
+        SELECT $_baseSelect, COUNT(*) OVER() AS _total
+        FROM blogs b
+        INNER JOIN users a ON a.id = b.author_id
+        LEFT JOIN users cb ON cb.id = b.created_by
+        LEFT JOIN users ub ON ub.id = b.updated_by
+        WHERE $whereClause
+          AND b.deleted_at IS NULL
+          AND a.deleted_at IS NULL
+        ORDER BY $orderBy
+        LIMIT @limit OFFSET @offset
+      '''),
+      parameters: params,
+    );
 
-      if (result.isEmpty) return (items: const <Blog>[], total: 0);
+    if (result.isEmpty) return (items: const <Blog>[], total: 0);
 
-      final total = result.first.toColumnMap()['_total'] as int;
-      final items = result.map(_mapBlog).toList(growable: false);
-      return (items: items, total: total);
-    } catch (e, st) {
-      _log.severe('blog query failed', e, st);
-      throw const InternalError();
-    }
+    final total = result.first.toColumnMap()['_total'] as int;
+    final items = result.map(_mapBlog).toList(growable: false);
+    return (items: items, total: total);
   }
 
   Future<Result> _runSelect({
@@ -464,26 +445,21 @@ final class PostgresBlogRepo implements BlogRepo {
     bool withLimit = false,
     bool limitOne = false,
   }) async {
-    try {
-      return await _pool.execute(
-        Sql.named('''
-          SELECT $_baseSelect
-          FROM blogs b
-          INNER JOIN users a ON a.id = b.author_id
-          LEFT JOIN users cb ON cb.id = b.created_by
-          LEFT JOIN users ub ON ub.id = b.updated_by
-          WHERE $whereClause
-            AND b.deleted_at IS NULL
-            AND a.deleted_at IS NULL
-          ORDER BY $orderBy
-          ${limitOne ? 'LIMIT 1' : (withLimit ? 'LIMIT @limit OFFSET @offset' : '')}
-        '''),
-        parameters: params,
-      );
-    } catch (e, st) {
-      _log.severe('blog query failed', e, st);
-      throw const InternalError();
-    }
+    return await _pool.execute(
+      Sql.named('''
+        SELECT $_baseSelect
+        FROM blogs b
+        INNER JOIN users a ON a.id = b.author_id
+        LEFT JOIN users cb ON cb.id = b.created_by
+        LEFT JOIN users ub ON ub.id = b.updated_by
+        WHERE $whereClause
+          AND b.deleted_at IS NULL
+          AND a.deleted_at IS NULL
+        ORDER BY $orderBy
+        ${limitOne ? 'LIMIT 1' : (withLimit ? 'LIMIT @limit OFFSET @offset' : '')}
+      '''),
+      parameters: params,
+    );
   }
 
   Blog _mapBlog(ResultRow row) {
