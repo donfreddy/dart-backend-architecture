@@ -13,7 +13,7 @@ final class PostgresBlogRepo implements BlogRepo {
   PostgresBlogRepo(this._pool);
 
   static const _baseSelect = '''
-    b.id,
+    b.id            AS blog_id,
     b.title,
     b.description,
     b.text,
@@ -28,23 +28,23 @@ final class PostgresBlogRepo implements BlogRepo {
     b.is_published,
     b.status,
     b.published_at,
-    b.created_at,
+    b.created_at    AS blog_created_at,
     b.updated_at,
-    a.id,
-    a.email,
-    a.name,
-    a.profile_pic_url,
-    a.created_at,
-    cb.id,
-    cb.email,
-    cb.name,
-    cb.profile_pic_url,
-    cb.created_at,
-    ub.id,
-    ub.email,
-    ub.name,
-    ub.profile_pic_url,
-    ub.created_at
+    a.id            AS author_id,
+    a.email         AS author_email,
+    a.name          AS author_name,
+    a.profile_pic_url AS author_profile_pic_url,
+    a.created_at    AS author_created_at,
+    cb.id           AS created_by_id,
+    cb.email        AS created_by_email,
+    cb.name         AS created_by_name,
+    cb.profile_pic_url AS created_by_profile_pic_url,
+    cb.created_at   AS created_by_created_at,
+    ub.id           AS updated_by_id,
+    ub.email        AS updated_by_email,
+    ub.name         AS updated_by_name,
+    ub.profile_pic_url AS updated_by_profile_pic_url,
+    ub.created_at   AS updated_by_created_at
   ''';
 
   @override
@@ -119,7 +119,7 @@ final class PostgresBlogRepo implements BlogRepo {
         },
       );
 
-      final id = result.first[0] as String;
+      final id = result.first.toColumnMap()['id'] as String;
       final created = await findBlogAllDataById(id);
       if (created == null) {
         throw const InternalError('Failed to load created blog');
@@ -466,7 +466,7 @@ final class PostgresBlogRepo implements BlogRepo {
 
       if (result.isEmpty) return (items: const <Blog>[], total: 0);
 
-      final total = result.first[32] as int;
+      final total = result.first.toColumnMap()['_total'] as int;
       final items = result.map(_mapBlog).toList(growable: false);
       return (items: items, total: total);
     } catch (e, st) {
@@ -505,59 +505,61 @@ final class PostgresBlogRepo implements BlogRepo {
   }
 
   Blog _mapBlog(ResultRow row) {
+    final map = row.toColumnMap();
+
     final author = User(
-      id: row[17] as String,
-      email: row[18] as String,
-      name: row[19] as String,
-      profilePicUrl: row[20] as String?,
-      createdAt: row[21] as DateTime,
+      id: map['author_id'] as String,
+      email: map['author_email'] as String,
+      name: map['author_name'] as String,
+      profilePicUrl: map['author_profile_pic_url'] as String?,
+      createdAt: map['author_created_at'] as DateTime,
     );
 
-    final createdBy = row[22] == null
+    final createdBy = map['created_by_id'] == null
         ? null
         : User(
-            id: row[22] as String,
-            email: row[23] as String,
-            name: row[24] as String,
-            profilePicUrl: row[25] as String?,
-            createdAt: row[26] as DateTime,
+            id: map['created_by_id'] as String,
+            email: map['created_by_email'] as String,
+            name: map['created_by_name'] as String,
+            profilePicUrl: map['created_by_profile_pic_url'] as String?,
+            createdAt: map['created_by_created_at'] as DateTime,
           );
 
-    final updatedBy = row[27] == null
+    final updatedBy = map['updated_by_id'] == null
         ? null
         : User(
-            id: row[27] as String,
-            email: row[28] as String,
-            name: row[29] as String,
-            profilePicUrl: row[30] as String?,
-            createdAt: row[31] as DateTime,
+            id: map['updated_by_id'] as String,
+            email: map['updated_by_email'] as String,
+            name: map['updated_by_name'] as String,
+            profilePicUrl: map['updated_by_profile_pic_url'] as String?,
+            createdAt: map['updated_by_created_at'] as DateTime,
           );
 
-    final tagsRaw = row[5];
+    final tagsRaw = map['tags'];
     final tags = switch (tagsRaw) {
       final List<dynamic> values => values.cast<String>(),
       _ => const <String>[],
     };
 
     return Blog(
-      id: row[0] as String,
-      title: row[1] as String,
-      description: row[2] as String,
-      text: row[3] as String?,
-      draftText: row[4] as String?,
+      id: map['blog_id'] as String,
+      title: map['title'] as String,
+      description: map['description'] as String,
+      text: map['text'] as String?,
+      draftText: map['draft_text'] as String?,
       tags: tags,
       author: author,
-      imgUrl: row[6] as String?,
-      blogUrl: row[7] as String,
-      likes: row[8] as int?,
-      score: row[9] as num,
-      isSubmitted: row[10] as bool,
-      isDraft: row[11] as bool,
-      isPublished: row[12] as bool,
-      status: row[13] as bool?,
-      publishedAt: row[14] as DateTime?,
-      createdAt: row[15] as DateTime?,
-      updatedAt: row[16] as DateTime?,
+      imgUrl: map['img_url'] as String?,
+      blogUrl: map['blog_url'] as String,
+      likes: map['likes'] as int?,
+      score: map['score'] as num,
+      isSubmitted: map['is_submitted'] as bool,
+      isDraft: map['is_draft'] as bool,
+      isPublished: map['is_published'] as bool,
+      status: map['status'] as bool?,
+      publishedAt: map['published_at'] as DateTime?,
+      createdAt: map['blog_created_at'] as DateTime?,
+      updatedAt: map['updated_at'] as DateTime?,
       createdBy: createdBy,
       updatedBy: updatedBy,
     );

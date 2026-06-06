@@ -25,15 +25,15 @@ final class PostgresApiKeyRepo implements ApiKeyRepo {
       );
 
       if (result.isEmpty) return null;
-      final row = result.first;
+      final row = result.first.toColumnMap();
 
       return ApiKey(
-        key: row[0] as String,
-        version: row[1] as int,
-        metadata: row[2] as String,
-        status: row[3] as bool?,
-        createdAt: row[4] as DateTime?,
-        updatedAt: row[5] as DateTime?,
+        key: row['key'] as String,
+        version: row['version'] as int,
+        metadata: row['metadata'] as String,
+        status: row['status'] as bool?,
+        createdAt: row['created_at'] as DateTime?,
+        updatedAt: row['updated_at'] as DateTime?,
       );
     } catch (e, st) {
       _log.severe('findByKey failed', e, st);

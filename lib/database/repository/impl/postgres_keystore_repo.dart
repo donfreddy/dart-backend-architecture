@@ -13,18 +13,18 @@ final class PostgresKeystoreRepo implements KeystoreRepo {
   PostgresKeystoreRepo(this._pool);
 
   static const _selectFields = '''
-    k.id,
+    k.id          AS keystore_id,
     k.client_id,
     k.primary_key,
     k.secondary_key,
     k.status,
-    k.created_at,
+    k.created_at  AS keystore_created_at,
     k.updated_at,
-    u.id,
+    u.id          AS user_id,
     u.email,
     u.name,
     u.profile_pic_url,
-    u.created_at
+    u.created_at  AS user_created_at
   ''';
 
   @override
@@ -51,15 +51,15 @@ final class PostgresKeystoreRepo implements KeystoreRepo {
         },
       );
 
-      final row = result.first;
+      final row = result.first.toColumnMap();
       return Keystore(
-        id: row[0] as String,
+        id: row['id'] as String,
         client: client,
-        primaryKey: row[2] as String,
-        secondaryKey: row[3] as String,
-        status: row[4] as bool?,
-        createdAt: row[5] as DateTime?,
-        updatedAt: row[6] as DateTime?,
+        primaryKey: row['primary_key'] as String,
+        secondaryKey: row['secondary_key'] as String,
+        status: row['status'] as bool?,
+        createdAt: row['created_at'] as DateTime?,
+        updatedAt: row['updated_at'] as DateTime?,
       );
     } catch (e, st) {
       _log.severe('create failed', e, st);
@@ -162,22 +162,23 @@ final class PostgresKeystoreRepo implements KeystoreRepo {
   }
 
   Keystore _mapKeystore(ResultRow row) {
+    final map = row.toColumnMap();
     final client = User(
-      id: row[7] as String,
-      email: row[8] as String,
-      name: row[9] as String,
-      profilePicUrl: row[10] as String?,
-      createdAt: row[11] as DateTime,
+      id: map['user_id'] as String,
+      email: map['email'] as String,
+      name: map['name'] as String,
+      profilePicUrl: map['profile_pic_url'] as String?,
+      createdAt: map['user_created_at'] as DateTime,
     );
 
     return Keystore(
-      id: row[0] as String,
+      id: map['keystore_id'] as String,
       client: client,
-      primaryKey: row[2] as String,
-      secondaryKey: row[3] as String,
-      status: row[4] as bool?,
-      createdAt: row[5] as DateTime?,
-      updatedAt: row[6] as DateTime?,
+      primaryKey: map['primary_key'] as String,
+      secondaryKey: map['secondary_key'] as String,
+      status: map['status'] as bool?,
+      createdAt: map['keystore_created_at'] as DateTime?,
+      updatedAt: map['updated_at'] as DateTime?,
     );
   }
 }

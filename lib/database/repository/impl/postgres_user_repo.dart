@@ -63,7 +63,7 @@ final class PostgresUserRepo implements UserRepo {
           },
         );
 
-        final userId = result.first[0] as String;
+        final userId = result.first.toColumnMap()['id'] as String;
 
         await session.execute(
           Sql.named('''
@@ -102,15 +102,15 @@ final class PostgresUserRepo implements UserRepo {
         throw const InternalError('User creation failed');
       }
 
-      final row = txResult.keystoreRow;
+      final row = txResult.keystoreRow.toColumnMap();
       final keystore = Keystore(
-        id: row[0] as String,
+        id: row['id'] as String,
         client: createdUser,
-        primaryKey: row[2] as String,
-        secondaryKey: row[3] as String,
-        status: row[4] as bool?,
-        createdAt: row[5] as DateTime?,
-        updatedAt: row[6] as DateTime?,
+        primaryKey: row['primary_key'] as String,
+        secondaryKey: row['secondary_key'] as String,
+        status: row['status'] as bool?,
+        createdAt: row['created_at'] as DateTime?,
+        updatedAt: row['updated_at'] as DateTime?,
       );
 
       return (user: createdUser, keystore: keystore);
@@ -250,7 +250,7 @@ final class PostgresUserRepo implements UserRepo {
         throw const NotFoundError('User not found');
       }
 
-      final updatedUser = await findById(result.first[0] as String);
+      final updatedUser = await findById(result.first.toColumnMap()['id'] as String);
       if (updatedUser == null) {
         throw const NotFoundError('User not found');
       }
@@ -296,19 +296,20 @@ final class PostgresUserRepo implements UserRepo {
   }
 
   User _mapUser(ResultRow row) {
-    final rawRoles = row.length > 6 ? row[6] : null;
+    final map = row.toColumnMap();
+    final rawRoles = map['roles'];
     final roles = switch (rawRoles) {
       final List<dynamic> values => values.cast<String>(),
       _ => const <String>[],
     };
 
     return User(
-      id: row[0] as String,
-      email: row[1] as String,
-      name: row[2] as String,
-      profilePicUrl: row[3] as String?,
-      createdAt: row[4] as DateTime,
-      passwordHash: row.length > 5 ? row[5] as String? : null,
+      id: map['id'] as String,
+      email: map['email'] as String,
+      name: map['name'] as String,
+      profilePicUrl: map['profile_pic_url'] as String?,
+      createdAt: map['created_at'] as DateTime,
+      passwordHash: map['password_hash'] as String?,
       roles: roles,
     );
   }
