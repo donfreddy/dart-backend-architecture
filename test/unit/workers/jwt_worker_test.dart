@@ -1,5 +1,5 @@
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
-import 'package:dart_backend_architecture/workers/jwt_worker.dart';
+import 'package:dart_backend_architecture/core/jwt/jwt_service.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:test/test.dart';
 
@@ -21,6 +21,11 @@ MEgCQQCej/gD7QcWnBLiOp9z23SA7C0dv7o/xVYp3DAWCgbaXN4wS/yTaal9dJpn
 ZDqTr+iYdLxN9eKvWYPPI0jY7rPZAgMBAAE=
 -----END RSA PUBLIC KEY-----''';
 
+  JwtService makeService() => JwtService(
+        privateKeyPem: privatePem,
+        publicKeyPem: publicPem,
+      );
+
   String signJwt(Map<String, dynamic> payload, {bool expired = false}) {
     final jwt = JWT(payload);
     if (expired) {
@@ -37,15 +42,11 @@ ZDqTr+iYdLxN9eKvWYPPI0jY7rPZAgMBAAE=
     );
   }
 
-  group('JwtWorker', () {
-    late JwtWorker worker;
+  group('JwtService', () {
+    late JwtService service;
 
-    setUp(() async {
-      worker = await JwtWorker.spawn(publicPem);
-    });
-
-    tearDown(() async {
-      await worker.dispose();
+    setUp(() {
+      service = makeService();
     });
 
     test('validate returns payload for valid token', () async {
@@ -57,10 +58,10 @@ ZDqTr+iYdLxN9eKvWYPPI0jY7rPZAgMBAAE=
         'iat': DateTime.now().millisecondsSinceEpoch ~/ 1000,
       });
 
-      final payload = await worker.validate(token);
+      final payload = await service.validate(token);
 
-      expect(payload['sub'], 'u-1');
-      expect(payload['prm'], 'key-1');
+      expect(payload.sub, 'u-1');
+      expect(payload.prm, 'key-1');
     });
 
     test('validate throws TokenExpiredError for expired token', () async {
@@ -75,14 +76,14 @@ ZDqTr+iYdLxN9eKvWYPPI0jY7rPZAgMBAAE=
       );
 
       await expectLater(
-        worker.validate(token),
+        service.validate(token),
         throwsA(isA<TokenExpiredError>()),
       );
     });
 
     test('validate throws BadTokenError for invalid token', () async {
       await expectLater(
-        worker.validate('invalid-token'),
+        service.validate('invalid-token'),
         throwsA(isA<BadTokenError>()),
       );
     });
@@ -98,15 +99,15 @@ ZDqTr+iYdLxN9eKvWYPPI0jY7rPZAgMBAAE=
         expired: true,
       );
 
-      final payload = await worker.decode(token);
+      final payload = await service.decode(token);
 
-      expect(payload['sub'], 'u-1');
+      expect(payload.sub, 'u-1');
     });
 
     test('decode throws BadTokenError for structurally invalid token',
         () async {
       await expectLater(
-        worker.decode('not-a-jwt'),
+        service.decode('not-a-jwt'),
         throwsA(isA<BadTokenError>()),
       );
     });

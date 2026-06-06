@@ -51,13 +51,13 @@ void main() {
   AuthService buildSut({
     MockUserRepo? userRepo,
     MockJwtService? jwt,
-    MockCryptoWorker? crypto,
+    MockPasswordHasher? crypto,
     MockTokenService? tokenService,
   }) =>
       AuthService(
         userRepo: userRepo ?? MockUserRepo(),
         jwt: jwt ?? MockJwtService(),
-        crypto: crypto ?? MockCryptoWorker(),
+        crypto: crypto ?? MockPasswordHasher(),
         tokenService: tokenService ?? MockTokenService(),
       );
 
@@ -65,17 +65,17 @@ void main() {
 
   group('AuthService.login', () {
     late MockUserRepo mockUserRepo;
-    late MockCryptoWorker mockCrypto;
+    late MockPasswordHasher mockHasher;
     late MockTokenService mockTokenService;
     late AuthService sut;
 
     setUp(() {
       mockUserRepo = MockUserRepo();
-      mockCrypto = MockCryptoWorker();
+      mockHasher = MockPasswordHasher();
       mockTokenService = MockTokenService();
       sut = buildSut(
         userRepo: mockUserRepo,
-        crypto: mockCrypto,
+        crypto: mockHasher,
         tokenService: mockTokenService,
       );
     });
@@ -91,7 +91,7 @@ void main() {
 
     test('throws AuthFailureError on wrong password', () async {
       when(() => mockUserRepo.findByEmail(any())).thenAnswer((_) async => user);
-      when(() => mockCrypto.verifyPassword(any(), any()))
+      when(() => mockHasher.verifyPassword(any(), any()))
           .thenAnswer((_) async => false);
 
       await expectLater(
@@ -103,7 +103,7 @@ void main() {
     test('returns AuthResult on valid credentials', () async {
       when(() => mockUserRepo.findByEmail('x@y.com'))
           .thenAnswer((_) async => user);
-      when(() => mockCrypto.verifyPassword('pass123', user.passwordHash!))
+      when(() => mockHasher.verifyPassword('pass123', user.passwordHash!))
           .thenAnswer((_) async => true);
       when(() => mockTokenService.issue(user))
           .thenAnswer((_) async => tokenPair);
@@ -113,7 +113,7 @@ void main() {
 
       expect(result.user.id, 'u-1');
       expect(result.tokens.accessToken, 'access-jwt');
-      verify(() => mockCrypto.verifyPassword('pass123', user.passwordHash!))
+      verify(() => mockHasher.verifyPassword('pass123', user.passwordHash!))
           .called(1);
       verify(() => mockTokenService.issue(user)).called(1);
     });
@@ -123,7 +123,7 @@ void main() {
 
   group('AuthService.signup', () {
     late MockUserRepo mockUserRepo;
-    late MockCryptoWorker mockCrypto;
+    late MockPasswordHasher mockHasher;
     late MockTokenService mockTokenService;
     late AuthService sut;
 
@@ -137,11 +137,11 @@ void main() {
 
     setUp(() {
       mockUserRepo = MockUserRepo();
-      mockCrypto = MockCryptoWorker();
+      mockHasher = MockPasswordHasher();
       mockTokenService = MockTokenService();
       sut = buildSut(
         userRepo: mockUserRepo,
-        crypto: mockCrypto,
+        crypto: mockHasher,
         tokenService: mockTokenService,
       );
     });
@@ -160,7 +160,7 @@ void main() {
 
     test('creates user, hashes password, returns tokens', () async {
       when(() => mockUserRepo.findByEmail(any())).thenAnswer((_) async => null);
-      when(() => mockCrypto.hashPassword(any()))
+      when(() => mockHasher.hashPassword(any()))
           .thenAnswer((inv) async => 'hashed-${inv.positionalArguments.first}');
       when(() => mockUserRepo.create(any(), any(), any(), any())).thenAnswer(
         (inv) async => (
@@ -182,7 +182,7 @@ void main() {
 
       expect(result.user.email, 'new@y.com');
       expect(result.tokens.accessToken, 'access-jwt');
-      verify(() => mockCrypto.hashPassword('p')).called(1);
+      verify(() => mockHasher.hashPassword('p')).called(1);
       verify(() => mockUserRepo.create(any(), any(), any(), any())).called(1);
       verify(() => mockTokenService.buildForExistingKeys(any(), any(), any()))
           .called(1);
@@ -297,7 +297,7 @@ void main() {
   group('AuthService - event publication', () {
     late MockUserRepo mockUserRepo;
     late MockJwtService mockJwt;
-    late MockCryptoWorker mockCrypto;
+    late MockPasswordHasher mockHasher;
     late MockTokenService mockTokenService;
     late MockEventBus mockEventBus;
     late AuthService sut;
@@ -305,13 +305,13 @@ void main() {
     setUp(() {
       mockUserRepo = MockUserRepo();
       mockJwt = MockJwtService();
-      mockCrypto = MockCryptoWorker();
+      mockHasher = MockPasswordHasher();
       mockTokenService = MockTokenService();
       mockEventBus = MockEventBus();
       sut = AuthService(
         userRepo: mockUserRepo,
         jwt: mockJwt,
-        crypto: mockCrypto,
+        crypto: mockHasher,
         tokenService: mockTokenService,
         eventBus: mockEventBus,
       );
@@ -327,7 +327,7 @@ void main() {
 
     test('signup publishes user.signed_up event', () async {
       when(() => mockUserRepo.findByEmail(any())).thenAnswer((_) async => null);
-      when(() => mockCrypto.hashPassword(any()))
+      when(() => mockHasher.hashPassword(any()))
           .thenAnswer((_) async => 'hash');
       when(() => mockUserRepo.create(any(), any(), any(), any())).thenAnswer(
         (_) async => (
@@ -353,7 +353,7 @@ void main() {
     test('login publishes user.logged_in event', () async {
       when(() => mockUserRepo.findByEmail('x@y.com'))
           .thenAnswer((_) async => user);
-      when(() => mockCrypto.verifyPassword('pass', user.passwordHash!))
+      when(() => mockHasher.verifyPassword('pass', user.passwordHash!))
           .thenAnswer((_) async => true);
       when(() => mockTokenService.issue(user))
           .thenAnswer((_) async => tokenPair);
@@ -379,7 +379,7 @@ void main() {
 
     test('events are best-effort and never crash', () async {
       when(() => mockUserRepo.findByEmail(any())).thenAnswer((_) async => null);
-      when(() => mockCrypto.hashPassword(any()))
+      when(() => mockHasher.hashPassword(any()))
           .thenAnswer((_) async => 'hash');
       when(() => mockUserRepo.create(any(), any(), any(), any())).thenAnswer(
         (_) async => (

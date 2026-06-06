@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
-import 'package:dart_backend_architecture/workers/jwt_worker.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 
 final class JwtPayload {
@@ -98,13 +97,6 @@ final class TokenPair {
 final _log = AppLogger.get('JwtService');
 
 /// JWT encoding / decoding service.
-///
-/// - [encode] signs tokens with the RSA private key (sync, called rarely).
-/// - [validate] and [decode] verify tokens via a [JwtWorker] isolate when
-///   available, keeping RSA CPU work off the HTTP event loop.
-///
-/// Call [initWorker] after construction to enable isolate-based verification.
-/// Call [dispose] on graceful shutdown to kill the worker isolate.
 class JwtService {
   final String privateKeyPath;
   final String publicKeyPath;
@@ -115,9 +107,6 @@ class JwtService {
 
   late final RSAPrivateKey _privateKey;
   late final RSAPublicKey _publicKey;
-  late final String _publicKeyPem;
-
-  JwtWorker? _worker;
 
   JwtService({
     this.privateKeyPath = '',
@@ -130,39 +119,22 @@ class JwtService {
     _loadKeys();
   }
 
-  /// Resolves keys in priority order: inline PEM → file path.
-  /// Throws [InternalError] if neither source is provided or readable.
   void _loadKeys() {
     try {
       final privatePem = privateKeyPem.isNotEmpty
           ? privateKeyPem
           : File(privateKeyPath).readAsStringSync();
-      _publicKeyPem = publicKeyPem.isNotEmpty
+      final publicPem = publicKeyPem.isNotEmpty
           ? publicKeyPem
           : File(publicKeyPath).readAsStringSync();
       _privateKey = RSAPrivateKey(privatePem);
-      _publicKey = RSAPublicKey(_publicKeyPem);
+      _publicKey = RSAPublicKey(publicPem);
     } catch (e) {
       throw const InternalError('Token generation failure');
     }
   }
 
-  /// Spawn the [JwtWorker] isolate. Should be called once at startup.
-  Future<void> initWorker() async {
-    _worker = await JwtWorker.spawn(_publicKeyPem);
-    _log.info('JwtService: worker isolate active');
-  }
-
-  /// Kill the worker isolate. Call on graceful shutdown.
-  Future<void> dispose() async {
-    await _worker?.dispose();
-    _worker = null;
-  }
-
-  // ── Encoding (sync: uses private key, called only on login/signup) ────────
-
   String encode(JwtPayload payload) {
-    _log.info('JwtService: ${payload.toMap()}');
     try {
       final jwt = JWT(payload.toMap());
       return jwt.sign(_privateKey, algorithm: JWTAlgorithm.RS256);
@@ -172,29 +144,9 @@ class JwtService {
     }
   }
 
-  // ── Verification (async: delegates to worker isolate when available) ──────
+  Future<JwtPayload> validate(String token) async => _validateSync(token);
 
-  /// Verify [token] signature and expiry.
-  /// Throws [TokenExpiredError] or [BadTokenError] on failure.
-  Future<JwtPayload> validate(String token) async {
-    if (_worker != null) {
-      final map = await _worker!.validate(token);
-      return JwtPayload.fromMap(map);
-    }
-    return _validateSync(token);
-  }
-
-  /// Decode [token] without checking expiry.
-  /// Throws [BadTokenError] on structural failures.
-  Future<JwtPayload> decode(String token) async {
-    if (_worker != null) {
-      final map = await _worker!.decode(token);
-      return JwtPayload.fromMap(map);
-    }
-    return _decodeSync(token);
-  }
-
-  // ── Sync fallbacks (used when worker not yet initialised / in tests) ───────
+  Future<JwtPayload> decode(String token) async => _decodeSync(token);
 
   JwtPayload _validateSync(String token) {
     try {

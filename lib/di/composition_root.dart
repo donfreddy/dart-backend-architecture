@@ -21,7 +21,7 @@ import 'package:dart_backend_architecture/routes/router.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
 import 'package:dart_backend_architecture/services/blog_service.dart';
 import 'package:dart_backend_architecture/services/token_service.dart';
-import 'package:dart_backend_architecture/workers/crypto_worker.dart' show CryptoWorkerPool;
+import 'package:dart_backend_architecture/workers/crypto_worker.dart' show CryptoSync;
 import 'package:shelf/shelf.dart';
 
 final _log = AppLogger.get('CompositionRoot');
@@ -33,7 +33,7 @@ final class CompositionRoot {
   final DatabasePool _db;
   final CacheService _cache;
   final EventBus _eventBus;
-  final CryptoWorkerPool _crypto;
+  final CryptoSync _crypto;
   final JwtService _jwtService;
   final TokenService _tokenService;
   final ApiKeyRepo apiKeyRepo;
@@ -43,7 +43,7 @@ final class CompositionRoot {
     required DatabasePool db,
     required CacheService cache,
     required EventBus eventBus,
-    required CryptoWorkerPool crypto,
+    required CryptoSync crypto,
     required JwtService jwtService,
     required TokenService tokenService,
     required this.apiKeyRepo,
@@ -66,7 +66,6 @@ final class CompositionRoot {
     );
     final cache = await CacheService.connect(config.redisUrl);
     final eventBus = const NoOpEventBus();
-    final crypto = await CryptoWorkerPool.spawn(poolSize: 3);
 
     final jwtService = JwtService(
       privateKeyPath: config.jwtPrivateKeyPath,
@@ -76,7 +75,6 @@ final class CompositionRoot {
       accessTokenExpiry: Duration(seconds: config.jwtAccessTokenExpiry),
       refreshTokenExpiry: Duration(seconds: config.jwtRefreshTokenExpiry),
     );
-    await jwtService.initWorker();
 
     final keystoreRepo = PostgresKeystoreRepo(db);
     final keystoreGcTimer = Timer.periodic(
@@ -90,6 +88,8 @@ final class CompositionRoot {
       userCache: userCache,
     );
     final apiKeyRepo = PostgresApiKeyRepo(db);
+
+    final crypto = CryptoSync();
 
     return CompositionRoot._(
       db: db,
@@ -164,10 +164,8 @@ final class CompositionRoot {
   /// Release resources in reverse dependency order. Call on graceful shutdown.
   Future<void> dispose() async {
     _keystoreGcTimer?.cancel();
-    await _jwtService.dispose();
     await _eventBus.close();
     await _cache.close();
     await _db.close();
-    await _crypto.dispose();
   }
 }
