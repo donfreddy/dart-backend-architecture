@@ -15,8 +15,6 @@ import 'package:dart_backend_architecture/database/repository/interfaces/blog_re
 import 'package:dart_backend_architecture/database/repository/impl/postgres_keystore_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_role_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_user_repo.dart';
-import 'package:dart_backend_architecture/messaging/event_bus.dart';
-import 'package:dart_backend_architecture/messaging/no_op_event_bus.dart';
 import 'package:dart_backend_architecture/routes/router.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
 import 'package:dart_backend_architecture/services/blog_service.dart';
@@ -32,7 +30,6 @@ final _log = AppLogger.get('CompositionRoot');
 final class CompositionRoot {
   final DatabasePool _db;
   final CacheService _cache;
-  final EventBus _eventBus;
   final CryptoSync _crypto;
   final JwtService _jwtService;
   final TokenService _tokenService;
@@ -42,7 +39,6 @@ final class CompositionRoot {
   CompositionRoot._({
     required DatabasePool db,
     required CacheService cache,
-    required EventBus eventBus,
     required CryptoSync crypto,
     required JwtService jwtService,
     required TokenService tokenService,
@@ -50,7 +46,6 @@ final class CompositionRoot {
     required Timer? keystoreGcTimer,
   })  : _db = db,
         _cache = cache,
-        _eventBus = eventBus,
         _crypto = crypto,
         _jwtService = jwtService,
         _tokenService = tokenService,
@@ -65,7 +60,6 @@ final class CompositionRoot {
       maxConnections: config.dbPoolSize,
     );
     final cache = await CacheService.connect(config.redisUrl);
-    final eventBus = const NoOpEventBus();
 
     final jwtService = JwtService(
       privateKeyPath: config.jwtPrivateKeyPath,
@@ -94,7 +88,6 @@ final class CompositionRoot {
     return CompositionRoot._(
       db: db,
       cache: cache,
-      eventBus: eventBus,
       crypto: crypto,
       jwtService: jwtService,
       tokenService: tokenService,
@@ -136,12 +129,10 @@ final class CompositionRoot {
     jwt: _jwtService,
     crypto: _crypto,
     tokenService: _tokenService,
-    eventBus: _eventBus,
   );
 
   late final BlogService _blogService = BlogService(
     blogRepo: _cachingBlogRepo,
-    eventBus: _eventBus,
   );
 
   // ── HTTP handler ───────────────────────────────────────────────────────────
@@ -164,7 +155,6 @@ final class CompositionRoot {
   /// Release resources in reverse dependency order. Call on graceful shutdown.
   Future<void> dispose() async {
     _keystoreGcTimer?.cancel();
-    await _eventBus.close();
     await _cache.close();
     await _db.close();
   }

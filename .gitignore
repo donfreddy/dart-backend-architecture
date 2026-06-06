@@ -26,6 +26,9 @@ keys/public.pem
 .DS_Store
 Thumbs.db
 
+# ── Audit ────────────────────────────────────────────────────
+deep_audit.md
+
 # ── Docker ────────────────────────────────────────────────────
 docker-compose.override.yml
 

@@ -29,99 +29,13 @@ void main() {
     isPublished: true,
   );
 
-  group('BlogService — event publication', () {
+  group('BlogService', () {
     late MockBlogRepo blogRepo;
-    late MockEventBus eventBus;
     late BlogService sut;
-
-    setUpAll(() {
-      registerFallbackValue(blog);
-    });
 
     setUp(() {
       blogRepo = MockBlogRepo();
-      eventBus = MockEventBus();
-      sut = BlogService(blogRepo: blogRepo, eventBus: eventBus);
-    });
-
-    test('create publishes blog.created event', () async {
-      when(() => blogRepo.create(any())).thenAnswer((_) async => blog);
-      when(() => eventBus.publish(any(), any())).thenAnswer((_) async {});
-
-      await sut.create(blog);
-
-      verify(() => eventBus.publish('blog.created', any())).called(1);
-    });
-
-    test('update publishes blog.updated event for unchanged state', () async {
-      when(() => blogRepo.findById(any<String>()))
-          .thenAnswer((_) async => blog);
-      when(() => blogRepo.update(blog)).thenAnswer((_) async {});
-      when(() => eventBus.publish(any<String>(), any())).thenAnswer((_) async {});
-
-      await sut.update(blog);
-
-      verify(() => eventBus.publish('blog.updated', any())).called(1);
-    });
-
-    test('update publishes blog.submitted on submit transition', () async {
-      final draft = blog.copyWith(
-        isSubmitted: false,
-        isDraft: true,
-        isPublished: false,
-      );
-      final submitted = blog.copyWith(
-        isSubmitted: true,
-        isDraft: false,
-        isPublished: false,
-      );
-      when(() => blogRepo.findById(any<String>()))
-          .thenAnswer((_) async => draft);
-      when(() => blogRepo.update(submitted)).thenAnswer((_) async {});
-      when(() => eventBus.publish(any<String>(), any())).thenAnswer((_) async {});
-
-      await sut.update(submitted);
-
-      verify(() => eventBus.publish('blog.submitted', any())).called(1);
-    });
-
-    test('update publishes blog.published on publish transition', () async {
-      final draft = blog.copyWith(
-        isSubmitted: true,
-        isDraft: false,
-        isPublished: false,
-      );
-      final published = draft.copyWith(isPublished: true);
-      when(() => blogRepo.findById(any<String>()))
-          .thenAnswer((_) async => draft);
-      when(() => blogRepo.update(published)).thenAnswer((_) async {});
-      when(() => eventBus.publish(any<String>(), any())).thenAnswer((_) async {});
-
-      await sut.update(published);
-
-      verify(() => eventBus.publish('blog.published', any())).called(1);
-    });
-
-    test('update publishes blog.deleted on status=false transition', () async {
-      final active = blog.copyWith(status: true);
-      final deleted = blog.copyWith(status: false);
-      when(() => blogRepo.findById(any<String>()))
-          .thenAnswer((_) async => active);
-      when(() => blogRepo.update(deleted)).thenAnswer((_) async {});
-      when(() => eventBus.publish(any<String>(), any())).thenAnswer((_) async {});
-
-      await sut.update(deleted);
-
-      verify(() => eventBus.publish('blog.deleted', any())).called(1);
-    });
-
-    test('create still succeeds when event bus is unavailable', () async {
-      when(() => blogRepo.create(any())).thenAnswer((_) async => blog);
-      when(() => eventBus.publish(any(), any()))
-          .thenThrow(Exception('event bus down'));
-
-      // Must not rethrow — events are best-effort
-      await expectLater(sut.create(blog), completes);
+      sut = BlogService(blogRepo: blogRepo);
     });
 
     test('findByUrl delegates to repo', () async {
