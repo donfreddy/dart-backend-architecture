@@ -8,7 +8,6 @@ final class AppConfig {
   final int port;
   final String databaseUrl;
   final String redisUrl;
-  final String natsUrl;
   final String jwtPrivateKeyPath;
   final String jwtPublicKeyPath;
   final String jwtPrivateKeyPem;
@@ -26,7 +25,6 @@ final class AppConfig {
     required this.port,
     required this.databaseUrl,
     required this.redisUrl,
-    required this.natsUrl,
     required this.jwtPrivateKeyPath,
     required this.jwtPublicKeyPath,
     required this.jwtPrivateKeyPem,
@@ -45,8 +43,6 @@ final class AppConfig {
     'PORT': z.coerce().integer(min: 1, max: 65535).withDefault(8080),
     'DATABASE_URL': z.string().min(1),
     'REDIS_URL': z.string().min(1),
-    'NATS_URL':
-        z.string().withDefault(''), // empty = NATS disabled (NoOpEventBus)
     // Keys can be supplied as file paths OR as raw PEM content via env vars.
     // At least one form must be non-empty for each key (validated in JwtService).
     'JWT_PRIVATE_KEY_PATH': z.string().withDefault(''),
@@ -89,7 +85,6 @@ final class AppConfig {
       port: env['PORT'] as int,
       databaseUrl: env['DATABASE_URL'] as String,
       redisUrl: env['REDIS_URL'] as String,
-      natsUrl: env['NATS_URL'] as String,
       jwtPrivateKeyPath: env['JWT_PRIVATE_KEY_PATH'] as String,
       jwtPublicKeyPath: env['JWT_PUBLIC_KEY_PATH'] as String,
       jwtPrivateKeyPem: env['JWT_PRIVATE_KEY_PEM'] as String,

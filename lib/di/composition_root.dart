@@ -16,8 +16,6 @@ import 'package:dart_backend_architecture/database/repository/impl/postgres_keys
 import 'package:dart_backend_architecture/database/repository/impl/postgres_role_repo.dart';
 import 'package:dart_backend_architecture/database/repository/impl/postgres_user_repo.dart';
 import 'package:dart_backend_architecture/messaging/event_bus.dart';
-import 'package:dart_backend_architecture/messaging/nats_event_bus.dart';
-import 'package:dart_backend_architecture/messaging/nats_service.dart';
 import 'package:dart_backend_architecture/messaging/no_op_event_bus.dart';
 import 'package:dart_backend_architecture/routes/router.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
@@ -59,15 +57,15 @@ final class CompositionRoot {
         _keystoreGcTimer = keystoreGcTimer;
 
   /// Initialize infrastructure dependencies once at process start.
-  /// NATS connection is optional: if [NATS_URL] is empty a [NoOpEventBus]
-  /// is used so the application starts without a NATS broker.
+  /// EventBus is always [NoOpEventBus] — replaces with a real transport
+  /// when async event consumers exist.
   static Future<CompositionRoot> initialize(AppConfig config) async {
     final db = await DatabasePool.connect(
       config.databaseUrl,
       maxConnections: config.dbPoolSize,
     );
     final cache = await CacheService.connect(config.redisUrl);
-    final eventBus = await _initEventBus(config.natsUrl);
+    final eventBus = const NoOpEventBus();
     final crypto = await CryptoWorker.spawn();
 
     final jwtService = JwtService(
@@ -115,20 +113,6 @@ final class CompositionRoot {
     });
   }
 
-  static Future<EventBus> _initEventBus(String natsUrl) async {
-    if (natsUrl.isEmpty) {
-      _log.info('NATS_URL not set - using NoOpEventBus (events disabled)');
-      return const NoOpEventBus();
-    }
-    try {
-      final nats = await NatsService.connect(natsUrl);
-      return NatsEventBus(nats);
-    } catch (e) {
-      _log.warning('NATS connection failed - falling back to NoOpEventBus: $e');
-      return const NoOpEventBus();
-    }
-  }
-
   // ── Repositories ───────────────────────────────────────────────────────────
 
   late final PostgresKeystoreRepo _keystoreRepo = PostgresKeystoreRepo(_db);
@@ -140,8 +124,6 @@ final class CompositionRoot {
 
   late final UserCache _userCache = UserCache(_cache);
 
-  /// CachingBlogRepo wraps the Postgres implementation with read-through caching
-  /// and write invalidation, keeping BlogService free of cache concerns.
   late final BlogRepo _cachingBlogRepo = CachingBlogRepo(
     inner: PostgresBlogRepo(_db),
     cache: BlogCache(_cache),
@@ -164,7 +146,6 @@ final class CompositionRoot {
 
   // ── HTTP handler ───────────────────────────────────────────────────────────
 
-  /// Fully-wired HTTP handler including health/readiness endpoints.
   late final Handler router = buildRouter(
     authService: _authService,
     blogService: _blogService,
@@ -178,7 +159,6 @@ final class CompositionRoot {
       return true;
     },
     cacheCheck: () => _cache.ping(),
-    natsCheck: () => _eventBus.ping(),
   );
 
   /// Release resources in reverse dependency order. Call on graceful shutdown.

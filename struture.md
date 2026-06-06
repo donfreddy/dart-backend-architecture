@@ -63,7 +63,8 @@ dart-backend-architecture/
 │   │       └── user_cache.dart
 │   │
 │   ├── messaging/
-│   │   └── nats_service.dart
+│   │   ├── event_bus.dart
+│   │   └── no_op_event_bus.dart
 │   │
 │   ├── workers/
 │   │   └── crypto_worker.dart

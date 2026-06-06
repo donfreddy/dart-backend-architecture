@@ -16,7 +16,6 @@ services:
       PORT: 8080
       DATABASE_URL: postgres://dba:dba@postgres:5432/dba?sslmode=disable
       REDIS_URL: redis://redis:6379
-      NATS_URL: nats://nats:4222
       JWT_PRIVATE_KEY_PATH: keys/private.pem
       JWT_PUBLIC_KEY_PATH: keys/public.pem
       OTEL_ENDPOINT: http://otel-collector:4318
@@ -31,8 +30,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      nats:
-        condition: service_started
       migrations:
         condition: service_completed_successfully
     restart: on-failure
@@ -82,14 +79,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-  # ── NATS ─────────────────────────────────────────────────────
-  nats:
-    image: nats:2-alpine
-    container_name: nats
-    ports:
-      - "${NATS_PORT:-4222}:4222"
-      - "8222:8222" # HTTP monitoring UI
 
   # ── OpenTelemetry Collector ───────────────────────────────────
   otel-collector:

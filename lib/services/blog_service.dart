@@ -8,7 +8,7 @@ import 'package:dart_backend_architecture/messaging/event_bus.dart';
 ///
 /// Responsibilities:
 ///   - Business-rule validation (non-empty fields, page bounds).
-///   - NATS event publication on writes (best-effort, never fatal).
+///   - Event publication on writes via [EventBus] (best-effort, never fatal).
 ///
 /// Cache read-through and write invalidation are handled by [CachingBlogRepo],
 /// which is injected as the [blogRepo] dependency. This keeps the service

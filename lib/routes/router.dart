@@ -20,7 +20,6 @@ Handler buildRouter({
   required RoleRepo roleRepo,
   required Probe dbCheck,
   required Probe cacheCheck,
-  required Probe natsCheck,
   UserCache? userCache,
 }) {
   final root = Router();
@@ -31,7 +30,6 @@ Handler buildRouter({
     return readyzHandler(
       dbCheck: dbCheck,
       cacheCheck: cacheCheck,
-      natsCheck: natsCheck,
     );
   });
 

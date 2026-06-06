@@ -22,13 +22,11 @@ Future<Response> healthzHandler(Request _) async {
 Future<Response> readyzHandler({
   required Probe dbCheck,
   required Probe cacheCheck,
-  required Probe natsCheck,
   Duration timeout = const Duration(seconds: 2),
 }) async {
   final results = await Future.wait([
     _run('database', dbCheck, timeout),
     _run('cache', cacheCheck, timeout),
-    _run('nats', natsCheck, timeout),
   ]);
 
   final allHealthy = results.every((r) => r.ok);

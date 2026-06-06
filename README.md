@@ -9,7 +9,7 @@
 
 <p align="center">
   Learn to build a backend server for a production ready blogging platform like Medium and FreeCodeCamp.<br>
-  Built with Shelf, PostgreSQL, Redis and NATS.
+  Built with Shelf, PostgreSQL and Redis.
 </p>
 
 <p align="center">
@@ -37,7 +37,7 @@ What makes it different:
 | HTTP | **shelf + shelf_router** | Official Dart middleware framework, no magic |
 | Database | **PostgreSQL + postgres v3** | SQL-first, transactions, explicit queries |
 | Cache | **Redis** | Cache-aside with read-through decorator |
-| Events | **NATS** | Async pub/sub, optional (NoOp fallback) |
+| Events | **EventBus** | Extension point for async pub/sub (currently NoOp) |
 | Validation | **Zema** | Type-safe schema validation |
 | Auth | **JWT RS256** | Access + refresh token rotation, keystore lifecycle |
 | Observability | **OpenTelemetry** | Distributed tracing + metrics + structured logs |
@@ -85,14 +85,11 @@ graph TD
         RD[(Redis)]
     end
 
-    EB{EventBus · NATS · optional}
-
     MW --> Routes
     Routes --> Services
     S1 --> W1
     S1 --> S2
     S2 --> W2
-    S3 --> EB
     Services --> Repos
     UR --> PG
     KR --> PG
@@ -121,7 +118,7 @@ lib/
 │   └── repository/             # Interfaces + impls + caching decorator
 ├── di/
 │   └── composition_root.dart   # Single wiring point (no service locator)
-├── messaging/                  # EventBus interface + NATS + NoOp
+├── messaging/                  # EventBus interface + NoOp implementation
 ├── routes/
 │   ├── health_handler.dart     # /healthz + /readyz
 │   └── v1/
@@ -175,7 +172,6 @@ docker compose exec api dart run bin/db_seed.dart
 |---|---|
 | API | `http://localhost:8080` |
 | Grafana / OTel | `http://localhost:3000` |
-| NATS monitor | `http://localhost:8222` |
 
 > **API key** (seeded by default) : `GCMUDiuY5a7WvyUNt9n3QztToSHzK7Uj`  
 > Send it via the `x-api-key` header on every request.
@@ -191,7 +187,7 @@ PostgreSQL runs on `tmpfs` (in-memory). Separate credentials. Destroyed on teard
 
 ### 2C) Run locally
 
-Requirements: PostgreSQL 16, Redis 7, NATS 2, dbmate
+Requirements: PostgreSQL 16, Redis 7, dbmate
 
 ```bash
 # Dev

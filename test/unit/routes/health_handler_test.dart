@@ -15,7 +15,6 @@ void main() {
     final res = await readyzHandler(
       dbCheck: () async => true,
       cacheCheck: () async => true,
-      natsCheck: () async => true,
     );
 
     expect(res.statusCode, 200);
@@ -26,7 +25,6 @@ void main() {
     final res = await readyzHandler(
       dbCheck: () async => true,
       cacheCheck: () async => false,
-      natsCheck: () async => true,
     );
 
     expect(res.statusCode, 503);
