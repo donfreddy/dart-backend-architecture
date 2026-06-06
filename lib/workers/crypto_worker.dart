@@ -105,6 +105,56 @@ class CryptoWorker implements PasswordHasher {
   }
 }
 
+/// Pool of [CryptoWorker]s with round‑robin distribution.
+///
+/// Each call to [hashPassword], [verifyPassword] or [fakeHash] is dispatched
+/// to the next worker in the ring so that BCrypt operations can saturate
+/// multiple CPU cores.
+///
+/// Default pool size (3) was chosen empirically: BCrypt with logRounds=12
+/// takes ~250 ms per hash on modern hardware; 3 workers keep the HTTP event
+/// loop responsive under load while leaving headroom for other isolates.
+class CryptoWorkerPool implements PasswordHasher {
+  final List<CryptoWorker> _workers;
+  int _nextIndex;
+
+  CryptoWorkerPool._(this._workers, this._nextIndex);
+
+  /// Spawn [poolSize] isolate workers and return a ready‑to‑use pool.
+  static Future<CryptoWorkerPool> spawn({int poolSize = 3}) async {
+    final workers = await Future.wait(
+      List.generate(poolSize, (_) => CryptoWorker.spawn()),
+    );
+    _log.info('CryptoWorkerPool spawned with $poolSize workers');
+    return CryptoWorkerPool._(workers, 0);
+  }
+
+  CryptoWorker _next() {
+    final index = _nextIndex;
+    _nextIndex = (_nextIndex + 1) % _workers.length;
+    return _workers[index];
+  }
+
+  @override
+  Future<String> hashPassword(String plaintext) =>
+      _next().hashPassword(plaintext);
+
+  @override
+  Future<bool> verifyPassword(String plaintext, String hash) =>
+      _next().verifyPassword(plaintext, hash);
+
+  @override
+  Future<void> fakeHash() => _next().fakeHash();
+
+  /// Shut down all workers in the pool.
+  Future<void> dispose() async {
+    for (final w in _workers) {
+      await w.dispose();
+    }
+    _log.info('CryptoWorkerPool disposed (${_workers.length} workers)');
+  }
+}
+
 // ── Worker entry point (runs inside the Isolate) ─────────────────────────────
 
 void _workerEntryPoint(SendPort callerSendPort) {

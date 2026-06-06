@@ -21,7 +21,7 @@ import 'package:dart_backend_architecture/routes/router.dart';
 import 'package:dart_backend_architecture/services/auth_service.dart';
 import 'package:dart_backend_architecture/services/blog_service.dart';
 import 'package:dart_backend_architecture/services/token_service.dart';
-import 'package:dart_backend_architecture/workers/crypto_worker.dart';
+import 'package:dart_backend_architecture/workers/crypto_worker.dart' show CryptoWorkerPool;
 import 'package:shelf/shelf.dart';
 
 final _log = AppLogger.get('CompositionRoot');
@@ -33,7 +33,7 @@ final class CompositionRoot {
   final DatabasePool _db;
   final CacheService _cache;
   final EventBus _eventBus;
-  final CryptoWorker _crypto;
+  final CryptoWorkerPool _crypto;
   final JwtService _jwtService;
   final TokenService _tokenService;
   final ApiKeyRepo apiKeyRepo;
@@ -43,7 +43,7 @@ final class CompositionRoot {
     required DatabasePool db,
     required CacheService cache,
     required EventBus eventBus,
-    required CryptoWorker crypto,
+    required CryptoWorkerPool crypto,
     required JwtService jwtService,
     required TokenService tokenService,
     required this.apiKeyRepo,
@@ -66,7 +66,7 @@ final class CompositionRoot {
     );
     final cache = await CacheService.connect(config.redisUrl);
     final eventBus = const NoOpEventBus();
-    final crypto = await CryptoWorker.spawn();
+    final crypto = await CryptoWorkerPool.spawn(poolSize: 3);
 
     final jwtService = JwtService(
       privateKeyPath: config.jwtPrivateKeyPath,
