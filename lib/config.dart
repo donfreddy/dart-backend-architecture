@@ -18,7 +18,6 @@ final class AppConfig {
   final String environment;
   final int maxRequestBodyBytes;
   final int dbPoolSize;
-  final int workerCount;
 
   const AppConfig._({
     required this.port,
@@ -34,7 +33,6 @@ final class AppConfig {
     required this.environment,
     required this.maxRequestBodyBytes,
     required this.dbPoolSize,
-    required this.workerCount,
   });
 
   static final _schema = z.object({
@@ -56,7 +54,6 @@ final class AppConfig {
     'MAX_REQUEST_BODY_BYTES':
         z.coerce().integer(min: 1024).withDefault(1024 * 1024),
     'DB_POOL_SIZE': z.coerce().integer(min: 1).withDefault(20),
-    'WORKER_COUNT': z.coerce().integer(min: 0).withDefault(0),
   });
 
   /// Load configuration from `.env` (if present) and environment variables.
@@ -92,7 +89,6 @@ final class AppConfig {
       environment: env['ENVIRONMENT'] as String,
       maxRequestBodyBytes: env['MAX_REQUEST_BODY_BYTES'] as int,
       dbPoolSize: env['DB_POOL_SIZE'] as int,
-      workerCount: env['WORKER_COUNT'] as int,
     );
   }
 
