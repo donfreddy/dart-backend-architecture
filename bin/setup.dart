@@ -128,7 +128,11 @@ Future<void> _generateKeys(Logger log) async {
   }
 
   // Check openssl is available
-  final which = await Process.run('which', ['openssl'], runInShell: true,);
+  final which = await Process.run(
+    'which',
+    ['openssl'],
+    runInShell: true,
+  );
   if (which.exitCode != 0) {
     log.info('  ⚠️  openssl not found. Generate keys manually:\n'
         '      openssl genrsa -out keys/private.pem 2048\n'
@@ -136,26 +140,34 @@ Future<void> _generateKeys(Logger log) async {
     return;
   }
 
-  final genKey = await Process.run('openssl', [
-    'genrsa',
-    '-out',
-    'keys/private.pem',
-    '2048',
-  ], runInShell: true,);
+  final genKey = await Process.run(
+    'openssl',
+    [
+      'genrsa',
+      '-out',
+      'keys/private.pem',
+      '2048',
+    ],
+    runInShell: true,
+  );
 
   if (genKey.exitCode != 0) {
     _error('Failed to generate private key:\n${genKey.stderr}');
     return;
   }
 
-  final extractPub = await Process.run('openssl', [
-    'rsa',
-    '-in',
-    'keys/private.pem',
-    '-pubout',
-    '-out',
-    'keys/public.pem',
-  ], runInShell: true,);
+  final extractPub = await Process.run(
+    'openssl',
+    [
+      'rsa',
+      '-in',
+      'keys/private.pem',
+      '-pubout',
+      '-out',
+      'keys/public.pem',
+    ],
+    runInShell: true,
+  );
 
   if (extractPub.exitCode != 0) {
     _error('Failed to extract public key:\n${extractPub.stderr}');

@@ -152,7 +152,6 @@ void main() {
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
 
-
       final user = body['data']['user'] as Map<String, dynamic>;
       expect(user['id'], isA<String>());
       expect(user['email'], 'signup$_emailSuffix');
@@ -307,7 +306,6 @@ void main() {
 
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
-
 
       final user = body['data']['user'] as Map<String, dynamic>;
       expect(user['email'], loginEmail);

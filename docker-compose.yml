@@ -23,6 +23,7 @@ services:
       WORKER_COUNT: 1
     volumes:
       - .:/app
+      - /app/.dart_tool
       - ./keys:/app/keys:ro
       - pub-cache:/root/.pub-cache
     depends_on:
