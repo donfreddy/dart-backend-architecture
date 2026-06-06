@@ -108,19 +108,6 @@ final class WorkerConfig {
   });
 }
 
-/// Main-side reference to a running worker.
-final class WorkerHandle {
-  final int id;
-  final SendPort controlPort;
-  final Completer<void> ackCompleter;
-
-  WorkerHandle({
-    required this.id,
-    required this.controlPort,
-    required this.ackCompleter,
-  });
-}
-
 // -- Entry point --------------------------------------------------------------
 
 Future<void> main() async {
@@ -136,51 +123,64 @@ Future<void> main() async {
   log.info('Starting $workerCount isolate(s) on port ${config.port}');
 
   // Caps concurrent DB pool negotiations at boot.
-  // With min:2/max:10 per worker and concurrency:4, the burst is ≤40
-  // connections — within Postgres defaults.
   final semaphore = InitSemaphore(config.initConcurrency);
 
-  // Single inbound port for all worker messages; broadcast so the
-  // dispatch subscription and per-worker futures coexist.
+  // Single inbound port for all worker messages; broadcast so multiple
+  // subscribers (boot + runtime) coexist.
   final mainPort = ReceivePort();
   final mainStream = mainPort.asBroadcastStream();
 
-  // Pre-allocate completers before spawning so the dispatch listener
-  // can resolve them regardless of message arrival order.
+  // Runtime state — populated at boot and updated on respawn.
+  final workerControlPorts = <int, SendPort>{};
+  final workerAckCompleters = <int, Completer<void>>{};
+
+  // Boot completers — resolved once, never used again after boot.
   final readyCompleters = <int, Completer<SendPort>>{
     for (var i = 1; i < workerCount; i++) i: Completer<SendPort>(),
   };
-  final ackCompleters = <int, Completer<void>>{
-    for (var i = 1; i < workerCount; i++) i: Completer<void>(),
-  };
 
-  // Centralized dispatch — one subscription routes all worker messages.
-  final sub = mainStream.listen((message) {
+  // Persistent subscription handles WorkerReady (boot + respawn) and
+  // ShutdownAck. Stays alive for the entire process lifetime.
+  mainStream.listen((message) {
     switch (message) {
       case WorkerReady(:final workerId, :final controlPort):
+        workerControlPorts[workerId] = controlPort;
         readyCompleters[workerId]?.complete(controlPort);
       case ShutdownAck(:final workerId):
-        ackCompleters[workerId]?.complete();
+        workerAckCompleters[workerId]?.complete();
       case _:
         log.warning('Unexpected message from worker: $message');
     }
   });
 
-  // Spawn all isolates in parallel — Isolate.spawn is cheap.
-  // DB init concurrency is throttled inside each worker via the semaphore.
-  for (var i = 1; i < workerCount; i++) {
+  void spawnWorker(int id) {
     unawaited(
       Isolate.spawn(
         _workerEntryPoint,
         WorkerConfig(
-          id: i,
+          id: id,
           mainPort: mainPort.sendPort,
           semaphorePort: semaphore.acquirePort,
         ),
-        debugName: 'worker-$i',
-        onError: _isolateErrorPort(i, log).sendPort,
+        debugName: 'worker-$id',
+        onError: _createErrorHandler(
+          workerId: id,
+          onCrash: () {
+            log.severe('[worker-$id] crashed — respawning in 2s');
+            Future.delayed(
+              const Duration(seconds: 2),
+              () => spawnWorker(id),
+            );
+          },
+          log: log,
+        ).sendPort,
       ),
     );
+  }
+
+  // Spawn all isolates in parallel.
+  for (var i = 1; i < workerCount; i++) {
+    spawnWorker(i);
   }
 
   // Wait for all workers to be ready before serving traffic.
@@ -193,21 +193,9 @@ Future<void> main() async {
     ),
   );
 
-  await sub.cancel();
   semaphore.close();
 
-  // Completers are all resolved — extract synchronously.
-  final workers = [
-    for (var i = 1; i < workerCount; i++)
-      WorkerHandle(
-        id: i,
-        controlPort: await readyCompleters[i]!.future,
-        ackCompleter: ackCompleters[i]!,
-      ),
-  ];
-
-  // The main isolate acts as worker-0 and bypasses the semaphore —
-  // it initializes after all workers are up to avoid contention.
+  // The main isolate acts as worker-0 and bypasses the semaphore.
   final mainServer = await _bindServer(config);
   final mainRoot = await CompositionRoot.initialize(config);
 
@@ -230,16 +218,16 @@ Future<void> main() async {
 
   log.info('Shutdown signal received — draining workers...');
 
-  for (final w in workers) {
-    w.controlPort.send(ShutdownCommand());
+  for (final controlPort in workerControlPorts.values) {
+    controlPort.send(ShutdownCommand());
   }
 
   await Future.wait([
     _gracefulStop(server: mainServer, root: mainRoot, log: log, workerId: 0),
-    ...workers.map(
-      (w) => w.ackCompleter.future.timeout(
+    ...workerControlPorts.keys.map(
+      (id) => (workerAckCompleters[id]?.future ?? Future.value()).timeout(
         const Duration(seconds: 25),
-        onTimeout: () => log.warning('[worker-${w.id}] ACK timeout'),
+        onTimeout: () => log.warning('[worker-$id] ACK timeout'),
       ),
     ),
   ]);
@@ -353,11 +341,15 @@ Future<void> _gracefulStop({
   log.info('[worker-$workerId] Stopped.');
 }
 
-/// Returns a [RawReceivePort] that logs uncaught isolate errors without
-/// terminating the process.
-RawReceivePort _isolateErrorPort(int workerId, Logger log) {
+/// Returns a [RawReceivePort] that logs uncaught isolate errors and
+/// triggers a delayed respawn via [onCrash].
+RawReceivePort _createErrorHandler({
+  required int workerId,
+  required void Function() onCrash,
+  required Logger log,
+}) {
   return RawReceivePort((dynamic error) {
     log.severe('[worker-$workerId] Uncaught error: $error');
-    // TODO: restart isolate or trigger alerting.
+    onCrash();
   });
 }
