@@ -4,13 +4,25 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - 'addons/**'
+      - '.github/**'
+      - 'keys/**'
+      - 'LICENSE'
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - 'addons/**'
+      - '.github/**'
+      - 'keys/**'
+      - 'LICENSE'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true # Cancel outdated runs on new push
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
 
