@@ -25,7 +25,7 @@ What makes it different:
 
 * **Dart idioms, not framework magic**: constructor injection, sealed types, pattern matching, no code generation
 * **SQL-first with PostgreSQL**: explicit queries, real transactions, no query builder abstraction leak
-* **CPU-bound work in isolates**: BCrypt hashing and RSA JWT verification run on dedicated workers, never blocking the HTTP event loop
+* **Synchronous crypto**: BCrypt hashing and RSA JWT verification run synchronously — fast enough (<250ms) to never need isolates
 * **Observable by default**: OpenTelemetry tracing + structured logging, every request is measurable
 
 
@@ -37,7 +37,6 @@ What makes it different:
 | HTTP | **shelf + shelf_router** | Official Dart middleware framework, no magic |
 | Database | **PostgreSQL + postgres v3** | SQL-first, transactions, explicit queries |
 | Cache | **Redis** | Cache-aside with read-through decorator |
-| Events | **EventBus** | Extension point for async pub/sub (currently NoOp) |
 | Validation | **Zema** | Type-safe schema validation |
 | Auth | **JWT RS256** | Access + refresh token rotation, keystore lifecycle |
 | Observability | **OpenTelemetry** | Distributed tracing + metrics + structured logs |
@@ -63,12 +62,6 @@ graph TD
     subgraph Services["Services"]
         S1[AuthService]
         S2[TokenService]
-        S3[BlogService]
-    end
-
-    subgraph Workers["Isolate Workers"]
-        W1[CryptoWorker · BCrypt]
-        W2[JwtWorker · RSA verify]
     end
 
     subgraph Repos["Repositories"]
@@ -118,7 +111,8 @@ lib/
 │   └── repository/             # Interfaces + impls + caching decorator
 ├── di/
 │   └── composition_root.dart   # Single wiring point (no service locator)
-├── messaging/                  # EventBus interface + NoOp implementation
+├── workers/
+│   └── crypto_sync.dart        # Sync BCrypt wrapper (no isolates needed)
 ├── routes/
 │   ├── health_handler.dart     # /healthz + /readyz
 │   └── v1/
@@ -127,14 +121,10 @@ lib/
 │       ├── blogs/              # public endpoints
 │       └── profile/            # user profile
 ├── services/                   # Application business logic
-└── workers/                    # Isolate-based workers
-    ├── crypto_worker.dart      # BCrypt in dedicated isolate
-    └── jwt_worker.dart         # RSA JWT verification in dedicated isolate
-
 db/
 └── migrations/                 # 5 SQL migration files
 test/
-├── unit/                       # AuthService, BlogService, middleware tests
+├── unit/                       # AuthService, middleware, handler tests
 └── integration/                # End-to-end route tests
 ```
 
@@ -205,27 +195,9 @@ DATABASE_URL=postgres://dba_test:dba_test@localhost:5432/dba_test?sslmode=disabl
 dart test
 ```
 
-## The Isolate advantage
+## Single-isolate architecture
 
-JavaScript/Node.js runs on a single thread. Any CPU-bound operation blocks **everything** : including handling other HTTP requests. Dart's isolate model solves this natively.
-
-This project runs two dedicated workers:
-
-```
-┌─ Main Isolate (HTTP) ─────────────────────┐
-│  shelf router → services → repos          │
-│  Non-blocking I/O only                    │
-└───────────────────────────────────────────┘
-         │                        ▲
-         │  hash/verify           │  validate/decode
-         ▼                        │
-┌─ CryptoWorker  ───────┐  ┌─ JwtWorker ───────────┐
-│  BCrypt hashing       │  │  RSA RS256 verify     │
-│  Constant-time dummy  │  │  Decode (no expiry)   │
-│  hash for timing      │  │                       │
-│  attack mitigation    │  │                       │
-└───────────────────────┘  └───────────────────────┘
-```
+Initial versions ran BCrypt and RSA JWT verification in dedicated isolate workers. After profiling, they were removed — BCrypt (~250ms) and RSA verify (<2ms) are fast enough to run synchronously without measurable impact on request throughput. Dart's `shelf` is I/O-bound, not CPU-bound, so a single isolate is sufficient.
 
 ## Core principles
 
@@ -316,12 +288,11 @@ bin/server.dart
       → AuthService.signup
           → UserRepo.findByEmail           # Duplicate check
           → TokenService.generateKey × 2  # Pre-generate access + refresh keys
-          → CryptoWorker.hashPassword      # BCrypt in dedicated isolate
+          → CryptoSync.hashPassword        # BCrypt (sync, no isolate)
           → UserRepo.create                # User + keystore in one transaction
           → TokenService.buildForExistingKeys
               → JwtService.encode × 2     # RSA RS256 sign
-  → lib/core/response/api_response.dart   # Success envelope
-  → lib/core/response/shelf_response_x.dart
+  → lib/core/response/shelf_response_x.dart   # JSON response helpers
 ```
 
 ## Response format
