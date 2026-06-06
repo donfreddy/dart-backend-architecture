@@ -122,6 +122,19 @@ Future<void> main() async {
 
   log.info('Starting $workerCount isolate(s) on port ${config.port}');
 
+  // Validate total DB connections won't exceed PostgreSQL max_connections.
+  final totalPoolConnections = workerCount * config.dbPoolSize;
+  const pgMaxConnections = 100;
+  if (totalPoolConnections > pgMaxConnections) {
+    log.severe(
+      'WORKER_COUNT ($workerCount) × DB_POOL_SIZE (${config.dbPoolSize}) '
+      '= $totalPoolConnections > PostgreSQL max_connections ($pgMaxConnections).\n'
+      'Reduce WORKER_COUNT or DB_POOL_SIZE in .env, or increase '
+      'max_connections in postgresql.conf.',
+    );
+    exit(1);
+  }
+
   // Caps concurrent DB pool negotiations at boot.
   final semaphore = InitSemaphore(config.initConcurrency);
 
