@@ -16,7 +16,7 @@ Future<Response> editorPublishBlogHandler(
     source: ValidationSource.param,
   );
 
-  final blog = await blogService.findBlogAllDataById(validated['id'] as String);
+  final blog = await blogService.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
 
   final published = blog.copyWith(
@@ -41,7 +41,7 @@ Future<Response> editorUnpublishBlogHandler(
     source: ValidationSource.param,
   );
 
-  final blog = await blogService.findBlogAllDataById(validated['id'] as String);
+  final blog = await blogService.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
 
   final unpublished = blog.copyWith(
@@ -64,7 +64,7 @@ Future<Response> editorDeleteBlogHandler(
     source: ValidationSource.param,
   );
 
-  final blog = await blogService.findBlogAllDataById(validated['id'] as String);
+  final blog = await blogService.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
 
   await blogService.update(blog.copyWith(status: false));
@@ -162,7 +162,7 @@ Future<Response> editorBlogByIdHandler(
     source: ValidationSource.param,
   );
 
-  final blog = await blogService.findBlogAllDataById(validated['id'] as String);
+  final blog = await blogService.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (!blog.isSubmitted && !blog.isPublished) {
     throw const ForbiddenError('This blog is private');

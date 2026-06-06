@@ -67,7 +67,7 @@ Future<Response> writerUpdateBlogHandler(
 
   final authUser = request.authUser;
   final blog =
-      await blogService.findBlogAllDataById(validatedParams['id'] as String);
+      await blogService.findById(validatedParams['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (blog.author.id != authUser.id) {
     throw const ForbiddenError("You don't have necessary permissions");
@@ -115,7 +115,7 @@ Future<Response> writerSubmitBlogHandler(
   );
 
   final authUser = request.authUser;
-  final blog = await blogService.findBlogAllDataById(validated['id'] as String);
+  final blog = await blogService.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (blog.author.id != authUser.id) {
     throw const ForbiddenError("You don't have necessary permissions");
@@ -144,7 +144,7 @@ Future<Response> writerWithdrawBlogHandler(
   );
 
   final authUser = request.authUser;
-  final blog = await blogService.findBlogAllDataById(validated['id'] as String);
+  final blog = await blogService.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (blog.author.id != authUser.id) {
     throw const ForbiddenError("You don't have necessary permissions");
@@ -173,7 +173,7 @@ Future<Response> writerDeleteBlogHandler(
   );
 
   final authUser = request.authUser;
-  final blog = await blogService.findBlogAllDataById(validated['id'] as String);
+  final blog = await blogService.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (blog.author.id != authUser.id) {
     throw const ForbiddenError("You don't have necessary permissions");
@@ -290,7 +290,7 @@ Future<Response> writerBlogByIdHandler(
   );
 
   final authUser = request.authUser;
-  final blog = await blogService.findBlogAllDataById(validated['id'] as String);
+  final blog = await blogService.findById(validated['id'] as String);
   if (blog == null) throw const BadRequestError('Blog does not exists');
   if (blog.author.id != authUser.id) {
     throw const ForbiddenError("You don't have necessary permissions");

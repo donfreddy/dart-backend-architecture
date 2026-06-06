@@ -38,7 +38,7 @@ Future<Response> blogByIdHandler(
   );
 
   final blog =
-      await blogService.findInfoWithTextById(validated['id'] as String);
+      await blogService.findById(validated['id'] as String);
   if (blog == null) {
     throw const BadRequestError('Blog do not exists');
   }

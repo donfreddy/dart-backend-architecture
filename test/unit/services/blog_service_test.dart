@@ -54,10 +54,10 @@ void main() {
     });
 
     test('update publishes blog.updated event for unchanged state', () async {
-      when(() => blogRepo.findBlogAllDataById(any()))
+      when(() => blogRepo.findById(any<String>()))
           .thenAnswer((_) async => blog);
       when(() => blogRepo.update(blog)).thenAnswer((_) async {});
-      when(() => eventBus.publish(any(), any())).thenAnswer((_) async {});
+      when(() => eventBus.publish(any<String>(), any())).thenAnswer((_) async {});
 
       await sut.update(blog);
 
@@ -75,10 +75,10 @@ void main() {
         isDraft: false,
         isPublished: false,
       );
-      when(() => blogRepo.findBlogAllDataById(any()))
+      when(() => blogRepo.findById(any<String>()))
           .thenAnswer((_) async => draft);
       when(() => blogRepo.update(submitted)).thenAnswer((_) async {});
-      when(() => eventBus.publish(any(), any())).thenAnswer((_) async {});
+      when(() => eventBus.publish(any<String>(), any())).thenAnswer((_) async {});
 
       await sut.update(submitted);
 
@@ -92,10 +92,10 @@ void main() {
         isPublished: false,
       );
       final published = draft.copyWith(isPublished: true);
-      when(() => blogRepo.findBlogAllDataById(any()))
+      when(() => blogRepo.findById(any<String>()))
           .thenAnswer((_) async => draft);
       when(() => blogRepo.update(published)).thenAnswer((_) async {});
-      when(() => eventBus.publish(any(), any())).thenAnswer((_) async {});
+      when(() => eventBus.publish(any<String>(), any())).thenAnswer((_) async {});
 
       await sut.update(published);
 
@@ -105,10 +105,10 @@ void main() {
     test('update publishes blog.deleted on status=false transition', () async {
       final active = blog.copyWith(status: true);
       final deleted = blog.copyWith(status: false);
-      when(() => blogRepo.findBlogAllDataById(any()))
+      when(() => blogRepo.findById(any<String>()))
           .thenAnswer((_) async => active);
       when(() => blogRepo.update(deleted)).thenAnswer((_) async {});
-      when(() => eventBus.publish(any(), any())).thenAnswer((_) async {});
+      when(() => eventBus.publish(any<String>(), any())).thenAnswer((_) async {});
 
       await sut.update(deleted);
 

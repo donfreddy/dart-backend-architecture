@@ -6,10 +6,7 @@ import 'package:dart_backend_architecture/database/model/user.dart';
 /// Consumers that only need to query blogs (e.g. read-only use-cases, analytics)
 /// depend on this narrower interface rather than the full [BlogRepo].
 abstract interface class BlogQueryRepo {
-  Future<Blog?> findInfoById(String id);
-  Future<Blog?> findInfoWithTextById(String id);
-  Future<Blog?> findInfoWithTextAndDraftTextById(String id);
-  Future<Blog?> findBlogAllDataById(String id);
+  Future<Blog?> findById(String id);
 
   Future<Blog?> findByUrl(String blogUrl);
   Future<Blog?> findUrlIfExists(String blogUrl);

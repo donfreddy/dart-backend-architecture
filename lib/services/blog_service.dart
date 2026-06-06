@@ -130,29 +130,14 @@ class BlogService {
     return _blogRepo.findByTagAndPaginated(tag, page, size);
   }
 
-  Future<Blog?> findBlogAllDataById(String id) {
+  Future<Blog?> findById(String id) {
     _requireId(id);
-    return _blogRepo.findBlogAllDataById(id);
+    return _blogRepo.findById(id);
   }
 
   Future<Blog?> findByUrl(String blogUrl) {
     _requireNonEmpty(blogUrl, field: 'blogUrl');
     return _blogRepo.findByUrl(blogUrl);
-  }
-
-  Future<Blog?> findInfoById(String id) {
-    _requireId(id);
-    return _blogRepo.findInfoById(id);
-  }
-
-  Future<Blog?> findInfoWithTextAndDraftTextById(String id) {
-    _requireId(id);
-    return _blogRepo.findInfoWithTextAndDraftTextById(id);
-  }
-
-  Future<Blog?> findInfoWithTextById(String id) {
-    _requireId(id);
-    return _blogRepo.findInfoWithTextById(id);
   }
 
   Future<({List<Blog> items, int total})> findLatestBlogs(
@@ -188,7 +173,7 @@ class BlogService {
 
   Future<void> update(Blog blog) async {
     final old =
-        blog.id != null ? await _blogRepo.findBlogAllDataById(blog.id!) : null;
+        blog.id != null ? await _blogRepo.findById(blog.id!) : null;
     await _blogRepo.update(blog);
     await _publishBestEffort(
       subject: _detectEvent(old, blog),

@@ -117,7 +117,7 @@ Future<Response> similarBlogsByIdHandler(
     source: ValidationSource.param,
   );
 
-  final blog = await blogService.findBlogAllDataById(validated['id'] as String);
+  final blog = await blogService.findById(validated['id'] as String);
   if (blog == null || !blog.isPublished) {
     throw const BadRequestError('Blog is not available');
   }

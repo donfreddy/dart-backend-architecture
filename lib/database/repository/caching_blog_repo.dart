@@ -36,8 +36,8 @@ class CachingBlogRepo implements BlogRepo {
   // ── Cached reads ───────────────────────────────────────────────────────────
 
   @override
-  Future<Blog?> findInfoWithTextById(String id) {
-    return _cache.getByIdWithLoader(id, () => _inner.findInfoWithTextById(id));
+  Future<Blog?> findById(String id) {
+    return _cache.getByIdWithLoader(id, () => _inner.findById(id));
   }
 
   @override
@@ -49,17 +49,6 @@ class CachingBlogRepo implements BlogRepo {
   }
 
   // ── Pass-through reads ─────────────────────────────────────────────────────
-
-  @override
-  Future<Blog?> findInfoById(String id) => _inner.findInfoById(id);
-
-  @override
-  Future<Blog?> findInfoWithTextAndDraftTextById(String id) =>
-      _inner.findInfoWithTextAndDraftTextById(id);
-
-  @override
-  Future<Blog?> findBlogAllDataById(String id) =>
-      _inner.findBlogAllDataById(id);
 
   @override
   Future<Blog?> findUrlIfExists(String blogUrl) =>

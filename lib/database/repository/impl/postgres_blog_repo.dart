@@ -120,7 +120,7 @@ final class PostgresBlogRepo implements BlogRepo {
       );
 
       final id = result.first.toColumnMap()['id'] as String;
-      final created = await findBlogAllDataById(id);
+      final created = await findById(id);
       if (created == null) {
         throw const InternalError('Failed to load created blog');
       }
@@ -190,25 +190,7 @@ final class PostgresBlogRepo implements BlogRepo {
   }
 
   @override
-  Future<Blog?> findInfoById(String id) => _findOne(
-        whereClause: 'b.id = @id AND b.status = TRUE',
-        params: {'id': id},
-      );
-
-  @override
-  Future<Blog?> findInfoWithTextById(String id) => _findOne(
-        whereClause: 'b.id = @id AND b.status = TRUE',
-        params: {'id': id},
-      );
-
-  @override
-  Future<Blog?> findInfoWithTextAndDraftTextById(String id) => _findOne(
-        whereClause: 'b.id = @id AND b.status = TRUE',
-        params: {'id': id},
-      );
-
-  @override
-  Future<Blog?> findBlogAllDataById(String id) => _findOne(
+  Future<Blog?> findById(String id) => _findOne(
         whereClause: 'b.id = @id AND b.status = TRUE',
         params: {'id': id},
       );
