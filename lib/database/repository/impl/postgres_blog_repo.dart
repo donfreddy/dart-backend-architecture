@@ -343,7 +343,6 @@ final class PostgresBlogRepo implements BlogRepo {
         ) DESC,
         b.updated_at DESC
       ''',
-      limit: true,
     );
   }
 
@@ -363,7 +362,6 @@ final class PostgresBlogRepo implements BlogRepo {
           plainto_tsquery('simple', @query)
         ) DESC
       ''',
-      limit: true,
     );
   }
 
@@ -377,7 +375,6 @@ final class PostgresBlogRepo implements BlogRepo {
       ''',
       params: {'query': '%$query%', 'limit': limit, 'offset': 0},
       orderBy: 'b.score DESC',
-      limit: true,
     );
   }
 
@@ -399,13 +396,12 @@ final class PostgresBlogRepo implements BlogRepo {
     required String whereClause,
     Map<String, Object?> params = const {},
     required String orderBy,
-    bool limit = false,
   }) async {
     final rows = await _runSelect(
       whereClause: whereClause,
       params: params,
       orderBy: orderBy,
-      withLimit: limit,
+      withLimit: true,
     );
     return rows.map(_mapBlog).toList(growable: false);
   }
