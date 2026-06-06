@@ -58,8 +58,7 @@ Future<Response> blogsByAuthorIdHandler(
   final pageNumber = query.isSuccess ? query.value['pageNumber'] as int : 1;
   final limit = query.isSuccess ? query.value['pageItemCount'] as int : 10;
 
-  final author =
-      await userRepo.findProfileById(validated['id'] as String);
+  final author = await userRepo.findProfileById(validated['id'] as String);
   if (author == null) throw const BadRequestError('User not registered');
 
   final result = await blogRepo.findAllPublishedForAuthor(
