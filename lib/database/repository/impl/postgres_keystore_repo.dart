@@ -130,7 +130,8 @@ final class PostgresKeystoreRepo implements KeystoreRepo {
     final count = result.affectedRows;
     if (count > 0) {
       _log.info(
-          'GC: deleted $count expired keystore(s) older than ${olderThan.inDays} days');
+        'GC: deleted $count expired keystore(s) older than ${olderThan.inDays} days',
+      );
     }
     return count;
   }
