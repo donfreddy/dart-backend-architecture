@@ -115,7 +115,9 @@ class CacheService {
     }
   }
 
-  // ── Cache-aside pattern ────────────────────────────────────────────────────
+  // ── Cache-aside pattern with singleflight ─────────────────────────────────
+
+  final _inflight = <String, Future<Object?>>{};
 
   Future<T> getOrSet<T>(
     String key,
@@ -130,18 +132,33 @@ class CacheService {
       try {
         return deserialize(cached);
       } catch (e) {
-        // Corrupt cache entry — evict and reload
         _log.warning('Failed to deserialize cache entry for $key — evicting');
         await invalidate(key);
       }
     }
 
-    // 2. Load from source
+    // 2. Singleflight: deduplicate concurrent loaders for the same key
+    final existing = _inflight[key];
+    if (existing != null) return (await existing) as T;
+
+    // 3. Load from source and populate cache
+    final future = _doLoadAndSet(key, loader, serialize, ttl);
+    _inflight[key] = future;
+    try {
+      return (await future) as T;
+    } finally {
+      _inflight.remove(key);
+    }
+  }
+
+  Future<Object?> _doLoadAndSet<T>(
+    String key,
+    Future<T> Function() loader,
+    String Function(T) serialize,
+    Duration ttl,
+  ) async {
     final value = await loader();
-
-    // 3. Populate cache — never throws
     await set(key, serialize(value), ttl: ttl);
-
     return value;
   }
 
