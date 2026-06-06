@@ -351,6 +351,26 @@ bin/server.dart
 }
 ```
 
+### Paginated (200)
+
+```json
+{
+  "status": 10000,
+  "message": "success",
+  "data": {
+    "items": [ ... ],
+    "meta": {
+      "total_items": 42,
+      "current_page": 1,
+      "total_pages": 5,
+      "items_per_page": 10,
+      "has_next": true,
+      "has_previous": false
+    }
+  }
+}
+```
+
 ### Error (4xx/5xx)
 
 ```json
