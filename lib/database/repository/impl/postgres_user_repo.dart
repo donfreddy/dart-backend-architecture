@@ -1,5 +1,6 @@
 import 'package:dart_backend_architecture/core/errors/api_error.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
+import 'package:dart_backend_architecture/database/model/keystore.dart';
 import 'package:dart_backend_architecture/database/model/user.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/keystore_repo.dart';
 import 'package:dart_backend_architecture/database/repository/interfaces/role_repo.dart';
@@ -43,46 +44,72 @@ final class PostgresUserRepo implements UserRepo {
         throw const InternalError('Role must be defined');
       }
 
-      final result = await _pool.execute(
-        Sql.named('''
-          INSERT INTO users (id, email, name, password_hash, profile_pic_url, created_at, updated_at)
-          VALUES (@id, @email, @name, @passwordHash, @profilePicUrl, @createdAt, @updatedAt)
-          RETURNING id
-        '''),
-        parameters: {
-          'id': user.id,
-          'email': user.email,
-          'name': user.name,
-          'passwordHash': passwordHash,
-          'profilePicUrl': user.profilePicUrl,
-          'createdAt': now,
-          'updatedAt': now,
-        },
-      );
+      final txResult = await _pool.runTx((session) async {
+        final result = await session.execute(
+          Sql.named('''
+            INSERT INTO users (id, email, name, password_hash, profile_pic_url, created_at, updated_at)
+            VALUES (@id, @email, @name, @passwordHash, @profilePicUrl, @createdAt, @updatedAt)
+            RETURNING id
+          '''),
+          parameters: {
+            'id': user.id,
+            'email': user.email,
+            'name': user.name,
+            'passwordHash': passwordHash,
+            'profilePicUrl': user.profilePicUrl,
+            'createdAt': now,
+            'updatedAt': now,
+          },
+        );
 
-      final userId = result.first[0] as String;
-      await _pool.execute(
-        Sql.named('''
-          INSERT INTO user_roles (user_id, role_id, created_at)
-          VALUES (@userId, @roleId, @createdAt)
-          ON CONFLICT (user_id, role_id) DO NOTHING
-        '''),
-        parameters: {
-          'userId': userId,
-          'roleId': role.id,
-          'createdAt': now,
-        },
-      );
+        final userId = result.first[0] as String;
 
-      final createdUser = await findById(userId);
+        await session.execute(
+          Sql.named('''
+            INSERT INTO user_roles (user_id, role_id, created_at)
+            VALUES (@userId, @roleId, @createdAt)
+            ON CONFLICT (user_id, role_id) DO NOTHING
+          '''),
+          parameters: {
+            'userId': userId,
+            'roleId': role.id,
+            'createdAt': now,
+          },
+        );
+
+        final keystoreResult = await session.execute(
+          Sql.named('''
+            INSERT INTO keystores (client_id, primary_key, secondary_key, status, created_at, updated_at)
+            VALUES (@clientId, @primaryKey, @secondaryKey, @status, @createdAt, @updatedAt)
+            RETURNING id, client_id, primary_key, secondary_key, status, created_at, updated_at
+          '''),
+          parameters: {
+            'clientId': userId,
+            'primaryKey': accessTokenKey,
+            'secondaryKey': refreshTokenKey,
+            'status': true,
+            'createdAt': now,
+            'updatedAt': now,
+          },
+        );
+
+        return (userId: userId, keystoreRow: keystoreResult.first);
+      });
+
+      final createdUser = await findById(txResult.userId);
       if (createdUser == null) {
         throw const InternalError('User creation failed');
       }
 
-      final keystore = await _keystoreRepo.create(
-        createdUser,
-        accessTokenKey,
-        refreshTokenKey,
+      final row = txResult.keystoreRow;
+      final keystore = Keystore(
+        id: row[0] as String,
+        client: createdUser,
+        primaryKey: row[2] as String,
+        secondaryKey: row[3] as String,
+        status: row[4] as bool?,
+        createdAt: row[5] as DateTime?,
+        updatedAt: row[6] as DateTime?,
       );
 
       return (user: createdUser, keystore: keystore);
