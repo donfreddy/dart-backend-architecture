@@ -42,7 +42,7 @@ final class DatabasePool {
       settings: PoolSettings(
         maxConnectionCount: maxConnections,
         connectTimeout: const Duration(seconds: 5),
-        queryTimeout: const Duration(seconds: 30),
+        queryTimeout: const Duration(seconds: 5),
         sslMode: sslMode,
       ),
     );
