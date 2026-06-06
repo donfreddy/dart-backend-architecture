@@ -48,11 +48,25 @@ Future<Response> blogsByAuthorIdHandler(
     source: ValidationSource.param,
   );
 
+  final query = blogPaginationQuerySchema.safeParse(
+    request.requestedUri.queryParameters,
+  );
+  final pageNumber = query.isSuccess
+      ? query.value['pageNumber'] as int
+      : 1;
+  final limit = query.isSuccess
+      ? query.value['pageItemCount'] as int
+      : 10;
+
   final author =
       await userRepo.findPublicProfileById(validated['id'] as String);
   if (author == null) throw const BadRequestError('User not registered');
 
-  final blogs = await blogService.findAllPublishedForAuthor(author);
+  final blogs = await blogService.findAllPublishedForAuthor(
+    author,
+    pageNumber: pageNumber,
+    limit: limit,
+  );
   if (blogs.isEmpty) throw const NoDataError();
 
   return ok(

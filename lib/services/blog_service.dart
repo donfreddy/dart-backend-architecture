@@ -36,32 +36,87 @@ class BlogService {
     return created;
   }
 
-  Future<List<Blog>> findAllDrafts() {
-    return _blogRepo.findAllDrafts();
+  Future<List<Blog>> findAllDrafts({
+    int pageNumber = 1,
+    int limit = 10,
+  }) {
+    final page = pageNumber < 1 ? 1 : pageNumber;
+    final size = limit < 1 ? 1 : limit;
+    return _blogRepo.findAllDrafts(pageNumber: page, limit: size);
   }
 
-  Future<List<Blog>> findAllDraftsForWriter(User user) {
-    return _blogRepo.findAllDraftsForWriter(user);
+  Future<List<Blog>> findAllDraftsForWriter(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  }) {
+    final page = pageNumber < 1 ? 1 : pageNumber;
+    final size = limit < 1 ? 1 : limit;
+    return _blogRepo.findAllDraftsForWriter(
+      user,
+      pageNumber: page,
+      limit: size,
+    );
   }
 
-  Future<List<Blog>> findAllPublished() {
-    return _blogRepo.findAllPublished();
+  Future<List<Blog>> findAllPublished({
+    int pageNumber = 1,
+    int limit = 10,
+  }) {
+    final page = pageNumber < 1 ? 1 : pageNumber;
+    final size = limit < 1 ? 1 : limit;
+    return _blogRepo.findAllPublished(pageNumber: page, limit: size);
   }
 
-  Future<List<Blog>> findAllPublishedForAuthor(User user) {
-    return _blogRepo.findAllPublishedForAuthor(user);
+  Future<List<Blog>> findAllPublishedForAuthor(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  }) {
+    final page = pageNumber < 1 ? 1 : pageNumber;
+    final size = limit < 1 ? 1 : limit;
+    return _blogRepo.findAllPublishedForAuthor(
+      user,
+      pageNumber: page,
+      limit: size,
+    );
   }
 
-  Future<List<Blog>> findAllPublishedForWriter(User user) {
-    return _blogRepo.findAllPublishedForWriter(user);
+  Future<List<Blog>> findAllPublishedForWriter(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  }) {
+    final page = pageNumber < 1 ? 1 : pageNumber;
+    final size = limit < 1 ? 1 : limit;
+    return _blogRepo.findAllPublishedForWriter(
+      user,
+      pageNumber: page,
+      limit: size,
+    );
   }
 
-  Future<List<Blog>> findAllSubmissions() {
-    return _blogRepo.findAllSubmissions();
+  Future<List<Blog>> findAllSubmissions({
+    int pageNumber = 1,
+    int limit = 10,
+  }) {
+    final page = pageNumber < 1 ? 1 : pageNumber;
+    final size = limit < 1 ? 1 : limit;
+    return _blogRepo.findAllSubmissions(pageNumber: page, limit: size);
   }
 
-  Future<List<Blog>> findAllSubmissionsForWriter(User user) {
-    return _blogRepo.findAllSubmissionsForWriter(user);
+  Future<List<Blog>> findAllSubmissionsForWriter(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  }) {
+    final page = pageNumber < 1 ? 1 : pageNumber;
+    final size = limit < 1 ? 1 : limit;
+    return _blogRepo.findAllSubmissionsForWriter(
+      user,
+      pageNumber: page,
+      limit: size,
+    );
   }
 
   Future<Blog?> findBlogAllDataById(String id) {

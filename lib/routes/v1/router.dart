@@ -140,13 +140,19 @@ Handler buildV1Router({
     return applyEditorAuth((_) => editorDeleteBlogHandler(id, blogService))(r);
   });
   router.get('/blogs/editor/published/all', (Request r) {
-    return applyEditorAuth((_) => editorPublishedBlogsHandler(blogService))(r);
+    return applyEditorAuth(
+      (req) => editorPublishedBlogsHandler(req, blogService),
+    )(r);
   });
   router.get('/blogs/editor/submitted/all', (Request r) {
-    return applyEditorAuth((_) => editorSubmittedBlogsHandler(blogService))(r);
+    return applyEditorAuth(
+      (req) => editorSubmittedBlogsHandler(req, blogService),
+    )(r);
   });
   router.get('/blogs/editor/drafts/all', (Request r) {
-    return applyEditorAuth((_) => editorDraftBlogsHandler(blogService))(r);
+    return applyEditorAuth(
+      (req) => editorDraftBlogsHandler(req, blogService),
+    )(r);
   });
   router.get('/blogs/editor/id/<id>', (Request r, String id) {
     return applyEditorAuth((_) => editorBlogByIdHandler(id, blogService))(r);

@@ -198,7 +198,21 @@ Future<Response> writerSubmittedBlogsHandler(
   Request request,
   BlogService blogService,
 ) async {
-  final blogs = await blogService.findAllSubmissionsForWriter(request.authUser);
+  final query = blogPaginationQuerySchema.safeParse(
+    request.requestedUri.queryParameters,
+  );
+  final pageNumber = query.isSuccess
+      ? query.value['pageNumber'] as int
+      : 1;
+  final limit = query.isSuccess
+      ? query.value['pageItemCount'] as int
+      : 10;
+
+  final blogs = await blogService.findAllSubmissionsForWriter(
+    request.authUser,
+    pageNumber: pageNumber,
+    limit: limit,
+  );
   return ok(
     message: 'success',
     data: blogs.map((b) => b.toJson()).toList(growable: false),
@@ -209,7 +223,21 @@ Future<Response> writerPublishedBlogsHandler(
   Request request,
   BlogService blogService,
 ) async {
-  final blogs = await blogService.findAllPublishedForWriter(request.authUser);
+  final query = blogPaginationQuerySchema.safeParse(
+    request.requestedUri.queryParameters,
+  );
+  final pageNumber = query.isSuccess
+      ? query.value['pageNumber'] as int
+      : 1;
+  final limit = query.isSuccess
+      ? query.value['pageItemCount'] as int
+      : 10;
+
+  final blogs = await blogService.findAllPublishedForWriter(
+    request.authUser,
+    pageNumber: pageNumber,
+    limit: limit,
+  );
   return ok(
     message: 'success',
     data: blogs.map((b) => b.toJson()).toList(growable: false),
@@ -220,7 +248,21 @@ Future<Response> writerDraftBlogsHandler(
   Request request,
   BlogService blogService,
 ) async {
-  final blogs = await blogService.findAllDraftsForWriter(request.authUser);
+  final query = blogPaginationQuerySchema.safeParse(
+    request.requestedUri.queryParameters,
+  );
+  final pageNumber = query.isSuccess
+      ? query.value['pageNumber'] as int
+      : 1;
+  final limit = query.isSuccess
+      ? query.value['pageItemCount'] as int
+      : 10;
+
+  final blogs = await blogService.findAllDraftsForWriter(
+    request.authUser,
+    pageNumber: pageNumber,
+    limit: limit,
+  );
   return ok(
     message: 'success',
     data: blogs.map((b) => b.toJson()).toList(growable: false),

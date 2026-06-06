@@ -20,13 +20,38 @@ abstract interface class BlogQueryRepo {
     int limit,
   );
 
-  Future<List<Blog>> findAllPublishedForAuthor(User user);
-  Future<List<Blog>> findAllDrafts();
-  Future<List<Blog>> findAllSubmissions();
-  Future<List<Blog>> findAllPublished();
-  Future<List<Blog>> findAllSubmissionsForWriter(User user);
-  Future<List<Blog>> findAllPublishedForWriter(User user);
-  Future<List<Blog>> findAllDraftsForWriter(User user);
+  Future<List<Blog>> findAllPublishedForAuthor(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  });
+  Future<List<Blog>> findAllDrafts({
+    int pageNumber = 1,
+    int limit = 10,
+  });
+  Future<List<Blog>> findAllSubmissions({
+    int pageNumber = 1,
+    int limit = 10,
+  });
+  Future<List<Blog>> findAllPublished({
+    int pageNumber = 1,
+    int limit = 10,
+  });
+  Future<List<Blog>> findAllSubmissionsForWriter(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  });
+  Future<List<Blog>> findAllPublishedForWriter(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  });
+  Future<List<Blog>> findAllDraftsForWriter(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  });
 
   Future<List<Blog>> findLatestBlogs(int pageNumber, int limit);
   Future<List<Blog>> searchSimilarBlogs(Blog blog, int limit);

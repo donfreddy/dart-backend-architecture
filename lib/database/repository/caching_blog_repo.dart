@@ -74,29 +74,73 @@ class CachingBlogRepo implements BlogRepo {
       _inner.findByTagAndPaginated(tag, pageNumber, limit);
 
   @override
-  Future<List<Blog>> findAllPublishedForAuthor(User user) =>
-      _inner.findAllPublishedForAuthor(user);
+  Future<List<Blog>> findAllPublishedForAuthor(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  }) =>
+      _inner.findAllPublishedForAuthor(
+        user,
+        pageNumber: pageNumber,
+        limit: limit,
+      );
 
   @override
-  Future<List<Blog>> findAllDrafts() => _inner.findAllDrafts();
+  Future<List<Blog>> findAllDrafts({
+    int pageNumber = 1,
+    int limit = 10,
+  }) =>
+      _inner.findAllDrafts(pageNumber: pageNumber, limit: limit);
 
   @override
-  Future<List<Blog>> findAllSubmissions() => _inner.findAllSubmissions();
+  Future<List<Blog>> findAllSubmissions({
+    int pageNumber = 1,
+    int limit = 10,
+  }) =>
+      _inner.findAllSubmissions(pageNumber: pageNumber, limit: limit);
 
   @override
-  Future<List<Blog>> findAllPublished() => _inner.findAllPublished();
+  Future<List<Blog>> findAllPublished({
+    int pageNumber = 1,
+    int limit = 10,
+  }) =>
+      _inner.findAllPublished(pageNumber: pageNumber, limit: limit);
 
   @override
-  Future<List<Blog>> findAllSubmissionsForWriter(User user) =>
-      _inner.findAllSubmissionsForWriter(user);
+  Future<List<Blog>> findAllSubmissionsForWriter(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  }) =>
+      _inner.findAllSubmissionsForWriter(
+        user,
+        pageNumber: pageNumber,
+        limit: limit,
+      );
 
   @override
-  Future<List<Blog>> findAllPublishedForWriter(User user) =>
-      _inner.findAllPublishedForWriter(user);
+  Future<List<Blog>> findAllPublishedForWriter(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  }) =>
+      _inner.findAllPublishedForWriter(
+        user,
+        pageNumber: pageNumber,
+        limit: limit,
+      );
 
   @override
-  Future<List<Blog>> findAllDraftsForWriter(User user) =>
-      _inner.findAllDraftsForWriter(user);
+  Future<List<Blog>> findAllDraftsForWriter(
+    User user, {
+    int pageNumber = 1,
+    int limit = 10,
+  }) =>
+      _inner.findAllDraftsForWriter(
+        user,
+        pageNumber: pageNumber,
+        limit: limit,
+      );
 
   @override
   Future<List<Blog>> findLatestBlogs(int pageNumber, int limit) =>

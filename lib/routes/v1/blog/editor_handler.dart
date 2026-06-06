@@ -70,24 +70,72 @@ Future<Response> editorDeleteBlogHandler(
   return ok<Object?>(message: 'Blog deleted successfully');
 }
 
-Future<Response> editorPublishedBlogsHandler(BlogService blogService) async {
-  final blogs = await blogService.findAllPublished();
+Future<Response> editorPublishedBlogsHandler(
+  Request request,
+  BlogService blogService,
+) async {
+  final query = blogPaginationQuerySchema.safeParse(
+    request.requestedUri.queryParameters,
+  );
+  final pageNumber = query.isSuccess
+      ? query.value['pageNumber'] as int
+      : 1;
+  final limit = query.isSuccess
+      ? query.value['pageItemCount'] as int
+      : 10;
+
+  final blogs = await blogService.findAllPublished(
+    pageNumber: pageNumber,
+    limit: limit,
+  );
   return ok(
     message: 'success',
     data: blogs.map((b) => b.toJson()).toList(growable: false),
   );
 }
 
-Future<Response> editorSubmittedBlogsHandler(BlogService blogService) async {
-  final blogs = await blogService.findAllSubmissions();
+Future<Response> editorSubmittedBlogsHandler(
+  Request request,
+  BlogService blogService,
+) async {
+  final query = blogPaginationQuerySchema.safeParse(
+    request.requestedUri.queryParameters,
+  );
+  final pageNumber = query.isSuccess
+      ? query.value['pageNumber'] as int
+      : 1;
+  final limit = query.isSuccess
+      ? query.value['pageItemCount'] as int
+      : 10;
+
+  final blogs = await blogService.findAllSubmissions(
+    pageNumber: pageNumber,
+    limit: limit,
+  );
   return ok(
     message: 'success',
     data: blogs.map((b) => b.toJson()).toList(growable: false),
   );
 }
 
-Future<Response> editorDraftBlogsHandler(BlogService blogService) async {
-  final blogs = await blogService.findAllDrafts();
+Future<Response> editorDraftBlogsHandler(
+  Request request,
+  BlogService blogService,
+) async {
+  final query = blogPaginationQuerySchema.safeParse(
+    request.requestedUri.queryParameters,
+  );
+  final pageNumber = query.isSuccess
+      ? query.value['pageNumber'] as int
+      : 1;
+  final limit = query.isSuccess
+      ? query.value['pageItemCount'] as int
+      : 10;
+
+  final blogs = await blogService.findAllDrafts(
+    pageNumber: pageNumber,
+    limit: limit,
+  );
   return ok(
     message: 'success',
     data: blogs.map((b) => b.toJson()).toList(growable: false),
