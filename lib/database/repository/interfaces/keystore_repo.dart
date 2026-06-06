@@ -6,4 +6,8 @@ abstract interface class KeystoreRepo {
   Future<Keystore?> remove(String id);
   Future<Keystore?> find(User client, String primaryKey, String secondaryKey);
   Future<Keystore> create(User client, String primaryKey, String secondaryKey);
+
+  /// Hard-delete keystores whose [createdAt] is older than [olderThan].
+  /// Returns the number of deleted rows.
+  Future<int> deleteExpired({required Duration olderThan});
 }

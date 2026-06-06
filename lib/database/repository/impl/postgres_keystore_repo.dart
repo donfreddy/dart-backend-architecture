@@ -134,6 +134,28 @@ final class PostgresKeystoreRepo implements KeystoreRepo {
   }
 
   @override
+  Future<int> deleteExpired({required Duration olderThan}) async {
+    try {
+      final cutoff = DateTime.now().toUtc().subtract(olderThan);
+      final result = await _pool.execute(
+        Sql.named('''
+          DELETE FROM keystores
+          WHERE created_at < @cutoff
+        '''),
+        parameters: {'cutoff': cutoff},
+      );
+      final count = result.affectedRows;
+      if (count > 0) {
+        _log.info('GC: deleted $count expired keystore(s) older than ${olderThan.inDays} days');
+      }
+      return count;
+    } catch (e, st) {
+      _log.severe('deleteExpired failed', e, st);
+      throw const InternalError();
+    }
+  }
+
+  @override
   Future<Keystore?> remove(String id) async {
     try {
       final existing = await _pool.execute(

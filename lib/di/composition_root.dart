@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dart_backend_architecture/cache/cache_service.dart';
 import 'package:dart_backend_architecture/cache/repository/blog_cache.dart';
 import 'package:dart_backend_architecture/cache/repository/user_cache.dart';
@@ -37,6 +39,7 @@ final class CompositionRoot {
   final JwtService _jwtService;
   final TokenService _tokenService;
   final ApiKeyRepo apiKeyRepo;
+  final Timer? _keystoreGcTimer;
 
   CompositionRoot._({
     required DatabasePool db,
@@ -46,12 +49,14 @@ final class CompositionRoot {
     required JwtService jwtService,
     required TokenService tokenService,
     required this.apiKeyRepo,
+    required Timer? keystoreGcTimer,
   })  : _db = db,
         _cache = cache,
         _eventBus = eventBus,
         _crypto = crypto,
         _jwtService = jwtService,
-        _tokenService = tokenService;
+        _tokenService = tokenService,
+        _keystoreGcTimer = keystoreGcTimer;
 
   /// Initialize infrastructure dependencies once at process start.
   /// NATS connection is optional: if [NATS_URL] is empty a [NoOpEventBus]
@@ -76,6 +81,10 @@ final class CompositionRoot {
     await jwtService.initWorker();
 
     final keystoreRepo = PostgresKeystoreRepo(db);
+    final keystoreGcTimer = Timer.periodic(
+      const Duration(hours: 1),
+      (_) => _runKeystoreGc(keystoreRepo),
+    );
     final userCache = UserCache(cache);
     final tokenService = TokenService(
       keystoreRepo: keystoreRepo,
@@ -92,7 +101,18 @@ final class CompositionRoot {
       jwtService: jwtService,
       tokenService: tokenService,
       apiKeyRepo: apiKeyRepo,
+      keystoreGcTimer: keystoreGcTimer,
     );
+  }
+
+  static void _runKeystoreGc(PostgresKeystoreRepo repo) {
+    repo.deleteExpired(olderThan: const Duration(days: 90)).then((count) {
+      if (count > 0) {
+        _log.info('Keystore GC: deleted $count expired rows');
+      }
+    }).catchError((Object e) {
+      _log.warning('Keystore GC failed: $e');
+    });
   }
 
   static Future<EventBus> _initEventBus(String natsUrl) async {
@@ -163,6 +183,7 @@ final class CompositionRoot {
 
   /// Release resources in reverse dependency order. Call on graceful shutdown.
   Future<void> dispose() async {
+    _keystoreGcTimer?.cancel();
     await _jwtService.dispose();
     await _eventBus.close();
     await _cache.close();
