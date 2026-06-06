@@ -171,25 +171,6 @@ final class PostgresUserRepo implements UserRepo {
   }
 
   @override
-  Future<User?> findPublicProfileById(String id) async {
-    final result = await _pool.execute(
-      Sql.named(
-        '''
-        SELECT $_selectFields
-        FROM users u
-        LEFT JOIN user_roles ur ON ur.user_id = u.id
-        LEFT JOIN roles r ON r.id = ur.role_id AND r.status = TRUE
-        WHERE u.id = @id AND u.deleted_at IS NULL
-        GROUP BY u.id, u.email, u.name, u.profile_pic_url, u.created_at, u.password_hash
-        ''',
-      ),
-      parameters: {'id': id},
-    );
-    if (result.isEmpty) return null;
-    return _mapUser(result.first);
-  }
-
-  @override
   Future<UserWithKeystore> update(
     User user,
     String accessTokenKey,

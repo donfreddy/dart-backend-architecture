@@ -7,7 +7,6 @@ abstract interface class UserRepo {
   Future<User?> findById(String id);
   Future<User?> findByEmail(String email);
   Future<User?> findProfileById(String id);
-  Future<User?> findPublicProfileById(String id);
 
   Future<UserWithKeystore> create(
     User user,

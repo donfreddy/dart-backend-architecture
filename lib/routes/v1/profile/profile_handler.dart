@@ -17,7 +17,7 @@ Future<Response> publicProfileByIdHandler(
     source: ValidationSource.param,
   );
 
-  final user = await userRepo.findPublicProfileById(validated['id'] as String);
+  final user = await userRepo.findProfileById(validated['id'] as String);
   if (user == null) {
     throw const BadRequestError('User not registered');
   }
