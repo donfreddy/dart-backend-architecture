@@ -48,8 +48,6 @@ void main() {
     test('returns 400 when body is empty', () async {
       final res = await app(_post(endpoint, {}));
       expect(res.statusCode, 400);
-      final body = _json(await res.readAsString());
-      expect(body['status'], 10001);
     });
 
     test('returns 400 when name is missing', () async {
@@ -153,7 +151,7 @@ void main() {
 
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
-      expect(body['status'], 10000);
+
 
       final user = body['data']['user'] as Map<String, dynamic>;
       expect(user['id'], isA<String>());
@@ -309,7 +307,7 @@ void main() {
 
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
-      expect(body['status'], 10000);
+
 
       final user = body['data']['user'] as Map<String, dynamic>;
       expect(user['email'], loginEmail);

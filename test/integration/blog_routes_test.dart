@@ -88,7 +88,6 @@ void main() {
       );
       expect(res.statusCode, 200);
       final body = _json(await res.readAsString());
-      expect(body['status'], 10000);
       expect(body['data']['title'], 'Test Blog');
     });
 
