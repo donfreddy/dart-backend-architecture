@@ -1,12 +1,8 @@
-import 'package:dart_backend_architecture/core/circuit_breaker.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:postgres/postgres.dart';
 
-/// Thin wrapper around `postgres.Pool` with sane defaults and validation.
 final class DatabasePool {
   final Pool<dynamic> _pool;
-  final CircuitBreaker _breaker =
-      CircuitBreaker(name: 'PostgreSQL', failureThreshold: 5);
 
   DatabasePool._(this._pool);
 
@@ -57,17 +53,15 @@ final class DatabasePool {
     return DatabasePool._(pool);
   }
 
-  /// Run a query through the circuit breaker.
   Future<Result> execute(
     Object sql, {
     Map<String, dynamic>? parameters,
   }) {
-    return _breaker.execute(() => _pool.execute(sql, parameters: parameters));
+    return _pool.execute(sql, parameters: parameters);
   }
 
-  /// Run a transaction through the circuit breaker.
   Future<T> runTx<T>(Future<T> Function(Session session) action) {
-    return _breaker.execute(() => _pool.runTx(action));
+    return _pool.runTx(action);
   }
 
   Future<void> close() async {

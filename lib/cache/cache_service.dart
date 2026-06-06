@@ -1,18 +1,12 @@
 import 'dart:async';
 
-import 'package:dart_backend_architecture/core/circuit_breaker.dart';
 import 'package:dart_backend_architecture/core/logger.dart';
 import 'package:redis/redis.dart';
 
 final _log = AppLogger.get('CacheService');
 
-/// Minimal Redis wrapper with retry + reconnect, circuit‑breaker and
-/// cache‑aside helpers.
-/// Designed to fail open (never crash callers) so HTTP requests keep flowing.
 class CacheService {
   final _RedisConfig _config;
-  final CircuitBreaker _breaker =
-      CircuitBreaker(name: 'Redis', failureThreshold: 5);
   late RedisConnection _conn;
   late Command _cmd;
   Completer<void>? _reconnectCompleter;
@@ -184,20 +178,18 @@ class CacheService {
   static const _redisCommandTimeout = Duration(seconds: 5);
 
   Future<T> _execute<T>(Future<T> Function(Command cmd) action) async {
-    return _breaker.execute(() async {
-      for (var attempt = 0; attempt < 2; attempt++) {
-        try {
-          return await action(_cmd).timeout(_redisCommandTimeout);
-        } catch (e) {
-          _log.warning(
-            'Redis command failed (attempt ${attempt + 1}) — reconnecting: $e',
-          );
-          await _reconnect();
-        }
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await action(_cmd).timeout(_redisCommandTimeout);
+      } catch (e) {
+        _log.warning(
+          'Redis command failed (attempt ${attempt + 1}) — reconnecting: $e',
+        );
+        await _reconnect();
       }
-      // Last attempt — let the error surface
-      return action(_cmd).timeout(_redisCommandTimeout);
-    });
+    }
+    // Last attempt — let the error surface
+    return action(_cmd).timeout(_redisCommandTimeout);
   }
 
   Future<void> _reconnect() async {
